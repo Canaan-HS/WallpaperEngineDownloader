@@ -24,17 +24,17 @@
 
 ## 使用方法  
 
- * 請先安裝 [.NET 8.0 執行庫](https://dotnet.microsoft.com/download/dotnet/8.0/runtime)
+* 請先安裝 [.NET 8.0 執行庫](https://dotnet.microsoft.com/download/dotnet/8.0/runtime)
 
- * Widows 安裝指令:
- ```
- winget install Microsoft.DotNet.SDK.8
- ```
+* Widows 安裝指令:
+```
+winget install Microsoft.DotNet.SDK.8
+```
 
- 1. 執行 `WallpaperDownloader.exe`
+1. 執行 `WallpaperDownloader.exe`
 
- 2. 在 <https://steamcommunity.com/app/431960/workshop/> 瀏覽你喜歡的創意工坊專案。
+2. 在 <https://steamcommunity.com/app/431960/workshop/> 瀏覽你喜歡的創意工坊專案。
 
- 3. 複製你創意工坊專案的URL。例如，`https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`
+3. 複製你創意工坊專案的URL。例如，`https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`
 
- 4. 點擊下載
+4. 點擊下載
