@@ -1,3 +1,7 @@
 *.cfg
+*.cmd
+*.txt
+*.spec
+
 PackSpace
 DepotDownloaderMod
