@@ -6,9 +6,9 @@
 
 - **無需 Steam 帳戶**：直接下載創意工坊專案
 - **語言自適應**：支援簡體中文、繁體中文和英文。
-- **自動解析連結**：
-  - 貼上專案 URL（如 `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`）會自動提取 ID。
-  - 若 URL 含 `searchtext=名稱`，則以該名稱命名檔案，否則使用專案 ID。
+- **自動捕獲連結**：
+  - 複製專案 URL（如 `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`）會自動貼上到輸入框。
+  - 若 URL 含 `searchtext=名稱`，則輸出文件以該名稱命名，否則使用 ID 命名。
 - **動態下載**：
   - 下載開始後，已處理的連結會從輸入框移除。
   - 持續新增的連結會自動加入下載佇列，直到輸入框清空。
