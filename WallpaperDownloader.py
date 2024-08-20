@@ -10,6 +10,7 @@ import tkinter as tk
 
 from tkinter import ttk
 from pathlib import Path
+from urllib.parse import unquote
 from tkinter import scrolledtext, filedialog, messagebox
 
 import pyperclip
@@ -165,19 +166,6 @@ class GUI(DLL, tk.Tk):
         self.run_button = tk.Button(self.bottom_frame, text=self.transl('下載'), font=("Microsoft JhengHei", 10, "bold"), borderwidth=2, cursor="hand2", relief="flat", bg=self.secondary_color, fg=self.text_color, command=self.download_trigger)
         self.run_button.grid(row=2, column=0, sticky="ew")
 
-    def listen_clipboard(self):
-        pyperclip.copy('')
-
-        while True:
-            clipboard = pyperclip.paste()
-
-            if self.link_regular.match(clipboard) and clipboard not in self.add_record_url:
-                self.add_record_url.add(clipboard)
-
-                self.input_text.insert(tk.END, f"{clipboard}\n")
-                pyperclip.copy('')
-            time.sleep(0.3)
-        
     def status_switch(self, state):
         if state == "disabled":
             self.sername_menu.config(state="disabled", cursor="no")
@@ -187,7 +175,7 @@ class GUI(DLL, tk.Tk):
             self.sername_menu.config(state="readonly", cursor="hand2")
             self.path_button.config(state="normal", cursor="hand2")
             self.run_button.config(state="normal", cursor="hand2")
-        
+
     def save_settings(self):
         path = filedialog.askdirectory(title=self.transl('選擇資料夾'))
 
@@ -201,6 +189,19 @@ class GUI(DLL, tk.Tk):
         self.console.insert(tk.END, message)
         self.console.yview(tk.END)
         self.console.config(state="disabled")
+        
+    def listen_clipboard(self):
+        pyperclip.copy('')
+
+        while True:
+            clipboard = pyperclip.paste()
+
+            if self.link_regular.match(clipboard) and clipboard not in self.add_record_url:
+                self.add_record_url.add(clipboard)
+
+                self.input_text.insert(tk.END, f"{clipboard}\n")
+                pyperclip.copy('')
+            time.sleep(0.3)
 
     def download(self, taskId, searchtext):
         process_name = self.illegal_regular.sub("-", searchtext if searchtext else taskId).strip()
@@ -230,7 +231,7 @@ class GUI(DLL, tk.Tk):
                 if not lines or not lines[0].strip():
                     break
                 self.input_text.delete("1.0", "2.0")
-                yield lines[0].strip()
+                yield unquote(lines[0]).strip()
 
         def trigger():
             for link in lines():
