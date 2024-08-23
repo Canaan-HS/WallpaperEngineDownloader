@@ -32,6 +32,16 @@ def language(lang):
                 "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "输入创意工坊项目（每行一个，支持链接和文件ID）",
                 "下載": "下载",
                 "選擇資料夾": "选择文件夹",
+                "選擇整合的類型": "选择整合的类型",
+                "檔案類型": "文件类型",
+                "檔案數量": "文件数量",
+                "操作提示": "操作提示",
+                "請選擇要整合的類型": "请选择要整合的类型",
+                "操作確認": "操作确认",
+                "整合以下類型的檔案": "整合以下类型的文件",
+                "操作完成": "操作完成",
+                "檔案整合完成": "文件整合完成",
+                "整合輸出": "整合输出",
                 "獲取失敗": "获取失败",
                 "沒有可整合的檔案": "没有可整合的文件",
                 "下載完成": "下载完成",
@@ -49,6 +59,16 @@ def language(lang):
                 "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "Enter Workshop Projects (One per Line, Supports Links and File IDs)",
                 "下載": "Download",
                 "選擇資料夾": "Select Folder",
+                "選擇整合的類型": "Select the types to integrate",
+                "檔案類型": "File Type",
+                "檔案數量": "File Count",
+                "操作提示": "Operation Tips",
+                "請選擇要整合的類型": "Please select the types to integrate",
+                "操作確認": "Operation Confirmation",
+                "整合以下類型的檔案": "Integrate the following types of files",
+                "操作完成": "Operation Completed",
+                "檔案整合完成": "File Integration Completed",
+                "整合輸出": "Integration Output",
                 "獲取失敗": "Failed to Retrieve",
                 "沒有可整合的檔案": "No Files to Integrate",
                 "下載完成": "Download Completed",
@@ -202,7 +222,7 @@ class GUI(DLL, tk.Tk):
             merge_window = tk.Toplevel(self)
             merge_window.title(self.transl('檔案整合'))
             merge_window.configure(bg=self.primary_color)
-            
+
             try:
                 merge_window.iconbitmap(self.icon_ico)
             except: pass
@@ -267,7 +287,9 @@ class GUI(DLL, tk.Tk):
                     for files in move_file:
                         files.rename(merge_path / f"[{files.parent.name}] {files.name}")
 
-            print_button = tk.Button(output_frame, text=self.transl('整合選中的類型'), font=("Microsoft JhengHei", 12, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=move_save_file)
+                    messagebox.showinfo(title=self.transl('操作完成'), message=f"{self.transl('檔案整合完成')}\n{merge_path}", parent=merge_window)
+
+            print_button = tk.Button(output_frame, text=self.transl('整合輸出'), font=("Microsoft JhengHei", 12, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=move_save_file)
             print_button.pack(pady=(5, 15))
         else:
             messagebox.showwarning(title=self.transl('獲取失敗'), message=self.transl('沒有可整合的檔案'), parent=self)
