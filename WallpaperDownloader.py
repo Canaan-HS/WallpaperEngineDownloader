@@ -4,7 +4,6 @@ import sys
 import time
 import locale
 import base64
-import textwrap
 import threading
 import subprocess
 import tkinter as tk
