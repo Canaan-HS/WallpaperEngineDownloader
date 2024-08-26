@@ -19,8 +19,7 @@
 
 ## 預覽
 
-![中文版](https://github.com/user-attachments/assets/cf9acb4a-f7bd-422a-a6ec-916c266b44c6)
-
+![中文版](https://github.com/user-attachments/assets/3c6f23f0-c9ae-42e3-9152-2748818db0a6)
 
 ## 使用方法  
 
