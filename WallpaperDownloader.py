@@ -281,10 +281,11 @@ class GUI(DLL, tk.Tk):
 
                     merge_path = self.save_path / self.integrate_folder
                     merge_path.mkdir(parents=True, exist_ok=True)
-                    move_file = [data_table[f".{select}"][0] for select in selected]
+                    move_file = [data_table[f".{select}"] for select in selected]
 
                     for files in move_file:
-                        files.rename(merge_path / f"[{files.parent.name}] {files.name}")
+                        for file in files:
+                            file.rename(merge_path / f"[{file.parent.name}] {file.name}")
 
                     messagebox.showinfo(title=self.transl('操作完成'), message=f"{self.transl('檔案整合完成')}\n{merge_path}", parent=merge_window)
 
