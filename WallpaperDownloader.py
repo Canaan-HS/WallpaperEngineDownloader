@@ -328,7 +328,7 @@ class GUI(DLL, tk.Tk):
     def download(self, taskId, searchtext):
         process_name = self.illegal_regular.sub("-", searchtext if searchtext else taskId).strip()
 
-        self.console_update(f"> {self.transl('開始下載')} [{process_name}]\n", "important")
+        self.console_update(f"\n> {self.transl('開始下載')} [{process_name}]\n", "important")
         if not self.save_path.exists():
             self.save_path.mkdir(parents=True, exist_ok=True)
 
@@ -341,7 +341,7 @@ class GUI(DLL, tk.Tk):
         process.stdout.close()
         process.wait()
 
-        self.console_update(f"> [{process_name}] {self.transl('下載完成')} \n\n", "important")
+        self.console_update(f"> [{process_name}] {self.transl('下載完成')} \n", "important")
         self.complete_record_id.add(taskId)
 
     def download_trigger(self):
@@ -358,7 +358,7 @@ class GUI(DLL, tk.Tk):
         def trigger():
             for link in lines():
                 if link:
-                    match = self.parse_regular.match(link)
+                    match = self.parse_regular.search(link)
                     if match:
                         self.add_record_url.add(link)
                         if match.group(1) not in self.complete_record_id:
