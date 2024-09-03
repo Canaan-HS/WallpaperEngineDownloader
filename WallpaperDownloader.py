@@ -81,7 +81,7 @@ def language(lang):
 
 class DLL:
     def __init__(self):
-        self.integrate_folder = "Integrate"
+        self.integrate_folder = "!【Integrate】!"
         self.output_folder = "Wallpaper_Output"
         self.current_dir = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).parent
 
