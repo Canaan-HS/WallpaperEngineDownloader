@@ -20,7 +20,7 @@
             for (const tr of document.querySelectorAll("#table-apps tr.app")) {
                 const name = tr.querySelector(".applogo").nextElementSibling.textContent;
                 const id = tr.getAttribute("data-appid");
-                data.set(id, name);
+                data.set(name, id);
             };
 
             const next = document.querySelector("button.next");
