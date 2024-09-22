@@ -28,11 +28,11 @@ A simple recreation of [WallpaperEngineWorkshopDownloader](https://github.com/ou
 
 ## How to Use
 
-* First, install the [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0/runtime)
+* First, install the [.NET 9.0 Runtime](https://dotnet.microsoft.com/download/dotnet/9.0/runtime)
 
 * Windows installation command:
 ```
-winget install Microsoft.DotNet.SDK.8
+winget install Microsoft.DotNet.SDK.9
 ```
 
 1. Run `WallpaperDownloader.exe`
