@@ -32,9 +32,11 @@ def language(lang=None):
                 "依賴錯誤": "依赖错误",
                 "找不到": "找不到",
                 "創意工坊下載器": "创意工坊下载器",
-                "選擇帳號": "选择账号",
                 "修改路徑": "修改路径",
                 "檔案整合": "文件整合",
+                "選擇配置": "选择配置",
+                "帳號": "账号",
+                "應用": "应用",
                 "控制台輸出": "控制台输出",
                 "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "输入创意工坊项目（每行一个，支持链接和文件ID）",
                 "下載": "下载",
@@ -51,6 +53,7 @@ def language(lang=None):
                 "整合輸出": "整合输出",
                 "獲取失敗": "获取失败",
                 "沒有可整合的檔案": "没有可整合的文件",
+                "開始下載": "开始下载",
                 "下載完成": "下载完成",
                 "無效連結": "无效链接",
                 "讀取配置文件時出錯": "读取配置文件时出错"
@@ -59,9 +62,11 @@ def language(lang=None):
                 "依賴錯誤": "Dependency Error",
                 "找不到": "Not Found",
                 "創意工坊下載器": "Workshop Downloader",
-                "選擇帳號": "Select Account",
                 "修改路徑": "Modify Path",
                 "檔案整合": "File Integration",
+                "選擇配置": "Select",
+                "帳號": "Acc",
+                "應用": "App",
                 "控制台輸出": "Console Output",
                 "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "Enter Workshop Projects (One per Line, Supports Links and File IDs)",
                 "下載": "Download",
@@ -78,6 +83,7 @@ def language(lang=None):
                 "整合輸出": "Integration Output",
                 "獲取失敗": "Failed to Retrieve",
                 "沒有可整合的檔案": "No Files to Integrate",
+                "開始下載": "Start Download",
                 "下載完成": "Download Completed",
                 "無效連結": "Invalid Link",
                 "讀取配置文件時出錯": "Error Reading Configuration File"
@@ -129,7 +135,7 @@ class DLL:
         self.depot_exe = Path(self.current_dir) / "DepotdownloaderMod/DepotDownloadermod.exe"
 
         self.transl = language()
-        self.default_appid = {"Wallpaper Engine": "431960"}
+        self.appid_dict = {"Wallpaper Engine": "431960"}
 
         if not self.depot_exe.exists():
             messagebox.showerror(self.transl('依賴錯誤'), f"{self.transl('找不到')} {self.depot_exe}", parent=self)
@@ -148,7 +154,7 @@ class DLL:
         if self.id_json.exists():
             try:
                 id_dict = json.loads(self.id_json.read_text(encoding="utf-8"))
-                self.default_appid.update(id_dict)
+                self.appid_dict.update(id_dict)
             except Exception as e:
                 print(f"{self.transl('讀取配置文件時出錯')}: {e}") # 除錯用
 
@@ -159,7 +165,7 @@ class DLL:
         self.illegal_regular = re.compile(r'[<>:"/\\|?*\x00-\x1F]')
         self.parse_regular = re.compile(r'(\d{8,10})(?:&searchtext=(.*))?')
         self.link_regular = re.compile(r'^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$')
-        
+
         self.accounts = {
             'ruiiixx': 'UzY3R0JUQjgzRDNZ',
             'premexilmenledgconis': 'M3BYYkhaSmxEYg==',
@@ -169,8 +175,10 @@ class DLL:
             '787109690': 'SHVjVXhZTVFpZzE1'
         }
 
-        self.acclist = list(self.accounts.keys())
-        self.passwords = {account: base64.b64decode(self.accounts[account]).decode('utf-8') for account in self.accounts}
+        self.acc_list = list(self.accounts.keys())
+        self.appid_list = list(self.appid_dict.keys())
+
+        self.password_dict = {account: base64.b64decode(self.accounts[account]).decode('utf-8') for account in self.accounts}
 
     def get_save_data(self):
         file_data = defaultdict(list)
@@ -184,8 +192,8 @@ class GUI(DLL, tk.Tk):
         DLL.__init__(self)
         tk.Tk.__init__(self, className=f"Wallpaper Engine {self.transl('創意工坊下載器')}")
 
-        self.geometry("600x650")
-        self.minsize(500, 550)
+        self.geometry("640x650")
+        self.minsize(180, 550)
 
         try:
             self.iconbitmap(self.icon_ico)
@@ -203,6 +211,7 @@ class GUI(DLL, tk.Tk):
         self.select_frame = tk.Frame(self, bg=self.primary_color)
         self.select_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
         self.select_frame.columnconfigure(1, weight=0)
+        self.select_frame.columnconfigure(2, weight=0)
         self.settings_element()
 
         self.console_frame = tk.Frame(self, bg=self.primary_color)
@@ -217,15 +226,18 @@ class GUI(DLL, tk.Tk):
         self.input_element()
 
     def settings_element(self):
-        username_label = tk.Label(self.select_frame, text=f"{self.transl('選擇帳號')}：", font=("Microsoft JhengHei", 14, "bold"), bg=self.primary_color, fg=self.text_color)
-        username_label.grid(row=0, column=0, sticky="w", pady=(10, 10))
+        username_label = tk.Label(self.select_frame, text=f"{self.transl('選擇配置')}：", font=("Microsoft JhengHei", 14, "bold"), bg=self.primary_color, fg=self.text_color)
+        username_label.grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(10, 10))
 
         self.username = tk.StringVar(self)
-        self.username.set(self.acclist[0])
-        self.sername_menu = ttk.Combobox(self.select_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), cursor="hand2", justify="center", state="readonly", values=self.acclist)
-        self.sername_menu.grid(row=0, column=1, sticky="w")
+        self.username.set(f"{self.transl('帳號')}->{self.acc_list[0]}")
+        self.username_menu = ttk.Combobox(self.select_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), cursor="hand2", justify="center", state="readonly", values=self.acc_list)
+        self.username_menu.grid(row=0, column=1, sticky="w")
 
-        # next(iter(self.default_appid))
+        self.serverid = tk.StringVar(self)
+        self.serverid.set(f"{self.transl('應用')}->{self.appid_list[0]}")
+        self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10), width=35, cursor="hand2", justify="center", state="readonly", values=self.appid_list)
+        self.serverid_menu.grid(row=0, column=2, sticky="w")
 
         self.path_button = tk.Button(self.select_frame, text=self.transl('修改路徑'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.save_settings)
         self.path_button.grid(row=1, column=0, sticky="w")
@@ -334,7 +346,10 @@ class GUI(DLL, tk.Tk):
 
                     for files in move_file:
                         for file in files:
-                            file.rename(merge_path / f"[{file.parent.name}] {file.name}")
+                            relative_path = file.relative_to(self.save_path) # 獲取 file 在 self.save_path 下的相對路徑
+                            top_folder = relative_path.parts[0] # 取得最上層資料夾名稱
+
+                            file.rename(merge_path / f"[{top_folder}] {file.name}")
 
                     messagebox.showinfo(title=self.transl('操作完成'), message=f"{self.transl('檔案整合完成')}\n{merge_path}", parent=merge_window)
 
@@ -345,12 +360,14 @@ class GUI(DLL, tk.Tk):
 
     def status_switch(self, state):
         if state == "disabled":
-            self.sername_menu.config(state="disabled", cursor="no")
+            self.username_menu.config(state="disabled", cursor="no")
+            self.serverid_menu.config(state="disabled", cursor="no")
             self.path_button.config(state="disabled", cursor="no")
             self.merge_button.config(state="disabled", cursor="no")
             self.run_button.config(state="disabled", cursor="no")
         else:
-            self.sername_menu.config(state="readonly", cursor="hand2")
+            self.username_menu.config(state="readonly", cursor="hand2")
+            self.serverid_menu.config(state="readonly", cursor="hand2")
             self.path_button.config(state="normal", cursor="hand2")
             self.merge_button.config(state="normal", cursor="hand2")
             self.run_button.config(state="normal", cursor="hand2")
@@ -396,7 +413,7 @@ class GUI(DLL, tk.Tk):
     def download_trigger(self):
         self.status_switch("disabled")
 
-        def lines():
+        def stream():
             while True:
                 lines = self.input_text.get("1.0", "end").splitlines()
                 if not lines or not lines[0].strip():
@@ -405,11 +422,12 @@ class GUI(DLL, tk.Tk):
                 yield unquote(lines[0]).strip()
 
         def trigger():
-            app = "431960"
-            username = self.username.get()
-            password = self.passwords[username]
+            # .split 是處理預設的字串
+            app = self.appid_dict[self.serverid.get().split("->")[-1]]
+            username = self.username.get().split("->")[-1]
+            password = self.password_dict[username]
 
-            for link in lines():
+            for link in stream():
                 if link:
                     match = self.parse_regular.search(link)
                     if match:
