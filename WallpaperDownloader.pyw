@@ -6,10 +6,10 @@ import subprocess
 import threading
 
 # 標準庫 - 數據處理
+import re
 import json
 import time
 import base64
-import re
 import locale
 import ctypes
 
@@ -187,6 +187,35 @@ class DLL:
             suffix: files for suffix, files in sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
         }
 
+    def build_trie(self, data_list):
+        trie = {}
+        for appid in data_list:
+            current = trie
+            for char in appid.lower():
+                if char not in current:
+                    current[char] = {}
+                current = current[char]
+            current["$"] = appid
+        return trie
+
+    def search_trie(self, trie, prefix):
+        current = trie
+        for char in prefix:
+            if char not in current:
+                return []
+            current = current[char]
+
+        matches = []
+        stack = [current]
+        while stack:
+            node = stack.pop()
+            if "$" in node:
+                matches.append(node["$"])
+            for char, subtree in node.items():
+                if char != "$":
+                    stack.append(subtree)
+        return matches
+
 class GUI(DLL, tk.Tk):
     def __init__(self):
         DLL.__init__(self)
@@ -236,8 +265,9 @@ class GUI(DLL, tk.Tk):
 
         self.serverid = tk.StringVar(self)
         self.serverid.set(f"{self.transl('應用')}->{self.appid_list[0]}")
-        self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10), width=35, cursor="hand2", justify="center", state="readonly", values=self.appid_list)
+        self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10), width=35, cursor="hand2", justify="center", values=self.appid_list)
         self.serverid_menu.grid(row=0, column=2, sticky="w")
+        self.server_search()
 
         self.path_button = tk.Button(self.select_frame, text=self.transl('修改路徑'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.save_settings)
         self.path_button.grid(row=1, column=0, sticky="w")
@@ -274,6 +304,25 @@ class GUI(DLL, tk.Tk):
             self.save_path = Path(path) / self.output_folder
             self.save_path_label.config(text=self.save_path)
             self.config_cfg.write_text(str(self.save_path), encoding="utf-8")
+
+    def server_search(self):
+        appid_trie = self.build_trie(self.appid_list) # 編譯前綴樹
+
+        def on_input(event):
+            prefix = event.widget.get().lower()
+            matches = self.search_trie(appid_trie, prefix) if prefix else self.appid_list
+            self.serverid_menu.configure(values=matches)
+
+        def on_click(event):
+            x = event.x
+            widget = event.widget
+            text = self.serverid.get()
+            if x < widget.winfo_width() - 20 and "->" in text:
+                self.serverid.set("")
+                self.serverid_menu.unbind("<Button-1>")
+
+        self.serverid_menu.bind("<KeyRelease>", on_input)
+        self.serverid_menu.bind("<Button-1>", on_click)
 
     def file_merge(self):
         data_table = self.get_save_data()
@@ -367,7 +416,7 @@ class GUI(DLL, tk.Tk):
             self.run_button.config(state="disabled", cursor="no")
         else:
             self.username_menu.config(state="readonly", cursor="hand2")
-            self.serverid_menu.config(state="readonly", cursor="hand2")
+            self.serverid_menu.config(state="normal", cursor="hand2")
             self.path_button.config(state="normal", cursor="hand2")
             self.merge_button.config(state="normal", cursor="hand2")
             self.run_button.config(state="normal", cursor="hand2")
@@ -423,7 +472,7 @@ class GUI(DLL, tk.Tk):
 
         def trigger():
             # .split 是處理預設的字串
-            app = self.appid_dict[self.serverid.get().split("->")[-1]]
+            app = self.appid_dict.get(self.serverid.get().split("->")[-1], "431960")
             username = self.username.get().split("->")[-1]
             password = self.password_dict[username]
 
