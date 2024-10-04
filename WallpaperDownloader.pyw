@@ -227,15 +227,17 @@ class GUI(DLL, tk.Tk):
         try:
             self.iconbitmap(self.icon_ico)
         except: pass
-
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
+        
         self.primary_color = "#383d48"
         self.consolo_color = "#272727"
         self.secondary_color = "#afd4ff"
         self.text_color = "#ffffff"
         self.configure(bg=self.primary_color)
+
+        self.grid_rowconfigure(0, weight=0)  # select_frame
+        self.grid_rowconfigure(1, weight=0)  # console_frame
+        self.grid_rowconfigure(2, weight=1)  # operate_frame
+        self.grid_columnconfigure(0, weight=1)  # 水平拉伸
 
         self.select_frame = tk.Frame(self, bg=self.primary_color)
         self.select_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
@@ -251,6 +253,8 @@ class GUI(DLL, tk.Tk):
 
         self.operate_frame = tk.Frame(self, bg=self.primary_color)
         self.operate_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
+        self.operate_frame.grid_rowconfigure(1, weight=1)
+        self.operate_frame.grid_rowconfigure(2, weight=0)
         self.operate_frame.columnconfigure(0, weight=1)
         self.input_element()
 
@@ -282,7 +286,7 @@ class GUI(DLL, tk.Tk):
         console_label = tk.Label(self.console_frame, text=f"{self.transl('控制台輸出')}：", font=("Microsoft JhengHei", 10, "bold"), bg=self.primary_color, fg=self.text_color)
         console_label.grid(row=0, column=0, sticky="nsew")
 
-        self.console = scrolledtext.ScrolledText(self.console_frame, font=("Consolas", 12), height=14, borderwidth=4, cursor="arrow", relief="sunken", state="disabled", bg=self.consolo_color, fg=self.text_color)
+        self.console = scrolledtext.ScrolledText(self.console_frame, font=("Consolas", 12), height=16, borderwidth=4, cursor="arrow", relief="sunken", state="disabled", bg=self.consolo_color, fg=self.text_color)
         self.console.tag_configure("important", foreground="#00DB00", font=("Consolas", 12, "bold"))
         self.console.grid(row=1, column=0, sticky="nsew")
 
@@ -290,7 +294,7 @@ class GUI(DLL, tk.Tk):
         input_label = tk.Label(self.operate_frame, text=f"{self.transl('輸入創意工坊專案（每行一個，支援連結和檔案ID）')}：", font=("Microsoft JhengHei", 10, "bold"), bg=self.primary_color, fg=self.text_color)
         input_label.grid(row=0, column=0, sticky="nsew")
 
-        self.input_text = scrolledtext.ScrolledText(self.operate_frame, font=("Microsoft JhengHei", 10, "bold"), height=7, borderwidth=2, relief="sunken", wrap="none")
+        self.input_text = scrolledtext.ScrolledText(self.operate_frame, font=("Microsoft JhengHei", 10, "bold"), borderwidth=2, relief="sunken", wrap="none")
         self.input_text.grid(row=1, column=0, sticky="nsew")
         threading.Thread(target=self.listen_clipboard).start()
 
