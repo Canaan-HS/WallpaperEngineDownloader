@@ -325,8 +325,12 @@ class GUI(DLL, tk.Tk):
                 self.serverid.set("")
                 self.serverid_menu.unbind("<Button-1>")
 
+        def on_select(event):
+            self.serverid_menu.configure(values=self.appid_list)
+
         self.serverid_menu.bind("<KeyRelease>", on_input)
         self.serverid_menu.bind("<Button-1>", on_click)
+        self.serverid_menu.bind("<<ComboboxSelected>>", on_select)
 
     def file_merge(self):
         data_table = self.get_save_data()
