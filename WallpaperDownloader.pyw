@@ -208,6 +208,13 @@ class DLL:
             sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
         )
 
+    def get_unique_path(self, path):
+        index = 1
+        while path.exists():
+            path = path.with_name(f"{path.stem} ({index}){path.suffix}")
+            index += 1
+        return path
+
     def build_trie(self, data_list):
         trie = {}
         for appid in data_list:
@@ -508,7 +515,7 @@ class GUI(DLL, tk.Tk):
         if not self.save_path.exists():
             self.save_path.mkdir(parents=True, exist_ok=True)
 
-        dir_option = f"-dir \"{self.save_path / process_name}\""
+        dir_option = f"-dir \"{self.get_unique_path(self.save_path / process_name)}\""
         command = f"{self.depot_exe} -app {appId} -pubfile {pubId} -verify-all -username {Username} -password {Password} {dir_option}"
 
         end_message = self.transl('下載完成')
