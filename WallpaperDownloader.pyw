@@ -64,11 +64,11 @@ def language(lang=None):
             },
             'en_US': {
                 "創意工坊下載器": "Workshop Downloader",
-                "選擇配置": "Select Configuration",
+                "選擇配置": "Select",
                 "修改路徑": "Modify Path",
                 "檔案整合": "File Integration",
-                "帳號": "Account",
-                "應用": "Application",
+                "帳號": "Acc",
+                "應用": "App",
                 "已複製": "Copied",
                 "選擇資料夾": "Select Folder",
                 "控制台輸出": "Console Output",
@@ -312,7 +312,7 @@ class GUI(DLL, tk.Tk):
         self.path_button.grid(row=1, column=0, sticky="w")
 
         self.save_path_label = tk.Label(self.select_frame, text=self.save_path, font=("Microsoft JhengHei", 14, "bold"), cursor="hand2", anchor="w", justify="left", bg=self.primary_color, fg=self.text_color)
-        self.save_path_label.grid(row=1, column=1, columnspan=2, sticky="w")
+        self.save_path_label.grid(row=1, column=1, columnspan=3, sticky="w")
         self.save_path_label.bind("<Button-1>", self.copy_save_path)
 
         self.merge_button = tk.Button(self.select_frame, text=self.transl('檔案整合'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.file_merge)
