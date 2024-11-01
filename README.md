@@ -4,6 +4,31 @@ A simple recreation of [WallpaperEngineWorkshopDownloader](https://github.com/ou
 
 [中文版本](README_zh-TW.md)
 
+## Preview
+
+![English Version](https://github.com/user-attachments/assets/7d4786d6-4826-41da-b6ee-ea8faa634077)
+
+## Dependencies
+
+- [DepotDownloaderMod](https://github.com/oureveryday/DepotDownloaderMod)
+
+## How to Use
+
+* First, install the [.NET 9.0 Runtime](https://dotnet.microsoft.com/download/dotnet/9.0/runtime)
+
+* Windows installation command:
+```
+winget install Microsoft.DotNet.SDK.9
+```
+
+1. Run `WallpaperDownloader.exe`
+
+2. Browse your favorite Workshop projects at <https://steamcommunity.com/app/431960/workshop/>
+
+3. Copy the URL of your selected Workshop project. For example, `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`
+
+4. Click "Download"
+
 ## Features
 
 ## **No Steam Account Required**
@@ -38,28 +63,3 @@ A simple recreation of [WallpaperEngineWorkshopDownloader](https://github.com/ou
   Users can select the target application via a dropdown list, with `Wallpaper Engine` as the default option.
 - **Simple Search**
   After entering search text, reopen the dropdown list to select. If the input is not in the list (e.g., due to typos or invalid strings), the system will fall back to the default option, `Wallpaper Engine`.
-
-## Dependencies
-
-- [DepotDownloaderMod](https://github.com/oureveryday/DepotDownloaderMod)
-
-## Preview
-
-![English Version](https://github.com/user-attachments/assets/508c7cd3-f88f-4ff4-823c-8d5d005c41f8)
-
-## How to Use
-
-* First, install the [.NET 9.0 Runtime](https://dotnet.microsoft.com/download/dotnet/9.0/runtime)
-
-* Windows installation command:
-```
-winget install Microsoft.DotNet.SDK.9
-```
-
-1. Run `WallpaperDownloader.exe`
-
-2. Browse your favorite Workshop projects at <https://steamcommunity.com/app/431960/workshop/>
-
-3. Copy the URL of your selected Workshop project. For example, `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`
-
-4. Click "Download"
