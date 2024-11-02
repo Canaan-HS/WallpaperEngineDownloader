@@ -2,6 +2,31 @@
 
 一款簡單復刻 [WallpaperEngineWorkshopDownloader](https://github.com/oureveryday/WallpaperEngineWorkshopDownloader) 重寫 UI 的專案
 
+## 預覽
+
+![中文版](https://github.com/user-attachments/assets/1d08c74b-4d98-49f8-aeb8-26f2e1c6c3ef)
+
+## 依賴  
+
+- [DepotDownloaderMod](https://github.com/oureveryday/DepotDownloaderMod)
+
+## 使用方法  
+
+* 請先安裝 [.NET 9.0 執行庫](https://dotnet.microsoft.com/download/dotnet/9.0/runtime)
+
+* Widows 安裝指令:
+```
+winget install Microsoft.DotNet.SDK.9
+```
+
+1. 執行 `WallpaperDownloader.exe`
+
+2. 在 <https://steamcommunity.com/app/431960/workshop/> 瀏覽你喜歡的創意工坊專案。
+
+3. 複製你創意工坊專案的URL。例如，`https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`
+
+4. 點擊下載
+
 ## 功能  
 
 ## **無需 Steam 賬戶**
@@ -36,28 +61,3 @@
   使用者可透過下拉列表選擇目標應用程式，預設選項為 `Wallpaper Engine`。
 - **簡易搜尋**
   輸入搜尋文字後，再次開啟下拉列表進行選擇。若輸入內容不在列表中（例如拼寫錯誤或無效字串），系統將回退至預設選項 `Wallpaper Engine`。
-
-## 依賴  
-
-- [DepotDownloaderMod](https://github.com/oureveryday/DepotDownloaderMod)
-
-## 預覽
-
-![中文版](https://github.com/user-attachments/assets/3c6f23f0-c9ae-42e3-9152-2748818db0a6)
-
-## 使用方法  
-
-* 請先安裝 [.NET 9.0 執行庫](https://dotnet.microsoft.com/download/dotnet/9.0/runtime)
-
-* Widows 安裝指令:
-```
-winget install Microsoft.DotNet.SDK.9
-```
-
-1. 執行 `WallpaperDownloader.exe`
-
-2. 在 <https://steamcommunity.com/app/431960/workshop/> 瀏覽你喜歡的創意工坊專案。
-
-3. 複製你創意工坊專案的URL。例如，`https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`
-
-4. 點擊下載
