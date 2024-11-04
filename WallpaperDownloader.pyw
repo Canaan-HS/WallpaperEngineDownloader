@@ -208,10 +208,11 @@ class DLL:
             sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
         )
 
-    def get_unique_path(self, path):
+    def get_unique_path(path):
         index = 1
+        [parent, stem, suffix] = path.parent, path.stem, path.suffix
         while path.exists():
-            path = path.with_name(f"{path.stem} ({index}){path.suffix}")
+            path = parent / f"{stem} ({index}){suffix}"
             index += 1
         return path
 
