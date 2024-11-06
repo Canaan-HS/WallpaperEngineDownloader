@@ -2,8 +2,9 @@
 import os
 import sys
 import platform
-import subprocess
+import traceback
 import threading
+import subprocess
 
 # 標準庫 - 數據處理
 import re
@@ -52,8 +53,10 @@ def language(lang=None):
                 "獲取失敗": "获取失败",
                 "沒有可整合的檔案": "没有可整合的文件",
                 "下載": "下载",
+                "例外": "例外",
                 "開始下載": "开始下载",
                 "下載完成": "下载完成",
+                "例外中止": "例外中止",
                 "無效連結": "无效链接",
                 "下載失敗 請先安裝 .NET 9 執行庫": "",
                 "下載失敗 請設置正確的應用": "",
@@ -86,8 +89,10 @@ def language(lang=None):
                 "獲取失敗": "Failed to Retrieve",
                 "沒有可整合的檔案": "No Files to Integrate",
                 "下載": "Download",
+                "例外": "Exception",
                 "開始下載": "Start Download",
                 "下載完成": "Download Completed",
+                "例外中止": "Exception Aborted",
                 "無效連結": "Invalid Link",
                 "下載失敗 請先安裝 .NET 9 執行庫": "Download Failed. Please install .NET 9 runtime first",
                 "下載失敗 請設置正確的應用": "Download Failed. Please set the correct application",
@@ -208,7 +213,7 @@ class DLL:
             sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
         )
 
-    def get_unique_path(path):
+    def get_unique_path(self, path):
         index = 1
         [parent, stem, suffix] = path.parent, path.stem, path.suffix
         while path.exists():
@@ -509,37 +514,42 @@ class GUI(DLL, tk.Tk):
         self.console.config(state="disabled")
 
     def download(self, oriLink, appId, pubId, searchText, Username, Password):
-        process_name = self.illegal_regular.sub("-", searchText if searchText else pubId).strip()
+        try:
+            process_name = self.illegal_regular.sub("-", searchText if searchText else pubId).strip()
 
-        self.console_update(f"\n> {self.transl('開始下載')} [{process_name}]\n", "important")
+            self.console_update(f"\n> {self.transl('開始下載')} [{process_name}]\n", "important")
 
-        if not self.save_path.exists():
-            self.save_path.mkdir(parents=True, exist_ok=True)
+            if not self.save_path.exists():
+                self.save_path.mkdir(parents=True, exist_ok=True)
 
-        dir_option = f"-dir \"{self.get_unique_path(self.save_path / process_name)}\""
-        command = f"{self.depot_exe} -app {appId} -pubfile {pubId} -verify-all -username {Username} -password {Password} {dir_option}"
+            dir_option = f"-dir \"{self.get_unique_path(self.save_path / process_name)}\""
+            command = f"{self.depot_exe} -app {appId} -pubfile {pubId} -verify-all -username {Username} -password {Password} {dir_option}"
 
-        end_message = self.transl('下載完成')
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,creationflags=subprocess.CREATE_NO_WINDOW)
+            end_message = self.transl('下載完成')
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,creationflags=subprocess.CREATE_NO_WINDOW)
 
-        for line in process.stdout:
-            self.console_update(line)
-            state = self.console_analysis(line)
+            for line in process.stdout:
+                self.console_update(line)
+                state = self.console_analysis(line)
 
-            # 錯誤時更改消息
-            if isinstance(state, list):
-                end_message = state[0]
-                process.terminate()
-                break
+                # 錯誤時更改消息
+                if isinstance(state, list):
+                    end_message = state[0]
+                    process.terminate()
+                    break
 
-            elif state: end_message = state
+                elif state: end_message = state
 
-        process.stdout.close()
-        process.wait()
+            process.stdout.close()
+            process.wait()
 
-        self.console_update(f"> [{process_name}] {end_message} \n", "important")
-        if self.token: self.complete_record.add(f"{appId}-{pubId}")
-        else: self.error_cache.add(oriLink)
+            self.console_update(f"> [{process_name}] {end_message}\n", "important")
+            if self.token: self.complete_record.add(f"{appId}-{pubId}")
+            else: self.error_cache.add(oriLink)
+        except:
+            self.error_cache.add(oriLink)
+            self.console_update(f"> {self.transl('例外中止')}\n", "important")
+            messagebox.showerror(self.transl('例外'), traceback.format_exc(), parent=self)
 
     def download_trigger(self):
         self.status_switch("disabled")
