@@ -26,111 +26,6 @@ from tkinter import ttk, scrolledtext, filedialog, messagebox
 # 第三方庫
 import pyperclip
 
-def language(lang=None):
-        Word = {
-            'zh_TW': {"": ""},
-            'zh_CN': {
-                "創意工坊下載器": "创意工坊下载器",
-                "選擇配置": "选择配置",
-                "修改路徑": "修改路径",
-                "檔案整合": "文件整合",
-                "帳號": "账号",
-                "應用": "应用",
-                "已複製": "",
-                "選擇資料夾": "选择文件夹",
-                "控制台輸出": "控制台输出",
-                "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "输入创意工坊项目（每行一个，支持链接和文件ID）",
-                "選擇整合的類型": "选择整合的类型",
-                "檔案類型": "文件类型",
-                "檔案數量": "文件数量",
-                "操作提示": "操作提示",
-                "請選擇要整合的類型": "请选择要整合的类型",
-                "操作確認": "操作确认",
-                "整合以下類型的檔案": "整合以下类型的文件",
-                "操作完成": "操作完成",
-                "檔案整合完成": "文件整合完成",
-                "整合輸出": "整合输出",
-                "獲取失敗": "获取失败",
-                "沒有可整合的檔案": "没有可整合的文件",
-                "下載": "下载",
-                "例外": "例外",
-                "開始下載": "开始下载",
-                "下載完成": "下载完成",
-                "例外中止": "例外中止",
-                "無效連結": "无效链接",
-                "下載失敗 請先安裝 .NET 9 執行庫": "",
-                "下載失敗 請設置正確的應用": "",
-                "下載失敗 請嘗試變更帳號後在下載": "",
-                "找不到": "找不到",
-                "依賴錯誤": "依赖错误",
-                "讀取配置文件時出錯": "读取配置文件时出错"
-            },
-            'en_US': {
-                "創意工坊下載器": "Workshop Downloader",
-                "選擇配置": "Select",
-                "修改路徑": "Modify Path",
-                "檔案整合": "File Integration",
-                "帳號": "Acc",
-                "應用": "App",
-                "已複製": "Copied",
-                "選擇資料夾": "Select Folder",
-                "控制台輸出": "Console Output",
-                "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "Enter Workshop Project (one per line, supports link and file ID)",
-                "選擇整合的類型": "Select Type of Integration",
-                "檔案類型": "File Type",
-                "檔案數量": "File Count",
-                "操作提示": "Operation Tips",
-                "請選擇要整合的類型": "Please select the type of integration",
-                "操作確認": "Operation Confirmation",
-                "整合以下類型的檔案": "Integrate the following types of files",
-                "操作完成": "Operation Completed",
-                "檔案整合完成": "File Integration Completed",
-                "整合輸出": "Integration Output",
-                "獲取失敗": "Failed to Retrieve",
-                "沒有可整合的檔案": "No Files to Integrate",
-                "下載": "Download",
-                "例外": "Exception",
-                "開始下載": "Start Download",
-                "下載完成": "Download Completed",
-                "例外中止": "Exception Aborted",
-                "無效連結": "Invalid Link",
-                "下載失敗 請先安裝 .NET 9 執行庫": "Download Failed. Please install .NET 9 runtime first",
-                "下載失敗 請設置正確的應用": "Download Failed. Please set the correct application",
-                "下載失敗 請嘗試變更帳號後在下載": "Download Failed. Please try changing the account and retry",
-                "找不到": "Not Found",
-                "依賴錯誤": "Dependency Error",
-                "讀取配置文件時出錯": "Error Reading Configuration File"
-            }
-        }
-
-        Locale = {
-            '950': 'zh_TW',
-            '936': 'zh_CN',
-            '1252': 'en_US'
-        }
-
-        # 總是有人系統怪怪的
-        if lang is None:
-            sys = platform.system()
-
-            if sys == 'Windows':
-                buffer = ctypes.create_unicode_buffer(85)
-                ctypes.windll.kernel32.GetUserDefaultLocaleName(buffer, len(buffer))
-                lang = buffer.value.replace('-', '_')
-            elif sys == 'Linux' or sys == 'Darwin':
-                lang = os.environ.get("LANG").split('.')[0]
-            else:
-                locale.setlocale(locale.LC_ALL, '')
-                lang = locale.getlocale()[1].replace('cp', '')
-
-        if lang.isdigit():
-            lang = Locale.get(lang, 'en_US')
-            ML = Word.get(lang)
-        else:
-            ML = Word.get(lang, 'en_US') 
-
-        return lambda text: ML.get(text, text)
-
 class DLL:
     def __init__(self):
         # 打包的 exe 執行路徑 與 原碼執行要抓不同路徑
@@ -151,13 +46,6 @@ class DLL:
         self.save_path = self.current_dir / self.output_folder
         self.icon_ico = self.current_dir / "Icon/DepotDownloader.ico"
         self.depot_exe = self.current_dir / "DepotdownloaderMod/DepotDownloadermod.exe"
-
-        # 除重用
-        self.capture_record = set()
-        self.complete_record = set()
-
-        # 緩存任務數據 用於未完成恢復
-        self.task_cache = OrderedDict()
 
         if not self.depot_exe.exists():
             messagebox.showerror(self.transl('依賴錯誤'), f"{self.transl('找不到')} {self.depot_exe}")
@@ -180,97 +68,16 @@ class DLL:
             except Exception as e:
                 print(f"{self.transl('讀取配置文件時出錯')}: {e}") # 除錯用
 
-        self.account_dict = {
-            key: {**value, key: base64.b64decode(value[key]).decode('utf-8')}
-            for key, value in {
-                'ruiiixx': {'ruiiixx': 'UzY3R0JUQjgzRDNZ'},
-                'premexilmenledgconis': {'premexilmenledgconis': 'M3BYYkhaSmxEYg=='},
-                'vAbuDy': {'vAbuDy': 'Qm9vbHE4dmlw'},
-                'adgjl1182': {'adgjl1182': 'UUVUVU85OTk5OQ=='},
-                'gobjj16182':{'gobjj16182': 'enVvYmlhbzgyMjI='},
-                '787109690': {'787109690': 'SHVjVXhZTVFpZzE1'}
-            }.items()
-        }
-
-        self.acc_list = list(self.account_dict.keys())
-        self.appid_list = list(self.appid_dict.keys())
-
-        self.illegal_regular = re.compile(r'[<>:"/\\|?*\x00-\x1F]')
-        self.parse_regular = re.compile(r'(\d{8,10})(?:&searchtext=(.*))?')
-        self.link_regular = re.compile(r'^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$')
-
-        self.token = True
-        self.error_rule = {
-            "Microsoft.NETCore.App": self.transl("下載失敗 請先安裝 .NET 9 執行庫"),
-            "Unable to locate manifest ID for published file": self.transl("下載失敗 請設置正確的應用"),
-            "TryAnotherCM": [self.transl("下載失敗 請嘗試變更帳號後在下載")] # 以列表返回, 代表需要強制中止
-        }
-
-    def get_save_data(self):
-        file_data = defaultdict(list)
-        for file in self.save_path.rglob("*"):
-            if file.is_file() and self.integrate_folder not in file.parts:
-                file_data[file.suffix].append(file)
-        return dict( # 數量多到少排序, 相同數量按字母排序, 組合 key 為副檔名, value 為檔案列表 回傳字典
-            sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
-        )
-
-    def get_unique_path(self, path):
-        index = 1
-        [parent, stem, suffix] = path.parent, path.stem, path.suffix
-        while path.exists():
-            path = parent / f"{stem} ({index}){suffix}"
-            index += 1
-        return path
-
-    def build_trie(self, data_list):
-        trie = {}
-        for appid in data_list:
-            current = trie
-            for char in appid.lower():
-                if char not in current:
-                    current[char] = {}
-                current = current[char]
-            current["$"] = appid
-        return trie
-
-    def search_trie(self, trie, prefix):
-        current = trie
-        for char in prefix:
-            if char not in current:
-                return iter([])
-            current = current[char]
-
-        def match_generator():
-            stack = [current]
-            while stack:
-                node = stack.pop()
-                if "$" in node:
-                    yield node["$"]
-                for char, subtree in node.items():
-                    if char != "$":
-                        stack.append(subtree)
-
-        return match_generator()
-
-    def console_analysis(self, text):
-        for Key, message in self.error_rule.items():
-            if Key in text:
-                self.token = False
-                return message
-
-class GUI(DLL, tk.Tk):
+class GUI:
     def __init__(self):
-        DLL.__init__(self)
-        tk.Tk.__init__(self, className=f"Wallpaper Engine {self.transl('創意工坊下載器')}")
-
+        self.title(f"Wallpaper Engine {self.transl('創意工坊下載器')}")
         self.geometry("600x650")
         self.minsize(550, 600)
 
         try:
             self.iconbitmap(self.icon_ico)
         except: pass
-        
+
         self.primary_color = "#383d48"
         self.consolo_color = "#272727"
         self.secondary_color = "#afd4ff"
@@ -345,7 +152,44 @@ class GUI(DLL, tk.Tk):
         self.run_button = tk.Button(self.operate_frame, text=self.transl('下載'), font=("Microsoft JhengHei", 14, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.download_trigger)
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
 
-    """ ----- UI 函數處理 ----- """
+class Backend:
+    def __init__(self):
+        self.account_dict = {
+            key: {**value, key: base64.b64decode(value[key]).decode('utf-8')}
+            for key, value in {
+                'ruiiixx': {'ruiiixx': 'UzY3R0JUQjgzRDNZ'},
+                'premexilmenledgconis': {'premexilmenledgconis': 'M3BYYkhaSmxEYg=='},
+                'vAbuDy': {'vAbuDy': 'Qm9vbHE4dmlw'},
+                'adgjl1182': {'adgjl1182': 'UUVUVU85OTk5OQ=='},
+                'gobjj16182':{'gobjj16182': 'enVvYmlhbzgyMjI='},
+                '787109690': {'787109690': 'SHVjVXhZTVFpZzE1'}
+            }.items()
+        }
+
+        # 除重用
+        self.capture_record = set()
+        self.complete_record = set()
+
+        # 緩存任務數據 用於未完成恢復
+        self.task_cache = OrderedDict()
+
+        self.acc_list = list(self.account_dict.keys())
+        self.appid_list = list(self.appid_dict.keys())
+
+        self.illegal_regular = re.compile(r'[<>:"/\\|?*\x00-\x1F]')
+        self.parse_regular = re.compile(r'(\d{8,10})(?:&searchtext=(.*))?')
+        self.link_regular = re.compile(r'^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$')
+
+        self.token = True
+        self.error_rule = {
+            "Microsoft.NETCore.App": self.transl("下載失敗 請先安裝 .NET 9 執行庫"),
+            "Unable to locate manifest ID for published file": self.transl("下載失敗 請設置正確的應用"),
+            "TryAnotherCM": [self.transl("下載失敗 請嘗試變更帳號後在下載")] # 以列表返回, 代表需要強制中止
+        }
+
+    def Closure(self):
+        subprocess.Popen("taskkill /f /im DepotDownloadermod.exe", creationflags=subprocess.CREATE_NO_WINDOW)
+        os._exit(0)
 
     def save_settings(self):
         path = filedialog.askdirectory(title=self.transl('選擇資料夾'))
@@ -355,12 +199,57 @@ class GUI(DLL, tk.Tk):
             self.save_path_label.config(text=self.save_path)
             self.config_cfg.write_text(str(self.save_path), encoding="utf-8")
 
+    def copy_save_path(self, event):
+        pyperclip.copy(self.save_path)
+        popup = tk.Toplevel(self)
+        popup.overrideredirect(True)
+        popup.attributes("-topmost", True)
+
+        label = tk.Label(popup, text=self.transl('已複製'), font=("Microsoft JhengHei", 10), bg="#333333", fg="#FFFFFF", padx=5, pady=5)
+        label.pack()
+
+        popup.update_idletasks() # 更新窗口以計算 label 的大小
+        popup.geometry(f"{label.winfo_reqwidth()}x{label.winfo_reqheight()}+{event.x_root - 25}+{event.y_root - 35}")
+        popup.grab_set()
+        popup.after(800, popup.destroy)
+
     def server_search(self):
-        appid_trie = self.build_trie(self.appid_list) # 編譯前綴樹
+        # 編譯前綴樹函數
+        def build_trie(data_list):
+            trie = {}
+            for appid in data_list:
+                current = trie
+                for char in appid.lower():
+                    if char not in current:
+                        current[char] = {}
+                    current = current[char]
+                current["$"] = appid
+            return trie
+        # 搜尋前綴樹函數
+        def search_trie(trie, prefix):
+            current = trie
+            for char in prefix:
+                if char not in current:
+                    return iter([])
+                current = current[char]
+
+            def match_generator():
+                stack = [current]
+                while stack:
+                    node = stack.pop()
+                    if "$" in node:
+                        yield node["$"]
+                    for char, subtree in node.items():
+                        if char != "$":
+                            stack.append(subtree)
+            return match_generator()
+
+        # 編譯前綴樹
+        appid_trie = build_trie(self.appid_list)
 
         def on_input(event):
             prefix = event.widget.get().lower()
-            matches = self.search_trie(appid_trie, prefix) if prefix else self.appid_list
+            matches = search_trie(appid_trie, prefix) if prefix else self.appid_list
             self.serverid_menu.configure(values=list(matches))
 
         def on_click(event):
@@ -378,19 +267,15 @@ class GUI(DLL, tk.Tk):
         self.serverid_menu.bind("<Button-1>", on_click)
         self.serverid_menu.bind("<<ComboboxSelected>>", on_select)
 
-    def copy_save_path(self, event):
-        pyperclip.copy(self.save_path)
-        popup = tk.Toplevel(self)
-        popup.overrideredirect(True)
-        popup.attributes("-topmost", True)
-
-        label = tk.Label(popup, text=self.transl('已複製'), font=("Microsoft JhengHei", 10), bg="#333333", fg="#FFFFFF", padx=5, pady=5)
-        label.pack()
-
-        popup.update_idletasks() # 更新窗口以計算 label 的大小
-        popup.geometry(f"{label.winfo_reqwidth()}x{label.winfo_reqheight()}+{event.x_root - 25}+{event.y_root - 35}")
-        popup.grab_set()
-        popup.after(800, popup.destroy)
+    """ ====== 檔案整合區塊 ====== """
+    def get_save_data(self):
+        file_data = defaultdict(list)
+        for file in self.save_path.rglob("*"):
+            if file.is_file() and self.integrate_folder not in file.parts:
+                file_data[file.suffix].append(file)
+        return dict( # 數量多到少排序, 相同數量按字母排序, 組合 key 為副檔名, value 為檔案列表 回傳字典
+            sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
+        )
 
     def file_merge(self):
         data_table = self.get_save_data()
@@ -474,39 +359,22 @@ class GUI(DLL, tk.Tk):
             print_button.pack(pady=(5, 15))
         else:
             messagebox.showwarning(title=self.transl('獲取失敗'), message=self.transl('沒有可整合的檔案'), parent=self)
+    """ ====== 檔案整合區塊 ====== """
 
-    def listen_clipboard(self):
-        while True:
-            clipboard = pyperclip.paste()
+    """ ====== 下載處理區塊 ====== """
+    def console_analysis(self, text):
+        for Key, message in self.error_rule.items():
+            if Key in text:
+                self.token = False
+                return message
 
-            if self.link_regular.match(clipboard) and clipboard not in self.capture_record:
-                self.capture_record.add(clipboard)
-                self.input_text.insert("end", f"{clipboard}\n")
-                self.input_text.yview("end")
-
-            time.sleep(0.5)
-
-    def status_switch(self, state):
-        if state == "disabled":
-            self.username_menu.config(state="disabled", cursor="no")
-            self.serverid_menu.config(state="disabled", cursor="no")
-            self.path_button.config(state="disabled", cursor="no")
-            self.merge_button.config(state="disabled", cursor="no")
-            self.run_button.config(state="disabled", cursor="no")
-        else:
-            self.username_menu.config(state="readonly", cursor="hand2")
-            self.serverid_menu.config(state="normal", cursor="hand2")
-            self.path_button.config(state="normal", cursor="hand2")
-            self.merge_button.config(state="normal", cursor="hand2")
-            self.run_button.config(state="normal", cursor="hand2")
-
-            pyperclip.copy("") # 重設剪貼簿 避免 record 清除後再次擷取
-
-            for task in self.task_cache.values():
-                self.input_text.insert("end", f"{task}\n")
-
-            self.token = True # 重設令牌
-            self.capture_record.clear() # 重設擷取紀錄
+    def get_unique_path(self, path):
+        index = 1
+        [parent, stem, suffix] = path.parent, path.stem, path.suffix
+        while path.exists():
+            path = parent / f"{stem} ({index}){suffix}"
+            index += 1
+        return path
 
     def console_update(self, message, *args):
         self.console.config(state="normal")
@@ -553,6 +421,41 @@ class GUI(DLL, tk.Tk):
         except:
             self.console_update(f"> {self.transl('例外中止')}\n", "important")
             messagebox.showerror(self.transl('例外'), traceback.format_exc(), parent=self)
+    """ ====== 下載處理區塊 ====== """
+
+    """ ====== 觸發與UI處理區塊 ====== """
+    def listen_clipboard(self):
+        while True:
+            clipboard = pyperclip.paste()
+
+            if self.link_regular.match(clipboard) and clipboard not in self.capture_record:
+                self.capture_record.add(clipboard)
+                self.input_text.insert("end", f"{clipboard}\n")
+                self.input_text.yview("end")
+
+            time.sleep(0.5)
+
+    def status_switch(self, state):
+        if state == "disabled":
+            self.username_menu.config(state="disabled", cursor="no")
+            self.serverid_menu.config(state="disabled", cursor="no")
+            self.path_button.config(state="disabled", cursor="no")
+            self.merge_button.config(state="disabled", cursor="no")
+            self.run_button.config(state="disabled", cursor="no")
+        else:
+            self.username_menu.config(state="readonly", cursor="hand2")
+            self.serverid_menu.config(state="normal", cursor="hand2")
+            self.path_button.config(state="normal", cursor="hand2")
+            self.merge_button.config(state="normal", cursor="hand2")
+            self.run_button.config(state="normal", cursor="hand2")
+
+            pyperclip.copy("") # 重設剪貼簿 避免 record 清除後再次擷取
+
+            for task in self.task_cache.values():
+                self.input_text.insert("end", f"{task}\n")
+
+            self.token = True # 重設令牌
+            self.capture_record.clear() # 重設擷取紀錄
 
     def download_trigger(self):
         def trigger():
@@ -589,14 +492,120 @@ class GUI(DLL, tk.Tk):
                     yield unquote(lines[0]).strip()
 
         threading.Thread(target=trigger).start()
+    """ ====== 觸發與UI處理區塊 ====== """
 
-    def Main(self):
-        def Closure():
-            subprocess.Popen("taskkill /f /im DepotDownloadermod.exe", creationflags=subprocess.CREATE_NO_WINDOW)
-            os._exit(0)
+def language(lang=None):
+        Word = {
+            'zh_TW': {"": ""},
+            'zh_CN': {
+                "創意工坊下載器": "创意工坊下载器",
+                "選擇配置": "选择配置",
+                "修改路徑": "修改路径",
+                "檔案整合": "文件整合",
+                "帳號": "账号",
+                "應用": "应用",
+                "已複製": "",
+                "選擇資料夾": "选择文件夹",
+                "控制台輸出": "控制台输出",
+                "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "输入创意工坊项目（每行一个，支持链接和文件ID）",
+                "選擇整合的類型": "选择整合的类型",
+                "檔案類型": "文件类型",
+                "檔案數量": "文件数量",
+                "操作提示": "操作提示",
+                "請選擇要整合的類型": "请选择要整合的类型",
+                "操作確認": "操作确认",
+                "整合以下類型的檔案": "整合以下类型的文件",
+                "操作完成": "操作完成",
+                "檔案整合完成": "文件整合完成",
+                "整合輸出": "整合输出",
+                "獲取失敗": "获取失败",
+                "沒有可整合的檔案": "没有可整合的文件",
+                "下載": "下载",
+                "例外": "例外",
+                "開始下載": "开始下载",
+                "下載完成": "下载完成",
+                "例外中止": "例外中止",
+                "無效連結": "无效链接",
+                "下載失敗 請先安裝 .NET 9 執行庫": "",
+                "下載失敗 請設置正確的應用": "",
+                "下載失敗 請嘗試變更帳號後在下載": "",
+                "找不到": "找不到",
+                "依賴錯誤": "依赖错误",
+                "讀取配置文件時出錯": "读取配置文件时出错"
+            },
+            'en_US': {
+                "創意工坊下載器": "Workshop Downloader",
+                "選擇配置": "Select",
+                "修改路徑": "Modify Path",
+                "檔案整合": "File Integration",
+                "帳號": "Acc",
+                "應用": "App",
+                "已複製": "Copied",
+                "選擇資料夾": "Select Folder",
+                "控制台輸出": "Console Output",
+                "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "Enter Workshop Project (one per line, supports link and file ID)",
+                "選擇整合的類型": "Select Type of Integration",
+                "檔案類型": "File Type",
+                "檔案數量": "File Count",
+                "操作提示": "Operation Tips",
+                "請選擇要整合的類型": "Please select the type of integration",
+                "操作確認": "Operation Confirmation",
+                "整合以下類型的檔案": "Integrate the following types of files",
+                "操作完成": "Operation Completed",
+                "檔案整合完成": "File Integration Completed",
+                "整合輸出": "Integration Output",
+                "獲取失敗": "Failed to Retrieve",
+                "沒有可整合的檔案": "No Files to Integrate",
+                "下載": "Download",
+                "例外": "Exception",
+                "開始下載": "Start Download",
+                "下載完成": "Download Completed",
+                "例外中止": "Exception Aborted",
+                "無效連結": "Invalid Link",
+                "下載失敗 請先安裝 .NET 9 執行庫": "Download Failed. Please install .NET 9 runtime first",
+                "下載失敗 請設置正確的應用": "Download Failed. Please set the correct application",
+                "下載失敗 請嘗試變更帳號後在下載": "Download Failed. Please try changing the account and retry",
+                "找不到": "Not Found",
+                "依賴錯誤": "Dependency Error",
+                "讀取配置文件時出錯": "Error Reading Configuration File"
+            }
+        }
 
-        self.protocol("WM_DELETE_WINDOW", Closure)
+        Locale = {
+            '950': 'zh_TW', '936': 'zh_CN', '1252': 'en_US'
+        }
+
+        # 總是有人系統怪怪的
+        if lang is None:
+            sys = platform.system()
+
+            if sys == 'Windows':
+                buffer = ctypes.create_unicode_buffer(85)
+                ctypes.windll.kernel32.GetUserDefaultLocaleName(buffer, len(buffer))
+                lang = buffer.value.replace('-', '_')
+            elif sys == 'Linux' or sys == 'Darwin':
+                lang = os.environ.get("LANG").split('.')[0]
+            else:
+                locale.setlocale(locale.LC_ALL, '')
+                lang = locale.getlocale()[1].replace('cp', '')
+
+        if lang.isdigit():
+            lang = Locale.get(lang, 'en_US')
+            ML = Word.get(lang)
+        else:
+            ML = Word.get(lang, 'en_US') 
+
+        return lambda text: ML.get(text, text)
+
+class Controller(DLL, tk.Tk, Backend, GUI):
+    def __init__(self):
+        DLL.__init__(self)
+        tk.Tk.__init__(self)
+        Backend.__init__(self)
+        GUI.__init__(self)
+
+        self.protocol("WM_DELETE_WINDOW", self.Closure)
         self.mainloop()
 
 if __name__ == "__main__":
-    GUI().Main()
+    Controller()
