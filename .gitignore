@@ -2,6 +2,7 @@
 *.cmd
 *.txt
 *.spec
+Config.json
 
 PackSpace
 DepotDownloaderMod
