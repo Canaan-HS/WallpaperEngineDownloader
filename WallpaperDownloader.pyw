@@ -74,15 +74,20 @@ class DLL:
 
     def save_config(self, data):
         old_data = {}
+        cache_data = ""
+
         if self.config_cfg.exists():
             old_data = json.loads(self.config_cfg.read_text(encoding="utf-8"))
-        old_data.update(data)
+            cache_data = old_data.copy()
 
+        old_data.update(data)
         self.final_config = {key: old_data.get(key, "") for key in self.config_template}
-        self.config_cfg.write_text(
-            json.dumps(old_data, indent=4, separators=(',',':')),
-            encoding="utf-8"
-        )
+
+        if cache_data != self.final_config:
+            self.config_cfg.write_text(
+                json.dumps(old_data, indent=4, separators=(',',':')),
+                encoding="utf-8"
+            )
 
 class GUI:
     def __init__(self):
@@ -135,15 +140,14 @@ class GUI:
         username_label.grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(10, 10))
 
         self.username = tk.StringVar(self)
-        self.username.set(f"{self.transl('帳號')}->{self.config_data.get('Account', self.acc_list[0])}")
+        self.username.set(f"{self.transl('帳號')}->{self.config_data.get('Account', self.acc_list[0])}") # 下面取用數據時, 會進行判斷是否存在, 這邊直接填充
         self.username_menu = ttk.Combobox(self.select_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), width=15, cursor="hand2", justify="center", state="readonly", values=self.acc_list)
         self.username_menu.grid(row=0, column=1, sticky="w", padx=(0, 20))
 
         self.serverid = tk.StringVar(self)
         self.serverid.set(f"{self.transl('應用')}->{self.config_data.get('App', self.app_list[0])}")
-        self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10),  cursor="hand2", justify="center")
+        self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10),  cursor="hand2", justify="center", values=self.app_list)
         self.serverid_menu.grid(row=0, column=2, sticky="we")
-        self.serverid_menu.configure(values=self.app_list)
         self.server_search()
 
         self.path_button = tk.Button(self.select_frame, text=self.transl('修改路徑'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.save_settings)
@@ -181,10 +185,8 @@ class Backend:
             key: {**value, key: base64.b64decode(value[key]).decode('utf-8')}
             for key, value in {
                 'ruiiixx': {'ruiiixx': 'UzY3R0JUQjgzRDNZ'},
-                'premexilmenledgconis': {'premexilmenledgconis': 'M3BYYkhaSmxEYg=='},
                 'vAbuDy': {'vAbuDy': 'Qm9vbHE4dmlw'},
                 'adgjl1182': {'adgjl1182': 'UUVUVU85OTk5OQ=='},
-                'gobjj16182':{'gobjj16182': 'enVvYmlhbzgyMjI='},
                 '787109690': {'787109690': 'SHVjVXhZTVFpZzE1'}
             }.items()
         }
@@ -478,6 +480,7 @@ class Backend:
             clipboard = pyperclip.paste()
 
             if self.link_regular.match(clipboard) and clipboard not in self.capture_record:
+                clipboard = unquote(clipboard) # 沒必要, 方便觀看用
                 self.capture_record.add(clipboard)
                 self.input_text.insert("end", f"{clipboard}\n")
                 self.input_text.yview("end")
