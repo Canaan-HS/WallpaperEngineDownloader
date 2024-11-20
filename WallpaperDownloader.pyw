@@ -39,7 +39,8 @@ class DLL:
         self.transl = language()
         self.account = "ruiiixx"
         self.appid_dict = {"Wallpaper Engine": "431960"}
-        self.config_template = ["Sava_Path", "Account", "Application", "window_x", "window_y", "window_width", "window_height"]
+        # 保存數據的模板, 目前取索引值的方式, 不能隨意變動順序, 只能變動名稱
+        self.template = ["Sava_Path", "Account", "Application", "window_x", "window_y", "window_width", "window_height"]
 
         # 依賴載入路徑
         self.id_json = self.current_dir / "APPID/ID.json"
@@ -64,8 +65,8 @@ class DLL:
             try:
                 config_dict = json.loads(self.config_cfg.read_text(encoding="utf-8"))
 
-                self.config_data = {key: config_dict.get(key, "") for key in self.config_template} # 解構數據
-                record_path = Path(self.config_data.get("Sava_Path"))
+                self.config_data = {key: config_dict.get(key, "") for key in self.template} # 解構數據
+                record_path = Path(self.config_data.get(self.template[0]))
 
                 if record_path.is_absolute():
                     self.save_path = record_path if record_path.name == self.output_folder else record_path / self.output_folder
@@ -81,7 +82,7 @@ class DLL:
             cache_data = old_data.copy()
 
         old_data.update(data)
-        self.final_config = {key: old_data.get(key, "") for key in self.config_template}
+        self.final_config = {key: old_data.get(key, "") for key in self.template}
 
         if cache_data != self.final_config:
             self.config_cfg.write_text(
@@ -93,10 +94,10 @@ class GUI:
     def __init__(self):
         self.title(f"Wallpaper Engine {self.transl('創意工坊下載器')}")
 
-        x = self.config_data.get('window_x', 200)
-        y = self.config_data.get('window_y', 200)
-        width = self.config_data.get('window_width', 550)
-        height = self.config_data.get('window_height', 600)
+        x = self.config_data.get(self.template[3], 200)
+        y = self.config_data.get(self.template[4], 200)
+        width = self.config_data.get(self.template[5], 550)
+        height = self.config_data.get(self.template[6], 600)
 
         self.geometry(f"{width}x{height}+{x}+{y}")
         self.minsize(550, 600)
@@ -140,12 +141,12 @@ class GUI:
         username_label.grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(10, 10))
 
         self.username = tk.StringVar(self)
-        self.username.set(f"{self.transl('帳號')}->{self.config_data.get('Account', self.acc_list[0])}") # 下面取用數據時, 會進行判斷是否存在, 這邊直接填充
+        self.username.set(f"{self.transl('帳號')}->{self.config_data.get(self.template[1], self.acc_list[0])}") # 下面取用數據時, 會進行判斷是否存在, 這邊直接填充
         self.username_menu = ttk.Combobox(self.select_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), width=15, cursor="hand2", justify="center", state="readonly", values=self.acc_list)
         self.username_menu.grid(row=0, column=1, sticky="w", padx=(0, 20))
 
         self.serverid = tk.StringVar(self)
-        self.serverid.set(f"{self.transl('應用')}->{self.config_data.get('App', self.app_list[0])}")
+        self.serverid.set(f"{self.transl('應用')}->{self.config_data.get(self.template[2], self.app_list[0])}")
         self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10),  cursor="hand2", justify="center", values=self.app_list)
         self.serverid_menu.grid(row=0, column=2, sticky="we")
         self.server_search()
@@ -463,12 +464,12 @@ class Backend:
     """ ====== 觸發與UI處理區塊 ====== """
     def get_config(self, original=False):
         username, password = next(iter(
-            self.account_dict.get(self.username.get(), self.account_dict.get(self.account)).items()
+                self.account_dict.get(self.username.get().split("->")[-1], self.account_dict.get(self.account)).items()
             )
         )
 
         if original:
-            for app in [self.serverid.get(), self.app_list[0]]:
+            for app in [self.serverid.get().split("->")[-1], self.app_list[0]]:
                 if app in self.appid_dict:
                     return username, app
         else:
@@ -477,15 +478,14 @@ class Backend:
 
     def listen_clipboard(self):
         while True:
-            clipboard = pyperclip.paste()
+            clipboard = unquote(pyperclip.paste()) # unquote 是沒必要的, 方便觀看而已, 但會有額外性能開銷
 
             if self.link_regular.match(clipboard) and clipboard not in self.capture_record:
-                clipboard = unquote(clipboard) # 沒必要, 方便觀看用
                 self.capture_record.add(clipboard)
                 self.input_text.insert("end", f"{clipboard}\n")
                 self.input_text.yview("end")
 
-            time.sleep(0.5)
+            time.sleep(0.3)
 
     def status_switch(self, state):
         if state == "disabled":
@@ -649,7 +649,6 @@ class Controller(DLL, tk.Tk, Backend, GUI):
         GUI.__init__(self)
 
         self.protocol("WM_DELETE_WINDOW", self.Closure)
-        self.update_idletasks()
         self.mainloop()
 
 if __name__ == "__main__":
