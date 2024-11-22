@@ -4,5 +4,5 @@
 *.spec
 Config.json
 
-PackSpace
+PackSpace*
 DepotDownloaderMod
