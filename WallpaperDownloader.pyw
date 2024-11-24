@@ -1,6 +1,7 @@
 # 標準庫 - 系統 & 平台
 import os
 import sys
+import atexit
 import platform
 import traceback
 import threading
@@ -25,6 +26,8 @@ from tkinter import ttk, scrolledtext, filedialog, messagebox
 
 # 第三方庫
 import pyperclip
+
+SysPlat = platform.system()
 
 class DLL:
     def __init__(self):
@@ -226,7 +229,13 @@ class Backend:
             "window_height": self.winfo_height()
         })
 
-        subprocess.Popen("taskkill /f /im DepotDownloadermod.exe", creationflags=subprocess.CREATE_NO_WINDOW)
+        processName = "DepotDownloadermod.exe"
+
+        if SysPlat == "Windows":
+            subprocess.Popen(f"taskkill /f /im {processName}", creationflags=subprocess.CREATE_NO_WINDOW)
+        elif SysPlat in ["Linux", "Darwin"]:
+            subprocess.Popen(f"pkill -f {processName}", shell=True)
+
         os._exit(0)
 
     def save_settings(self):
@@ -621,13 +630,11 @@ def language(lang=None):
 
         # 總是有人系統怪怪的
         if lang is None:
-            sys = platform.system()
-
-            if sys == 'Windows':
+            if SysPlat == 'Windows':
                 buffer = ctypes.create_unicode_buffer(85)
                 ctypes.windll.kernel32.GetUserDefaultLocaleName(buffer, len(buffer))
                 lang = buffer.value.replace('-', '_')
-            elif sys == 'Linux' or sys == 'Darwin':
+            elif SysPlat == 'Linux' or SysPlat == 'Darwin':
                 lang = os.environ.get("LANG").split('.')[0]
             else:
                 locale.setlocale(locale.LC_ALL, '')
