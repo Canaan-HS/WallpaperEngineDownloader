@@ -43,7 +43,7 @@ class DLL:
         self.account = "ruiiixx"
         self.appid_dict = {"Wallpaper Engine": "431960"}
         # 保存數據的模板, 目前取索引值的方式, 不能隨意變動順序, 只能變動名稱
-        self.template = ["Sava_Path", "Account", "Application", "window_x", "window_y", "window_width", "window_height"]
+        self.template = ["Sava_Path", "Account", "Application", "window_x", "window_y", "window_width", "window_height", "Tasks"]
 
         # 依賴載入路徑
         self.id_json = self.current_dir / "APPID/ID.json"
@@ -68,8 +68,8 @@ class DLL:
             try:
                 config_dict = json.loads(self.config_cfg.read_text(encoding="utf-8"))
 
-                self.config_data = {key: config_dict.get(key, "") for key in self.template} # 解構數據
-                record_path = Path(self.config_data.get(self.template[0]))
+                self.config_data = {key: config_dict[key] for key in self.template if key in config_dict} # 解構數據
+                record_path = Path(self.config_data.get(self.template[0], ""))
 
                 if record_path.is_absolute():
                     self.save_path = record_path if record_path.name == self.output_folder else record_path / self.output_folder
@@ -85,7 +85,7 @@ class DLL:
             cache_data = old_data.copy()
 
         old_data.update(data)
-        self.final_config = {key: old_data.get(key, "") for key in self.template}
+        self.final_config = {key: old_data.get(key, "") for key in self.template if key in old_data}  
 
         if cache_data != self.final_config:
             self.config_cfg.write_text(
@@ -180,6 +180,9 @@ class GUI:
         self.input_text.grid(row=1, column=0, sticky="nsew")
         threading.Thread(target=self.listen_clipboard).start()
 
+        for task in self.config_data.get(self.template[7], []): # 添加舊任務數據
+            self.input_text.insert("end", f"{task}\n")
+
         self.run_button = tk.Button(self.operate_frame, text=self.transl('下載'), font=("Microsoft JhengHei", 14, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=lambda: threading.Thread(target=self.download_trigger).start())
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
 
@@ -220,13 +223,16 @@ class Backend:
 
     def Closure(self):
         username, app = self.get_config(True)
+        undone = list(set(self.task_cache.values()) | set(self.input_stream()))
+
         self.save_config({
             "Account": username,
             "Application": app,
             "window_x": self.winfo_x(),
             "window_y": self.winfo_y(),
             "window_width": self.winfo_width(),
-            "window_height": self.winfo_height()
+            "window_height": self.winfo_height(),
+            "Tasks": undone
         })
 
         processName = "DepotDownloadermod.exe"
