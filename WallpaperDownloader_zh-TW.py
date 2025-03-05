@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import time
 import base64
 import threading
@@ -25,7 +26,7 @@ class DLL:
         self.passwords = {account: base64.b64decode(self.accounts[account]).decode('utf-8') for account in self.accounts}
 
         self.folder = "Wallpaper_Output"
-        self.current_dir = Path(__file__).parent
+        self.current_dir = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).parent
 
         self.add_record_url = set()
         self.complete_record_id = set()
@@ -95,7 +96,7 @@ class GUI(DLL, tk.Tk):
         self.sername_menu = ttk.Combobox(self.top_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), cursor="hand2", justify="center", state="readonly", values=self.acclist)
         self.sername_menu.grid(row=0, column=1, sticky="ew", padx=(0, 350))
 
-        self.path_button = tk.Button(self.top_frame, text="修改路徑", font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="flat", bg=self.secondary_color, fg=self.primary_color, command=self.save_settings)
+        self.path_button = tk.Button(self.top_frame, text="修改路徑", font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="flat", bg=self.secondary_color, fg=self.text_color, command=self.save_settings)
         self.path_button.grid(row=1, column=0, sticky="w")
 
         self.save_path_label = tk.Label(self.top_frame, text=self.save_path, font=("Microsoft JhengHei", 14, "bold"), bg=self.primary_color, fg=self.text_color)
@@ -116,7 +117,7 @@ class GUI(DLL, tk.Tk):
         self.input_text.grid(row=1, column=0, sticky="nsew", pady=8)
         threading.Thread(target=self.listen_clipboard).start()
 
-        self.run_button = tk.Button(self.bottom_frame, text="下載", font=("Microsoft JhengHei", 10, "bold"), borderwidth=2, cursor="hand2", relief="flat", bg=self.secondary_color, fg=self.primary_color, command=self.download_trigger)
+        self.run_button = tk.Button(self.bottom_frame, text="下載", font=("Microsoft JhengHei", 10, "bold"), borderwidth=2, cursor="hand2", relief="flat", bg=self.secondary_color, fg=self.text_color, command=self.download_trigger)
         self.run_button.grid(row=2, column=0, sticky="ew")
 
     def listen_clipboard(self):
