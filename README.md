@@ -8,9 +8,9 @@ A simple recreation of [WallpaperEngineWorkshopDownloader](https://github.com/ou
 
 - **No Steam account required**: Directly download Workshop projects.
 - **Language adaptive**: Supports Simplified Chinese, Traditional Chinese, and English.
-- **Automatic URL parsing**:
-  - Paste the project URL (e.g., `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`), and the ID will be automatically extracted.
-  - If the URL contains `searchtext=Name`, the file will be named according to that name, otherwise, the project ID will be used.
+- **Automatic Link Capture**:
+  - Copy the project URL (e.g., `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`), and it will automatically be pasted into the input box.
+  - If the URL contains `searchtext=name`, the output file will be named after that name; otherwise, it will be named using the ID.
 - **Dynamic downloading**:
   - Once a download starts, the processed links will be removed from the input box.
   - Continuously added links will automatically join the download queue until the input box is cleared.
