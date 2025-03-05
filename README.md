@@ -1,0 +1,41 @@
+# Wallpaper Engine Workshop Downloader
+
+A simple recreation of [WallpaperEngineWorkshopDownloader](https://github.com/oureveryday/WallpaperEngineWorkshopDownloader) with a rewritten UI.
+
+[中文版本]("README_zh-TW.md")
+
+## Features
+
+- **No Steam account required**: Directly download Workshop projects.
+- **Language adaptive**: Supports Simplified Chinese, Traditional Chinese, and English.
+- **Automatic URL parsing**:
+  - Paste the project URL (e.g., `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`), and the ID will be automatically extracted.
+  - If the URL contains `searchtext=Name`, the file will be named according to that name, otherwise, the project ID will be used.
+- **Dynamic downloading**:
+  - Once a download starts, the processed links will be removed from the input box.
+  - Continuously added links will automatically join the download queue until the input box is cleared.
+
+## Dependencies
+
+- [DepotDownloaderMod](https://github.com/oureveryday/DepotDownloaderMod)
+
+## Preview
+
+![English Version](https://github.com/user-attachments/assets/cf9acb4a-f7bd-422a-a6ec-916c266b44c6)
+
+## How to Use
+
+* First, install the [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0/runtime)
+
+* Windows installation command:
+```
+winget install Microsoft.DotNet.SDK.8
+```
+
+1. Run `WallpaperDownloader.exe`
+
+2. Browse your favorite Workshop projects at <https://steamcommunity.com/app/431960/workshop/>
+
+3. Copy the URL of your selected Workshop project. For example, `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`
+
+4. Click "Download"
