@@ -28,7 +28,6 @@ def language(lang):
                 "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "输入创意工坊项目（每行一个，支持链接和文件ID）",
                 "下載": "下载",
                 "選擇資料夾": "选择文件夹",
-                "錯誤：儲存位置不存在。": "错误：存储位置不存在。",
                 "下載完成": "下载完成",
                 "無效連結": "无效链接"
             },
@@ -43,7 +42,6 @@ def language(lang):
                 "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "Enter Workshop projects (one per line, supports links and file IDs)",
                 "下載": "Download",
                 "選擇資料夾": "Select folder",
-                "錯誤：儲存位置不存在。": "Error: Storage location does not exist.",
                 "下載完成": "Download complete",
                 "無效連結": "Invalid link"
             }
@@ -209,8 +207,7 @@ class GUI(DLL, tk.Tk):
 
         self.console_update(f"----- {self.transl('開始下載')} [{process_name}] -----\n")
         if not self.save_path.exists():
-            self.console_update(f"{self.transl('錯誤：儲存位置不存在。')}\n")
-            return
+            self.save_path.mkdir(parents=True, exist_ok=True)
 
         dir_option = f"-dir \"{self.save_path / process_name}\""
         command = f"{self.depot_exe} -app 431960 -pubfile {taskId} -verify-all -username {self.username.get()} -password {self.passwords[self.username.get()]} {dir_option}"
@@ -226,7 +223,6 @@ class GUI(DLL, tk.Tk):
         
     def download_trigger(self):
         self.status_switch("disabled")
-        self.save_path.mkdir(parents=True, exist_ok=True)
 
         def lines():
             while True:
