@@ -2,7 +2,7 @@
 
 A simple recreation of [WallpaperEngineWorkshopDownloader](https://github.com/oureveryday/WallpaperEngineWorkshopDownloader) with a rewritten UI.
 
-[中文版本]("README_zh-TW.md")
+[中文版本](README_zh-TW.md)
 
 ## Features
 
@@ -21,7 +21,7 @@ A simple recreation of [WallpaperEngineWorkshopDownloader](https://github.com/ou
 
 ## Preview
 
-![English Version](https://github.com/user-attachments/assets/cf9acb4a-f7bd-422a-a6ec-916c266b44c6)
+![English Version](https://github.com/user-attachments/assets/b8f5d777-c578-4778-9200-5cd80b17961f)
 
 ## How to Use
 
