@@ -17,6 +17,11 @@
 
 - [DepotDownloaderMod](https://github.com/oureveryday/DepotDownloaderMod)
 
+## 預覽
+
+![中文版](https://github.com/user-attachments/assets/cf9acb4a-f7bd-422a-a6ec-916c266b44c6)
+
+
 ## 使用方法  
 
  * 請先安裝 [.NET 8.0 執行庫](https://dotnet.microsoft.com/download/dotnet/8.0/runtime)
