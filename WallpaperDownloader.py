@@ -110,7 +110,7 @@ class DLL:
         self.complete_record_id = set()
 
         self.illegal_regular = re.compile(r'[<>:"/\\|?*\x00-\x1F]')
-        self.parse_regular = re.compile(r'id=(\d{8,10})(?:&searchtext=(.*))?')
+        self.parse_regular = re.compile(r'(\d{8,10})(?:&searchtext=(.*))?')
         self.link_regular = re.compile(r'^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$')
         
         self.accounts = {
@@ -358,7 +358,7 @@ class GUI(DLL, tk.Tk):
         def trigger():
             for link in lines():
                 if link:
-                    match = self.parse_regular.search(link)
+                    match = self.parse_regular.match(link)
                     if match:
                         self.add_record_url.add(link)
                         if match.group(1) not in self.complete_record_id:
