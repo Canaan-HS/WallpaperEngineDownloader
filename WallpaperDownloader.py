@@ -11,6 +11,7 @@ import tkinter as tk
 from tkinter import ttk
 from pathlib import Path
 from urllib.parse import unquote
+from collections import defaultdict
 from tkinter import scrolledtext, filedialog, messagebox
 
 import pyperclip
@@ -25,26 +26,32 @@ def language(lang):
                 "創意工坊下載器": "创意工坊下载器",
                 "選擇帳號": "选择账号",
                 "修改路徑": "修改路径",
+                "檔案整合": "文件整合",
                 "控制台輸出": "控制台输出",
                 "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "输入创意工坊项目（每行一个，支持链接和文件ID）",
                 "下載": "下载",
                 "選擇資料夾": "选择文件夹",
+                "獲取失敗": "获取失败",
+                "沒有可整合的檔案": "没有可整合的文件",
                 "下載完成": "下载完成",
                 "無效連結": "无效链接"
             },
             '1252': {
-                "依賴錯誤": "Dependency error",
-                "找不到": "Not found",
-                "讀取配置文件時出錯": "Error reading configuration file",
+                "依賴錯誤": "Dependency Error",
+                "找不到": "Not Found",
+                "讀取配置文件時出錯": "Error Reading Configuration File",
                 "創意工坊下載器": "Workshop Downloader",
-                "選擇帳號": "Select account",
-                "修改路徑": "Modify path",
-                "控制台輸出": "Console output",
-                "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "Enter Workshop projects (one per line, supports links and file IDs)",
+                "選擇帳號": "Select Account",
+                "修改路徑": "Modify Path",
+                "檔案整合": "File Integration",
+                "控制台輸出": "Console Output",
+                "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "Enter Workshop Projects (One per Line, Supports Links and File IDs)",
                 "下載": "Download",
-                "選擇資料夾": "Select folder",
-                "下載完成": "Download complete",
-                "無效連結": "Invalid link"
+                "選擇資料夾": "Select Folder",
+                "獲取失敗": "Failed to Retrieve",
+                "沒有可整合的檔案": "No Files to Integrate",
+                "下載完成": "Download Completed",
+                "無效連結": "Invalid Link"
             }
         }
 
@@ -96,6 +103,13 @@ class DLL:
         self.acclist = list(self.accounts.keys())
         self.passwords = {account: base64.b64decode(self.accounts[account]).decode('utf-8') for account in self.accounts}
 
+    def get_save_data(self):
+        file_data = defaultdict(list)
+        [file_data[file.suffix].append(file) for file in self.save_path.rglob("*") if file.is_file()]
+        return { # 數量多到少排序, 相同數量按字母排序, 組合 key 為副檔名, value 為檔案列表 回傳字典
+            suffix: files for suffix, files in sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
+        }
+
 class GUI(DLL, tk.Tk):
     def __init__(self):
         DLL.__init__(self)
@@ -135,46 +149,40 @@ class GUI(DLL, tk.Tk):
 
     def settings_element(self):
         username_label = tk.Label(self.top_frame, text=f"{self.transl('選擇帳號')}：", font=("Microsoft JhengHei", 14, "bold"), bg=self.primary_color, fg=self.text_color)
-        username_label.grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(10, 10))
+        username_label.grid(row=0, column=0, sticky="w", pady=(10, 10))
 
         self.username = tk.StringVar(self)
         self.username.set(self.acclist[0])
         self.sername_menu = ttk.Combobox(self.top_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), cursor="hand2", justify="center", state="readonly", values=self.acclist)
-        self.sername_menu.grid(row=0, column=1, sticky="ew", padx=(0, 350))
+        self.sername_menu.grid(row=0, column=1, sticky="w")
 
-        self.path_button = tk.Button(self.top_frame, text=self.transl('修改路徑'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="flat", bg=self.secondary_color, fg=self.text_color, command=self.save_settings)
+        self.path_button = tk.Button(self.top_frame, text=self.transl('修改路徑'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.save_settings)
         self.path_button.grid(row=1, column=0, sticky="w")
 
         self.save_path_label = tk.Label(self.top_frame, text=self.save_path, font=("Microsoft JhengHei", 14, "bold"), bg=self.primary_color, fg=self.text_color)
         self.save_path_label.grid(row=1, column=1, sticky="w")
 
+        self.merge_button = tk.Button(self.top_frame, text=self.transl('檔案整合'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.file_merge)
+        self.merge_button.grid(row=2, column=0, sticky="w", pady=(15, 0))
+
     def display_element(self):
         console_label = tk.Label(self.middle_frame, text=f"{self.transl('控制台輸出')}：", font=("Microsoft JhengHei", 10, "bold"), bg=self.primary_color, fg=self.text_color)
         console_label.grid(row=0, column=0, sticky="nsew")
 
-        self.console = scrolledtext.ScrolledText(self.middle_frame, font=("Microsoft JhengHei", 12, "bold"), height=14, borderwidth=1, cursor="arrow", relief="sunken", state="disabled")
+        self.console = scrolledtext.ScrolledText(self.middle_frame, font=("Consolas", 12), height=14, borderwidth=4, cursor="arrow", relief="sunken", state="disabled", bg="#272727", fg=self.text_color)
+        self.console.tag_configure("important", foreground="#00DB00", font=("Consolas", 12, "bold"))
         self.console.grid(row=1, column=0, sticky="nsew")
 
     def input_element(self):
         input_label = tk.Label(self.bottom_frame, text=f"{self.transl('輸入創意工坊專案（每行一個，支援連結和檔案ID）')}：", font=("Microsoft JhengHei", 10, "bold"), bg=self.primary_color, fg=self.text_color)
         input_label.grid(row=0, column=0, sticky="nsew")
 
-        self.input_text = scrolledtext.ScrolledText(self.bottom_frame, font=("Microsoft JhengHei", 10, "bold"), height=7, borderwidth=1, relief="sunken")
-        self.input_text.grid(row=1, column=0, sticky="nsew", pady=8)
+        self.input_text = scrolledtext.ScrolledText(self.bottom_frame, font=("Microsoft JhengHei", 10, "bold"), height=7, borderwidth=2, relief="sunken", wrap="none")
+        self.input_text.grid(row=1, column=0, sticky="nsew")
         threading.Thread(target=self.listen_clipboard).start()
 
-        self.run_button = tk.Button(self.bottom_frame, text=self.transl('下載'), font=("Microsoft JhengHei", 10, "bold"), borderwidth=2, cursor="hand2", relief="flat", bg=self.secondary_color, fg=self.text_color, command=self.download_trigger)
-        self.run_button.grid(row=2, column=0, sticky="ew")
-
-    def status_switch(self, state):
-        if state == "disabled":
-            self.sername_menu.config(state="disabled", cursor="no")
-            self.path_button.config(state="disabled", cursor="no")
-            self.run_button.config(state="disabled", cursor="no")
-        else:
-            self.sername_menu.config(state="readonly", cursor="hand2")
-            self.path_button.config(state="normal", cursor="hand2")
-            self.run_button.config(state="normal", cursor="hand2")
+        self.run_button = tk.Button(self.bottom_frame, text=self.transl('下載'), font=("Microsoft JhengHei", 14, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.download_trigger)
+        self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
 
     def save_settings(self):
         path = filedialog.askdirectory(title=self.transl('選擇資料夾'))
@@ -184,9 +192,29 @@ class GUI(DLL, tk.Tk):
             self.save_path_label.config(text=self.save_path)
             self.config_cfg.write_text(str(self.save_path), encoding="utf-8")
 
-    def console_update(self, message):
+    def file_merge(self):
+        data_table = self.get_save_data()
+
+        if data_table:
+            messagebox.showinfo("wait", "Not yet developed")
+        else:
+            messagebox.showwarning(title=self.transl('獲取失敗'), message=self.transl('沒有可整合的檔案'))
+
+    def status_switch(self, state):
+        if state == "disabled":
+            self.sername_menu.config(state="disabled", cursor="no")
+            self.path_button.config(state="disabled", cursor="no")
+            self.merge_button.config(state="disabled", cursor="no")
+            self.run_button.config(state="disabled", cursor="no")
+        else:
+            self.sername_menu.config(state="readonly", cursor="hand2")
+            self.path_button.config(state="normal", cursor="hand2")
+            self.merge_button.config(state="normal", cursor="hand2")
+            self.run_button.config(state="normal", cursor="hand2")
+
+    def console_update(self, message, *args):
         self.console.config(state="normal")
-        self.console.insert(tk.END, message)
+        self.console.insert(tk.END, message, *args)
         self.console.yview(tk.END)
         self.console.config(state="disabled")
         
@@ -206,7 +234,7 @@ class GUI(DLL, tk.Tk):
     def download(self, taskId, searchtext):
         process_name = self.illegal_regular.sub("-", searchtext if searchtext else taskId).strip()
 
-        self.console_update(f"----- {self.transl('開始下載')} [{process_name}] -----\n")
+        self.console_update(f"> {self.transl('開始下載')} [{process_name}]\n", "important")
         if not self.save_path.exists():
             self.save_path.mkdir(parents=True, exist_ok=True)
 
@@ -219,7 +247,7 @@ class GUI(DLL, tk.Tk):
         process.stdout.close()
         process.wait()
 
-        self.console_update(f"----- [{process_name}] {self.transl('下載完成')} -----\n\n")
+        self.console_update(f"> [{process_name}] {self.transl('下載完成')} \n\n", "important")
         self.complete_record_id.add(taskId)
         
     def download_trigger(self):
@@ -240,7 +268,7 @@ class GUI(DLL, tk.Tk):
                     if match:
                         self.add_record_url.add(link)
                         if match.group(1) not in self.complete_record_id:
-                            self.download(match.group(1).strip(), match.group(2).strip())
+                            self.download(match.group(1), match.group(2))
                     else:
                         self.console_update(f"{self.transl('無效連結')}：{link}\n")
 
