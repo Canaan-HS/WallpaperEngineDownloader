@@ -14,6 +14,9 @@ A simple recreation of [WallpaperEngineWorkshopDownloader](https://github.com/ou
 - **Dynamic downloading**:
   - Once a download starts, the processed links will be removed from the input box.
   - Continuously added links will automatically join the download queue until the input box is cleared.
+- **File Integration**  
+  - Lists all files under the output path (excluding the Integrate folder), displaying file types with support for single selection or multi-selection via Ctrl/Shift.  
+  - After integration, selected file types are moved to the Integrate folder, with source location appended to the file names.
 
 ## Dependencies
 
