@@ -310,7 +310,7 @@ class GUI(DLL, tk.Tk):
         self.console.insert(tk.END, message, *args)
         self.console.yview(tk.END)
         self.console.config(state="disabled")
-        
+
     def listen_clipboard(self):
         pyperclip.copy('')
 
@@ -342,7 +342,7 @@ class GUI(DLL, tk.Tk):
 
         self.console_update(f"> [{process_name}] {self.transl('下載完成')} \n\n", "important")
         self.complete_record_id.add(taskId)
-        
+
     def download_trigger(self):
         self.status_switch("disabled")
 
