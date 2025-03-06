@@ -21,7 +21,7 @@ A simple recreation of [WallpaperEngineWorkshopDownloader](https://github.com/ou
 
 ## Preview
 
-![English Version](https://github.com/user-attachments/assets/b8f5d777-c578-4778-9200-5cd80b17961f)
+![English Version](https://github.com/user-attachments/assets/508c7cd3-f88f-4ff4-823c-8d5d005c41f8)
 
 ## How to Use
 
