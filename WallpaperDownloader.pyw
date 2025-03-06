@@ -221,8 +221,8 @@ class GUI(DLL, tk.Tk):
         DLL.__init__(self)
         tk.Tk.__init__(self, className=f"Wallpaper Engine {self.transl('創意工坊下載器')}")
 
-        self.geometry("640x650")
-        self.minsize(180, 550)
+        self.geometry("600x650")
+        self.minsize(500, 550)
 
         try:
             self.iconbitmap(self.icon_ico)
@@ -240,7 +240,7 @@ class GUI(DLL, tk.Tk):
         self.select_frame = tk.Frame(self, bg=self.primary_color)
         self.select_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
         self.select_frame.columnconfigure(1, weight=0)
-        self.select_frame.columnconfigure(2, weight=0)
+        self.select_frame.columnconfigure(2, weight=1)
         self.settings_element()
 
         self.console_frame = tk.Frame(self, bg=self.primary_color)
@@ -265,8 +265,8 @@ class GUI(DLL, tk.Tk):
 
         self.serverid = tk.StringVar(self)
         self.serverid.set(f"{self.transl('應用')}->{self.appid_list[0]}")
-        self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10), width=35, cursor="hand2", justify="center", values=self.appid_list)
-        self.serverid_menu.grid(row=0, column=2, sticky="w")
+        self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10),  cursor="hand2", justify="center", values=self.appid_list)
+        self.serverid_menu.grid(row=0, column=2, sticky="ew")
         self.server_search()
 
         self.path_button = tk.Button(self.select_frame, text=self.transl('修改路徑'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.save_settings)
