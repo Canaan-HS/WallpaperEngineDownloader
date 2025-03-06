@@ -265,7 +265,7 @@ class GUI(DLL, tk.Tk):
         self.username = tk.StringVar(self)
         self.username.set(f"{self.transl('帳號')}->{self.acc_list[0]}")
         self.username_menu = ttk.Combobox(self.select_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), cursor="hand2", justify="center", state="readonly", values=self.acc_list)
-        self.username_menu.grid(row=0, column=1, sticky="w")
+        self.username_menu.grid(row=0, column=1, sticky="ew", padx=(0, 15))
 
         self.serverid = tk.StringVar(self)
         self.serverid.set(f"{self.transl('應用')}->{self.appid_list[0]}")
