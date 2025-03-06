@@ -1,28 +1,36 @@
+# 標準庫 - 系統 & 平台
 import os
-import re
 import sys
-import time
-import locale
-import base64
-import threading
+import platform
 import subprocess
-import tkinter as tk
+import threading
 
-from tkinter import ttk
+# 標準庫 - 數據處理
+import json
+import time
+import base64
+import re
+import locale
+import ctypes
+
+# 標準庫 - 文件 & 解析
 from pathlib import Path
 from urllib.parse import unquote
 from collections import defaultdict
-from tkinter import scrolledtext, filedialog, messagebox
 
+# GUI (Tkinter)
+import tkinter as tk
+from tkinter import ttk, scrolledtext, filedialog, messagebox
+
+# 第三方庫
 import pyperclip
 
-def language(lang):
+def language(lang=None):
         Word = {
-            '950': {"": ""},
-            '936': {
+            'zh_TW': {"": ""},
+            'zh_CN': {
                 "依賴錯誤": "依赖错误",
                 "找不到": "找不到",
-                "讀取配置文件時出錯": "读取配置文件时出错",
                 "創意工坊下載器": "创意工坊下载器",
                 "選擇帳號": "选择账号",
                 "修改路徑": "修改路径",
@@ -44,12 +52,12 @@ def language(lang):
                 "獲取失敗": "获取失败",
                 "沒有可整合的檔案": "没有可整合的文件",
                 "下載完成": "下载完成",
-                "無效連結": "无效链接"
+                "無效連結": "无效链接",
+                "讀取配置文件時出錯": "读取配置文件时出错"
             },
-            '1252': {
+            'en_US': {
                 "依賴錯誤": "Dependency Error",
                 "找不到": "Not Found",
-                "讀取配置文件時出錯": "Error Reading Configuration File",
                 "創意工坊下載器": "Workshop Downloader",
                 "選擇帳號": "Select Account",
                 "修改路徑": "Modify Path",
@@ -71,26 +79,57 @@ def language(lang):
                 "獲取失敗": "Failed to Retrieve",
                 "沒有可整合的檔案": "No Files to Integrate",
                 "下載完成": "Download Completed",
-                "無效連結": "Invalid Link"
+                "無效連結": "Invalid Link",
+                "讀取配置文件時出錯": "Error Reading Configuration File"
             }
         }
 
-        lang = str(lang).replace('cp', '')
-        ML = Word.get(lang) or Word.get('1252')
-        return lambda text: ML.get(text) or text
+        Locale = {
+            '950': 'zh_TW',
+            '936': 'zh_CN',
+            '1252': 'en_US'
+        }
+
+        # 總是有人系統怪怪的
+        if lang is None:
+            sys = platform.system()
+
+            if sys == 'Windows':
+                buffer = ctypes.create_unicode_buffer(85)
+                ctypes.windll.kernel32.GetUserDefaultLocaleName(buffer, len(buffer))
+                lang = buffer.value.replace('-', '_')
+            elif sys == 'Linux' or sys == 'Darwin':
+                lang = os.environ.get("LANG").split('.')[0]
+            else:
+                locale.setlocale(locale.LC_ALL, '')
+                lang = locale.getlocale()[1].replace('cp', '')
+
+        if lang.isdigit():
+            lang = Locale.get(lang, 'en_US')
+            ML = Word.get(lang)
+        else:
+            ML = Word.get(lang, 'en_US') 
+
+        return lambda text: ML.get(text, text)
 
 class DLL:
     def __init__(self):
-        self.integrate_folder = "!【Integrate】!"
-        self.output_folder = "Wallpaper_Output"
+        # 打包的 exe 執行路徑 與 原碼執行要抓不同路徑
         self.current_dir = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).parent
 
+        # 預設輸出的文件名稱
+        self.integrate_folder = "!【Integrate】!"
+        self.output_folder = "Wallpaper_Output"
+
+        # 依賴載入路徑
         self.save_path = Path(self.current_dir) / self.output_folder
+        self.id_json = Path(self.current_dir) / "APPID/ID.json"
         self.config_cfg = Path(self.current_dir) / "lastsavelocation.cfg"
         self.icon_ico = Path(self.current_dir) / "Icon/DepotDownloader.ico"
         self.depot_exe = Path(self.current_dir) / "DepotdownloaderMod/DepotDownloadermod.exe"
 
-        self.transl = language(locale.getlocale()[1])
+        self.transl = language()
+        self.default_appid = {"Wallpaper Engine": "431960"}
 
         if not self.depot_exe.exists():
             messagebox.showerror(self.transl('依賴錯誤'), f"{self.transl('找不到')} {self.depot_exe}", parent=self)
@@ -104,8 +143,16 @@ class DLL:
                 if record_path.is_absolute():
                     self.save_path = record_path if record_path.name == self.output_folder else record_path / self.output_folder
             except Exception as e:
-                print(f"{self.transl('讀取配置文件時出錯')}: {e}")
+                print(f"{self.transl('讀取配置文件時出錯')}: {e}") # 除錯用
 
+        if self.id_json.exists():
+            try:
+                id_dict = json.loads(self.id_json.read_text(encoding="utf-8"))
+                self.default_appid.update(id_dict)
+            except Exception as e:
+                print(f"{self.transl('讀取配置文件時出錯')}: {e}") # 除錯用
+
+        # 除重用
         self.add_record_url = set()
         self.complete_record_id = set()
 
@@ -177,6 +224,8 @@ class GUI(DLL, tk.Tk):
         self.username.set(self.acclist[0])
         self.sername_menu = ttk.Combobox(self.select_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), cursor="hand2", justify="center", state="readonly", values=self.acclist)
         self.sername_menu.grid(row=0, column=1, sticky="w")
+
+        # next(iter(self.default_appid))
 
         self.path_button = tk.Button(self.select_frame, text=self.transl('修改路徑'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.save_settings)
         self.path_button.grid(row=1, column=0, sticky="w")
@@ -313,8 +362,6 @@ class GUI(DLL, tk.Tk):
         self.console.config(state="disabled")
 
     def listen_clipboard(self):
-        pyperclip.copy('')
-
         while True:
             clipboard = pyperclip.paste()
 
@@ -322,8 +369,9 @@ class GUI(DLL, tk.Tk):
                 self.add_record_url.add(clipboard)
 
                 self.input_text.insert(tk.END, f"{clipboard}\n")
-                pyperclip.copy('')
-            time.sleep(0.3)
+                self.input_text.yview(tk.END)
+
+            time.sleep(0.5)
 
     def download(self, appId, pubId, searchText, username, password):
         process_name = self.illegal_regular.sub("-", searchText if searchText else pubId).strip()
