@@ -98,7 +98,7 @@ class DLL:
 
         if self.config_cfg.exists():
             try:
-                record_str = self.config_cfg.read_text().strip()
+                record_str = self.config_cfg.read_text(encoding="utf-8").strip()
                 record_path = Path(record_str)
 
                 if record_path.is_absolute():
@@ -325,15 +325,16 @@ class GUI(DLL, tk.Tk):
                 pyperclip.copy('')
             time.sleep(0.3)
 
-    def download(self, taskId, searchtext):
-        process_name = self.illegal_regular.sub("-", searchtext if searchtext else taskId).strip()
+    def download(self, appId, pubId, searchText, username, password):
+        process_name = self.illegal_regular.sub("-", searchText if searchText else pubId).strip()
 
         self.console_update(f"\n> {self.transl('開始下載')} [{process_name}]\n", "important")
+
         if not self.save_path.exists():
             self.save_path.mkdir(parents=True, exist_ok=True)
 
         dir_option = f"-dir \"{self.save_path / process_name}\""
-        command = f"{self.depot_exe} -app 431960 -pubfile {taskId} -verify-all -username {self.username.get()} -password {self.passwords[self.username.get()]} {dir_option}"
+        command = f"{self.depot_exe} -app {appId} -pubfile {pubId} -verify-all -username {username} -password {password} {dir_option}"
 
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,creationflags=subprocess.CREATE_NO_WINDOW)
         for line in process.stdout:
@@ -342,7 +343,7 @@ class GUI(DLL, tk.Tk):
         process.wait()
 
         self.console_update(f"> [{process_name}] {self.transl('下載完成')} \n", "important")
-        self.complete_record_id.add(taskId)
+        self.complete_record_id.add(pubId)
 
     def download_trigger(self):
         self.status_switch("disabled")
@@ -356,13 +357,17 @@ class GUI(DLL, tk.Tk):
                 yield unquote(lines[0]).strip()
 
         def trigger():
+            app = "431960"
+            username = self.username.get()
+            password = self.passwords[username]
+
             for link in lines():
                 if link:
                     match = self.parse_regular.search(link)
                     if match:
                         self.add_record_url.add(link)
                         if match.group(1) not in self.complete_record_id:
-                            self.download(match.group(1), match.group(2))
+                            self.download(app, match.group(1), match.group(2), username, password)
                     else:
                         self.console_update(f"{self.transl('無效連結')}：{link}\n")
 
