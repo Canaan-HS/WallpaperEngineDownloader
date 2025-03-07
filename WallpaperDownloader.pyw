@@ -29,18 +29,16 @@ def language(lang=None):
         Word = {
             'zh_TW': {"": ""},
             'zh_CN': {
-                "依賴錯誤": "依赖错误",
-                "找不到": "找不到",
                 "創意工坊下載器": "创意工坊下载器",
+                "選擇配置": "选择配置",
                 "修改路徑": "修改路径",
                 "檔案整合": "文件整合",
-                "選擇配置": "选择配置",
                 "帳號": "账号",
                 "應用": "应用",
+                "已複製": "",
+                "選擇資料夾": "选择文件夹",
                 "控制台輸出": "控制台输出",
                 "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "输入创意工坊项目（每行一个，支持链接和文件ID）",
-                "下載": "下载",
-                "選擇資料夾": "选择文件夹",
                 "選擇整合的類型": "选择整合的类型",
                 "檔案類型": "文件类型",
                 "檔案數量": "文件数量",
@@ -53,29 +51,33 @@ def language(lang=None):
                 "整合輸出": "整合输出",
                 "獲取失敗": "获取失败",
                 "沒有可整合的檔案": "没有可整合的文件",
+                "下載": "下载",
                 "開始下載": "开始下载",
                 "下載完成": "下载完成",
                 "無效連結": "无效链接",
+                "下載失敗 請先安裝 .NET 9 執行庫": "",
+                "下載失敗 請設置正確的應用": "",
+                "下載失敗 請嘗試變更帳號後在下載": "",
+                "找不到": "找不到",
+                "依賴錯誤": "依赖错误",
                 "讀取配置文件時出錯": "读取配置文件时出错"
             },
             'en_US': {
-                "依賴錯誤": "Dependency Error",
-                "找不到": "Not Found",
                 "創意工坊下載器": "Workshop Downloader",
+                "選擇配置": "Select Configuration",
                 "修改路徑": "Modify Path",
                 "檔案整合": "File Integration",
-                "選擇配置": "Select",
-                "帳號": "Acc",
-                "應用": "App",
-                "控制台輸出": "Console Output",
-                "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "Enter Workshop Projects (One per Line, Supports Links and File IDs)",
-                "下載": "Download",
+                "帳號": "Account",
+                "應用": "Application",
+                "已複製": "Copied",
                 "選擇資料夾": "Select Folder",
-                "選擇整合的類型": "Select the types to integrate",
+                "控制台輸出": "Console Output",
+                "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "Enter Workshop Project (one per line, supports link and file ID)",
+                "選擇整合的類型": "Select Type of Integration",
                 "檔案類型": "File Type",
                 "檔案數量": "File Count",
                 "操作提示": "Operation Tips",
-                "請選擇要整合的類型": "Please select the types to integrate",
+                "請選擇要整合的類型": "Please select the type of integration",
                 "操作確認": "Operation Confirmation",
                 "整合以下類型的檔案": "Integrate the following types of files",
                 "操作完成": "Operation Completed",
@@ -83,9 +85,15 @@ def language(lang=None):
                 "整合輸出": "Integration Output",
                 "獲取失敗": "Failed to Retrieve",
                 "沒有可整合的檔案": "No Files to Integrate",
+                "下載": "Download",
                 "開始下載": "Start Download",
                 "下載完成": "Download Completed",
                 "無效連結": "Invalid Link",
+                "下載失敗 請先安裝 .NET 9 執行庫": "Download Failed. Please install .NET 9 runtime first",
+                "下載失敗 請設置正確的應用": "Download Failed. Please set the correct application",
+                "下載失敗 請嘗試變更帳號後在下載": "Download Failed. Please try changing the account and retry",
+                "找不到": "Not Found",
+                "依賴錯誤": "Dependency Error",
                 "讀取配置文件時出錯": "Error Reading Configuration File"
             }
         }
@@ -127,21 +135,32 @@ class DLL:
         self.integrate_folder = "!【Integrate】!"
         self.output_folder = "Wallpaper_Output"
 
-        # 依賴載入路徑
-        self.save_path = Path(self.current_dir) / self.output_folder
-        self.id_json = Path(self.current_dir) / "APPID/ID.json"
-        self.config_cfg = Path(self.current_dir) / "lastsavelocation.cfg"
-        self.icon_ico = Path(self.current_dir) / "Icon/DepotDownloader.ico"
-        self.depot_exe = Path(self.current_dir) / "DepotdownloaderMod/DepotDownloadermod.exe"
-
         # 配置預設值
         self.transl = language()
         self.account = "ruiiixx"
         self.appid_dict = {"Wallpaper Engine": "431960"}
 
+        # 依賴載入路徑
+        self.id_json = self.current_dir / "APPID/ID.json"
+        self.config_cfg = self.current_dir / "Config.cfg"
+        self.save_path = self.current_dir / self.output_folder
+        self.icon_ico = self.current_dir / "Icon/DepotDownloader.ico"
+        self.depot_exe = self.current_dir / "DepotdownloaderMod/DepotDownloadermod.exe"
+
+        # 除重用
+        self.capture_record = set()
+        self.complete_record = set()
+
         if not self.depot_exe.exists():
             messagebox.showerror(self.transl('依賴錯誤'), f"{self.transl('找不到')} {self.depot_exe}")
             os._exit(0)
+
+        if self.id_json.exists():
+            try:
+                id_dict = json.loads(self.id_json.read_text(encoding="utf-8"))
+                self.appid_dict.update(id_dict)
+            except Exception as e:
+                print(f"{self.transl('讀取配置文件時出錯')}: {e}")
 
         if self.config_cfg.exists():
             try:
@@ -152,21 +171,6 @@ class DLL:
                     self.save_path = record_path if record_path.name == self.output_folder else record_path / self.output_folder
             except Exception as e:
                 print(f"{self.transl('讀取配置文件時出錯')}: {e}") # 除錯用
-
-        if self.id_json.exists():
-            try:
-                id_dict = json.loads(self.id_json.read_text(encoding="utf-8"))
-                self.appid_dict.update(id_dict)
-            except Exception as e:
-                print(f"{self.transl('讀取配置文件時出錯')}: {e}") # 除錯用
-
-        # 除重用
-        self.add_record_url = set()
-        self.complete_record_id = set()
-
-        self.illegal_regular = re.compile(r'[<>:"/\\|?*\x00-\x1F]')
-        self.parse_regular = re.compile(r'(\d{8,10})(?:&searchtext=(.*))?')
-        self.link_regular = re.compile(r'^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$')
 
         self.account_dict = {
             key: {**value, key: base64.b64decode(value[key]).decode('utf-8')}
@@ -182,6 +186,18 @@ class DLL:
 
         self.acc_list = list(self.account_dict.keys())
         self.appid_list = list(self.appid_dict.keys())
+
+        self.illegal_regular = re.compile(r'[<>:"/\\|?*\x00-\x1F]')
+        self.parse_regular = re.compile(r'(\d{8,10})(?:&searchtext=(.*))?')
+        self.link_regular = re.compile(r'^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$')
+
+        self.token = True
+        self.error_cache = set()
+        self.error_rule = {
+            "Microsoft.NETCore.App": self.transl("下載失敗 請先安裝 .NET 9 執行庫"),
+            "Unable to locate manifest ID for published file": self.transl("下載失敗 請設置正確的應用"),
+            "TryAnotherCM": [self.transl("下載失敗 請嘗試變更帳號後在下載")] # 以列表返回, 代表需要強制中止
+        }
 
     def get_save_data(self):
         file_data = defaultdict(list)
@@ -221,6 +237,12 @@ class DLL:
                         stack.append(subtree)
 
         return match_generator()
+
+    def console_analysis(self, text):
+        for Key, message in self.error_rule.items():
+            if Key in text:
+                self.token = False
+                return message
 
 class GUI(DLL, tk.Tk):
     def __init__(self):
@@ -271,19 +293,20 @@ class GUI(DLL, tk.Tk):
         self.username = tk.StringVar(self)
         self.username.set(f"{self.transl('帳號')}->{self.acc_list[0]}")
         self.username_menu = ttk.Combobox(self.select_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), width=15, cursor="hand2", justify="center", state="readonly", values=self.acc_list)
-        self.username_menu.grid(row=0, column=1, sticky="w")
+        self.username_menu.grid(row=0, column=1, sticky="w", padx=(0, 20))
 
         self.serverid = tk.StringVar(self)
         self.serverid.set(f"{self.transl('應用')}->{self.appid_list[0]}")
         self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10),  cursor="hand2", justify="center", values=self.appid_list)
-        self.serverid_menu.grid(row=0, column=2, sticky="ew")
+        self.serverid_menu.grid(row=0, column=2, sticky="we")
         self.server_search()
 
         self.path_button = tk.Button(self.select_frame, text=self.transl('修改路徑'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.save_settings)
         self.path_button.grid(row=1, column=0, sticky="w")
 
-        self.save_path_label = tk.Label(self.select_frame, text=self.save_path, font=("Microsoft JhengHei", 14, "bold"), bg=self.primary_color, fg=self.text_color)
-        self.save_path_label.grid(row=1, column=1, sticky="w")
+        self.save_path_label = tk.Label(self.select_frame, text=self.save_path, font=("Microsoft JhengHei", 14, "bold"), cursor="hand2", justify="left", bg=self.primary_color, fg=self.text_color)
+        self.save_path_label.grid(row=1, column=1, columnspan=2, sticky="w")
+        self.save_path_label.bind("<Button-1>", self.copy_save_path)
 
         self.merge_button = tk.Button(self.select_frame, text=self.transl('檔案整合'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.file_merge)
         self.merge_button.grid(row=2, column=0, sticky="w", pady=(15, 0))
@@ -306,6 +329,8 @@ class GUI(DLL, tk.Tk):
 
         self.run_button = tk.Button(self.operate_frame, text=self.transl('下載'), font=("Microsoft JhengHei", 14, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.download_trigger)
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
+
+    """ ----- UI 函數處理 ----- """
 
     def save_settings(self):
         path = filedialog.askdirectory(title=self.transl('選擇資料夾'))
@@ -337,6 +362,20 @@ class GUI(DLL, tk.Tk):
         self.serverid_menu.bind("<KeyRelease>", on_input)
         self.serverid_menu.bind("<Button-1>", on_click)
         self.serverid_menu.bind("<<ComboboxSelected>>", on_select)
+
+    def copy_save_path(self, event):
+        pyperclip.copy(self.save_path)
+        popup = tk.Toplevel(self)
+        popup.overrideredirect(True)
+        popup.attributes("-topmost", True)
+
+        label = tk.Label(popup, text=self.transl('已複製'), font=("Microsoft JhengHei", 10), bg="#333333", fg="#FFFFFF", padx=5, pady=5)
+        label.pack()
+
+        popup.update_idletasks() # 更新窗口以計算 label 的大小
+        popup.geometry(f"{label.winfo_reqwidth()}x{label.winfo_reqheight()}+{event.x_root - 25}+{event.y_root - 35}")
+        popup.grab_set()
+        popup.after(800, popup.destroy)
 
     def file_merge(self):
         data_table = self.get_save_data()
@@ -421,6 +460,17 @@ class GUI(DLL, tk.Tk):
         else:
             messagebox.showwarning(title=self.transl('獲取失敗'), message=self.transl('沒有可整合的檔案'), parent=self)
 
+    def listen_clipboard(self):
+        while True:
+            clipboard = pyperclip.paste()
+
+            if self.link_regular.match(clipboard) and clipboard not in self.capture_record:
+                self.capture_record.add(clipboard)
+                self.input_text.insert("end", f"{clipboard}\n")
+                self.input_text.yview("end")
+
+            time.sleep(0.5)
+
     def status_switch(self, state):
         if state == "disabled":
             self.username_menu.config(state="disabled", cursor="no")
@@ -435,25 +485,22 @@ class GUI(DLL, tk.Tk):
             self.merge_button.config(state="normal", cursor="hand2")
             self.run_button.config(state="normal", cursor="hand2")
 
+            self.token = True # 重設令牌
+            pyperclip.copy("") # 重設剪貼簿 避免 record 清除後再次擷取
+
+            for cache in self.error_cache:
+                self.input_text.insert("end", f"{cache}\n")
+
+            self.error_cache.clear() # 重設列表
+            self.capture_record.clear() # 重設擷取紀錄
+
     def console_update(self, message, *args):
         self.console.config(state="normal")
-        self.console.insert(tk.END, message, *args)
-        self.console.yview(tk.END)
+        self.console.insert("end", message, *args)
+        self.console.yview("end")
         self.console.config(state="disabled")
 
-    def listen_clipboard(self):
-        while True:
-            clipboard = pyperclip.paste()
-
-            if self.link_regular.match(clipboard) and clipboard not in self.add_record_url:
-                self.add_record_url.add(clipboard)
-
-                self.input_text.insert(tk.END, f"{clipboard}\n")
-                self.input_text.yview(tk.END)
-
-            time.sleep(0.5)
-
-    def download(self, appId, pubId, searchText, username, password):
+    def download(self, oriLink, appId, pubId, searchText, Username, Password):
         process_name = self.illegal_regular.sub("-", searchText if searchText else pubId).strip()
 
         self.console_update(f"\n> {self.transl('開始下載')} [{process_name}]\n", "important")
@@ -462,16 +509,29 @@ class GUI(DLL, tk.Tk):
             self.save_path.mkdir(parents=True, exist_ok=True)
 
         dir_option = f"-dir \"{self.save_path / process_name}\""
-        command = f"{self.depot_exe} -app {appId} -pubfile {pubId} -verify-all -username {username} -password {password} {dir_option}"
+        command = f"{self.depot_exe} -app {appId} -pubfile {pubId} -verify-all -username {Username} -password {Password} {dir_option}"
 
+        end_message = self.transl('下載完成')
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,creationflags=subprocess.CREATE_NO_WINDOW)
+
         for line in process.stdout:
             self.console_update(line)
+            state = self.console_analysis(line)
+
+            # 錯誤時更改消息
+            if isinstance(state, list):
+                end_message = state[0]
+                process.terminate()
+                break
+
+            elif state: end_message = state
+
         process.stdout.close()
         process.wait()
 
-        self.console_update(f"> [{process_name}] {self.transl('下載完成')} \n", "important")
-        self.complete_record_id.add(pubId)
+        self.console_update(f"> [{process_name}] {end_message} \n", "important")
+        if self.token: self.complete_record.add(f"{appId}-{pubId}")
+        else: self.error_cache.add(oriLink)
 
     def download_trigger(self):
         self.status_switch("disabled")
@@ -485,7 +545,7 @@ class GUI(DLL, tk.Tk):
                 yield unquote(lines[0]).strip()
 
         def trigger():
-            app = self.appid_dict.get(self.serverid.get(), next(iter(self.appid_dict.values())))
+            appid = self.appid_dict.get(self.serverid.get(), next(iter(self.appid_dict.values())))
             username, password = next(iter(
                 self.account_dict.get(self.username.get(), self.account_dict.get(self.account)).items()
                 )
@@ -495,9 +555,11 @@ class GUI(DLL, tk.Tk):
                 if link:
                     match = self.parse_regular.search(link)
                     if match:
-                        self.add_record_url.add(link)
-                        if match.group(1) not in self.complete_record_id:
-                            self.download(app, match.group(1), match.group(2), username, password)
+                        self.capture_record.add(link)
+                        if not self.token:
+                            self.error_cache.add(link)
+                        elif f"{appid}-{match.group(1)}" not in self.complete_record:
+                            self.download(link, appid, match.group(1), match.group(2), username, password)
                     else:
                         self.console_update(f"{self.transl('無效連結')}：{link}\n")
 
