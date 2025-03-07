@@ -134,7 +134,9 @@ class DLL:
         self.icon_ico = Path(self.current_dir) / "Icon/DepotDownloader.ico"
         self.depot_exe = Path(self.current_dir) / "DepotdownloaderMod/DepotDownloadermod.exe"
 
+        # 配置預設值
         self.transl = language()
+        self.account = "ruiiixx"
         self.appid_dict = {"Wallpaper Engine": "431960"}
 
         if not self.depot_exe.exists():
@@ -166,26 +168,29 @@ class DLL:
         self.parse_regular = re.compile(r'(\d{8,10})(?:&searchtext=(.*))?')
         self.link_regular = re.compile(r'^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$')
 
-        self.accounts = {
-            'ruiiixx': 'UzY3R0JUQjgzRDNZ',
-            'premexilmenledgconis': 'M3BYYkhaSmxEYg==',
-            'vAbuDy': 'Qm9vbHE4dmlw',
-            'adgjl1182': 'UUVUVU85OTk5OQ==',
-            'gobjj16182': 'enVvYmlhbzgyMjI=',
-            '787109690': 'SHVjVXhZTVFpZzE1'
+        self.account_dict = {
+            key: {**value, key: base64.b64decode(value[key]).decode('utf-8')}
+            for key, value in {
+                'ruiiixx': {'ruiiixx': 'UzY3R0JUQjgzRDNZ'},
+                'premexilmenledgconis': {'premexilmenledgconis': 'M3BYYkhaSmxEYg=='},
+                'vAbuDy': {'vAbuDy': 'Qm9vbHE4dmlw'},
+                'adgjl1182': {'adgjl1182': 'UUVUVU85OTk5OQ=='},
+                'gobjj16182':{'gobjj16182': 'enVvYmlhbzgyMjI='},
+                '787109690': {'787109690': 'SHVjVXhZTVFpZzE1'}
+            }.items()
         }
 
-        self.acc_list = list(self.accounts.keys())
+        self.acc_list = list(self.account_dict.keys())
         self.appid_list = list(self.appid_dict.keys())
-
-        self.password_dict = {account: base64.b64decode(self.accounts[account]).decode('utf-8') for account in self.accounts}
 
     def get_save_data(self):
         file_data = defaultdict(list)
-        [file_data[file.suffix].append(file) for file in self.save_path.rglob("*") if file.is_file() and self.integrate_folder not in str(file)]
-        return { # 數量多到少排序, 相同數量按字母排序, 組合 key 為副檔名, value 為檔案列表 回傳字典
-            suffix: files for suffix, files in sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
-        }
+        for file in self.save_path.rglob("*"):
+            if file.is_file() and self.integrate_folder not in file.parts:
+                file_data[file.suffix].append(file)
+        return dict( # 數量多到少排序, 相同數量按字母排序, 組合 key 為副檔名, value 為檔案列表 回傳字典
+            sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
+        )
 
     def build_trie(self, data_list):
         trie = {}
@@ -202,19 +207,20 @@ class DLL:
         current = trie
         for char in prefix:
             if char not in current:
-                return []
+                return iter([])
             current = current[char]
 
-        matches = []
-        stack = [current]
-        while stack:
-            node = stack.pop()
-            if "$" in node:
-                matches.append(node["$"])
-            for char, subtree in node.items():
-                if char != "$":
-                    stack.append(subtree)
-        return matches
+        def match_generator():
+            stack = [current]
+            while stack:
+                node = stack.pop()
+                if "$" in node:
+                    yield node["$"]
+                for char, subtree in node.items():
+                    if char != "$":
+                        stack.append(subtree)
+
+        return match_generator()
 
 class GUI(DLL, tk.Tk):
     def __init__(self):
@@ -315,7 +321,7 @@ class GUI(DLL, tk.Tk):
         def on_input(event):
             prefix = event.widget.get().lower()
             matches = self.search_trie(appid_trie, prefix) if prefix else self.appid_list
-            self.serverid_menu.configure(values=matches)
+            self.serverid_menu.configure(values=list(matches))
 
         def on_click(event):
             x = event.x
@@ -479,10 +485,11 @@ class GUI(DLL, tk.Tk):
                 yield unquote(lines[0]).strip()
 
         def trigger():
-            # .split 是處理預設的字串
-            app = self.appid_dict.get(self.serverid.get().split("->")[-1], "431960")
-            username = self.username.get().split("->")[-1]
-            password = self.password_dict[username]
+            app = self.appid_dict.get(self.serverid.get(), next(iter(self.appid_dict.values())))
+            username, password = next(iter(
+                self.account_dict.get(self.username.get(), self.account_dict.get(self.account)).items()
+                )
+            )
 
             for link in stream():
                 if link:
