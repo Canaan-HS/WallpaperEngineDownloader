@@ -222,7 +222,7 @@ class GUI(DLL, tk.Tk):
         tk.Tk.__init__(self, className=f"Wallpaper Engine {self.transl('創意工坊下載器')}")
 
         self.geometry("600x650")
-        self.minsize(500, 550)
+        self.minsize(550, 600)
 
         try:
             self.iconbitmap(self.icon_ico)
