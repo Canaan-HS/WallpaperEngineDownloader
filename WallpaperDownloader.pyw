@@ -138,7 +138,7 @@ class DLL:
         self.appid_dict = {"Wallpaper Engine": "431960"}
 
         if not self.depot_exe.exists():
-            messagebox.showerror(self.transl('依賴錯誤'), f"{self.transl('找不到')} {self.depot_exe}", parent=self)
+            messagebox.showerror(self.transl('依賴錯誤'), f"{self.transl('找不到')} {self.depot_exe}")
             os._exit(0)
 
         if self.config_cfg.exists():
@@ -234,10 +234,10 @@ class GUI(DLL, tk.Tk):
         self.text_color = "#ffffff"
         self.configure(bg=self.primary_color)
 
-        self.grid_rowconfigure(0, weight=0)  # select_frame
-        self.grid_rowconfigure(1, weight=0)  # console_frame
-        self.grid_rowconfigure(2, weight=1)  # operate_frame
-        self.grid_columnconfigure(0, weight=1)  # 水平拉伸
+        self.rowconfigure(0, weight=0)  # select_frame
+        self.rowconfigure(1, weight=0)  # console_frame
+        self.rowconfigure(2, weight=1)  # operate_frame
+        self.columnconfigure(0, weight=1)  # 水平拉伸
 
         self.select_frame = tk.Frame(self, bg=self.primary_color)
         self.select_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
@@ -253,8 +253,8 @@ class GUI(DLL, tk.Tk):
 
         self.operate_frame = tk.Frame(self, bg=self.primary_color)
         self.operate_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
-        self.operate_frame.grid_rowconfigure(1, weight=1)
-        self.operate_frame.grid_rowconfigure(2, weight=0)
+        self.operate_frame.rowconfigure(1, weight=1)
+        self.operate_frame.rowconfigure(2, weight=0)
         self.operate_frame.columnconfigure(0, weight=1)
         self.input_element()
 
@@ -264,8 +264,8 @@ class GUI(DLL, tk.Tk):
 
         self.username = tk.StringVar(self)
         self.username.set(f"{self.transl('帳號')}->{self.acc_list[0]}")
-        self.username_menu = ttk.Combobox(self.select_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), cursor="hand2", justify="center", state="readonly", values=self.acc_list)
-        self.username_menu.grid(row=0, column=1, sticky="ew", padx=(0, 15))
+        self.username_menu = ttk.Combobox(self.select_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), width=15, cursor="hand2", justify="center", state="readonly", values=self.acc_list)
+        self.username_menu.grid(row=0, column=1, sticky="w")
 
         self.serverid = tk.StringVar(self)
         self.serverid.set(f"{self.transl('應用')}->{self.appid_list[0]}")
