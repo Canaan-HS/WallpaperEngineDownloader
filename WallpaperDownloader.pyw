@@ -304,7 +304,7 @@ class GUI(DLL, tk.Tk):
         self.path_button = tk.Button(self.select_frame, text=self.transl('修改路徑'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.save_settings)
         self.path_button.grid(row=1, column=0, sticky="w")
 
-        self.save_path_label = tk.Label(self.select_frame, text=self.save_path, font=("Microsoft JhengHei", 14, "bold"), cursor="hand2", justify="left", bg=self.primary_color, fg=self.text_color)
+        self.save_path_label = tk.Label(self.select_frame, text=self.save_path, font=("Microsoft JhengHei", 14, "bold"), cursor="hand2", anchor="w", justify="left", bg=self.primary_color, fg=self.text_color)
         self.save_path_label.grid(row=1, column=1, columnspan=2, sticky="w")
         self.save_path_label.bind("<Button-1>", self.copy_save_path)
 
