@@ -99,11 +99,11 @@ class GUI:
 
         x = self.config_data.get(self.template[3], 200)
         y = self.config_data.get(self.template[4], 200)
-        width = self.config_data.get(self.template[5], 550)
-        height = self.config_data.get(self.template[6], 600)
+        width = self.config_data.get(self.template[5], 600)
+        height = self.config_data.get(self.template[6], 700)
 
         self.geometry(f"{width}x{height}+{x}+{y}")
-        self.minsize(550, 600)
+        self.minsize(350, 250)
 
         try:
             self.iconbitmap(self.icon_ico)
