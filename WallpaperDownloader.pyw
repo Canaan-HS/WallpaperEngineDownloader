@@ -1,7 +1,6 @@
 # 標準庫 - 系統 & 平台
 import os
 import sys
-import atexit
 import platform
 import traceback
 import threading
@@ -446,8 +445,8 @@ class Backend:
             if not self.save_path.exists():
                 self.save_path.mkdir(parents=True, exist_ok=True)
 
-            dir_option = f"-dir \"{self.get_unique_path(self.save_path / process_name)}\""
-            command = f"{self.depot_exe} -app {appId} -pubfile {pubId} -verify-all -username {Username} -password {Password} {dir_option}"
+            dir_path = self.get_unique_path(self.save_path / process_name)
+            command = f"{self.depot_exe} -app {appId} -pubfile {pubId} -verify-all -username {Username} -password {Password} -dir \"{dir_path}\""
 
             end_message = self.transl('下載完成')
             process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,creationflags=subprocess.CREATE_NO_WINDOW)
@@ -467,10 +466,13 @@ class Backend:
             process.stdout.close()
             process.wait()
 
-            self.console_update(f"> [{process_name}] {end_message}\n", "important")
-            if self.token:
+            if self.token and Path(dir_path).exists():
                 del self.task_cache[taskId] # 刪除已下載緩存
                 self.complete_record.add(taskId) # 添加下載完成紀錄
+            else:
+                end_message = self.transl('下載失敗')
+
+            self.console_update(f"> [{process_name}] {end_message}\n", "important")
         except:
             self.console_update(f"> {self.transl('例外中止')}\n", "important")
             messagebox.showerror(self.transl('例外'), traceback.format_exc(), parent=self)
@@ -492,6 +494,8 @@ class Backend:
             return appid, username, password
 
     def listen_clipboard(self):
+        pyperclip.copy("") # 避免開啟直接貼上
+
         while True:
             clipboard = unquote(pyperclip.paste()) # unquote 是沒必要的, 方便觀看而已, 但會有額外性能開銷
 
@@ -563,7 +567,7 @@ def language(lang=None):
                 "檔案整合": "文件整合",
                 "帳號": "账号",
                 "應用": "应用",
-                "已複製": "",
+                "已複製": "已复制",
                 "選擇資料夾": "选择文件夹",
                 "控制台輸出": "控制台输出",
                 "輸入創意工坊專案（每行一個，支援連結和檔案ID）": "输入创意工坊项目（每行一个，支持链接和文件ID）",
@@ -585,9 +589,10 @@ def language(lang=None):
                 "下載完成": "下载完成",
                 "例外中止": "例外中止",
                 "無效連結": "无效链接",
-                "下載失敗 請先安裝 .NET 9 執行庫": "",
-                "下載失敗 請設置正確的應用": "",
-                "下載失敗 請嘗試變更帳號後在下載": "",
+                "下載失敗": "下载失败",
+                "下載失敗 請先安裝 .NET 9 執行庫": "下载失败 请先安装 .NET 9 运行库",
+                "下載失敗 請設置正確的應用": "下载失败 请设置正确的应用",
+                "下載失敗 請嘗試變更帳號後在下載": "下载失败 请尝试更换帐号后再下载",
                 "找不到": "找不到",
                 "依賴錯誤": "依赖错误",
                 "讀取配置文件時出錯": "读取配置文件时出错"
@@ -621,6 +626,7 @@ def language(lang=None):
                 "下載完成": "Download Completed",
                 "例外中止": "Exception Aborted",
                 "無效連結": "Invalid Link",
+                "下載失敗": "Download Failed",
                 "下載失敗 請先安裝 .NET 9 執行庫": "Download Failed. Please install .NET 9 runtime first",
                 "下載失敗 請設置正確的應用": "Download Failed. Please set the correct application",
                 "下載失敗 請嘗試變更帳號後在下載": "Download Failed. Please try changing the account and retry",
