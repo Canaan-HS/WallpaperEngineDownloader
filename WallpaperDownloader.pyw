@@ -17,7 +17,7 @@ import ctypes
 # 標準庫 - 文件 & 解析
 from pathlib import Path
 from urllib.parse import unquote
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 
 # GUI (Tkinter)
 import tkinter as tk
@@ -156,6 +156,9 @@ class DLL:
         self.capture_record = set()
         self.complete_record = set()
 
+        # 緩存任務數據 用於未完成恢復
+        self.task_cache = OrderedDict()
+
         if not self.depot_exe.exists():
             messagebox.showerror(self.transl('依賴錯誤'), f"{self.transl('找不到')} {self.depot_exe}")
             os._exit(0)
@@ -197,7 +200,6 @@ class DLL:
         self.link_regular = re.compile(r'^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$')
 
         self.token = True
-        self.error_cache = set()
         self.error_rule = {
             "Microsoft.NETCore.App": self.transl("下載失敗 請先安裝 .NET 9 執行庫"),
             "Unable to locate manifest ID for published file": self.transl("下載失敗 請設置正確的應用"),
@@ -498,13 +500,12 @@ class GUI(DLL, tk.Tk):
             self.merge_button.config(state="normal", cursor="hand2")
             self.run_button.config(state="normal", cursor="hand2")
 
-            self.token = True # 重設令牌
             pyperclip.copy("") # 重設剪貼簿 避免 record 清除後再次擷取
 
-            for cache in self.error_cache:
-                self.input_text.insert("end", f"{cache}\n")
+            for task in self.task_cache.values():
+                self.input_text.insert("end", f"{task}\n")
 
-            self.error_cache.clear() # 重設列表
+            self.token = True # 重設令牌
             self.capture_record.clear() # 重設擷取紀錄
 
     def console_update(self, message, *args):
@@ -513,7 +514,9 @@ class GUI(DLL, tk.Tk):
         self.console.yview("end")
         self.console.config(state="disabled")
 
-    def download(self, oriLink, appId, pubId, searchText, Username, Password):
+    def download(self, taskId, appId, pubId, searchText, Username, Password):
+        if not self.token: return
+
         try:
             process_name = self.illegal_regular.sub("-", searchText if searchText else pubId).strip()
 
@@ -544,24 +547,14 @@ class GUI(DLL, tk.Tk):
             process.wait()
 
             self.console_update(f"> [{process_name}] {end_message}\n", "important")
-            if self.token: self.complete_record.add(f"{appId}-{pubId}")
-            else: self.error_cache.add(oriLink)
+            if self.token:
+                del self.task_cache[taskId] # 刪除已下載緩存
+                self.complete_record.add(taskId) # 添加下載完成紀錄
         except:
-            self.error_cache.add(oriLink)
             self.console_update(f"> {self.transl('例外中止')}\n", "important")
             messagebox.showerror(self.transl('例外'), traceback.format_exc(), parent=self)
 
     def download_trigger(self):
-        self.status_switch("disabled")
-
-        def stream():
-            while True:
-                lines = self.input_text.get("1.0", "end").splitlines()
-                if not lines or not lines[0].strip():
-                    break
-                self.input_text.delete("1.0", "2.0")
-                yield unquote(lines[0]).strip()
-
         def trigger():
             appid = self.appid_dict.get(self.serverid.get(), next(iter(self.appid_dict.values())))
             username, password = next(iter(
@@ -569,24 +562,40 @@ class GUI(DLL, tk.Tk):
                 )
             )
 
+            self.status_switch("disabled")
+
             for link in stream():
                 if link:
                     match = self.parse_regular.search(link)
                     if match:
                         self.capture_record.add(link)
-                        if not self.token:
-                            self.error_cache.add(link)
-                        elif f"{appid}-{match.group(1)}" not in self.complete_record:
-                            self.download(link, appid, match.group(1), match.group(2), username, password)
+
+                        match_gp1 = match.group(1)
+                        task_id = f"{appid}-{match_gp1}"
+
+                        if task_id not in self.complete_record:
+                            self.task_cache[task_id] = link
+                            self.download(task_id, appid, match_gp1, match.group(2), username, password)
                     else:
                         self.console_update(f"{self.transl('無效連結')}：{link}\n")
-
+  
             self.status_switch("normal")
+
+            def stream():
+                while True:
+                    lines = self.input_text.get("1.0", "end").splitlines()
+                    if not lines or not lines[0].strip(): break # 避免空數據
+                    self.input_text.delete("1.0", "2.0")
+                    yield unquote(lines[0]).strip()
 
         threading.Thread(target=trigger).start()
 
     def Main(self):
-        self.protocol("WM_DELETE_WINDOW", lambda: (subprocess.Popen("taskkill /f /im DepotDownloadermod.exe", creationflags=subprocess.CREATE_NO_WINDOW), os._exit(0)))
+        def Closure():
+            subprocess.Popen("taskkill /f /im DepotDownloadermod.exe", creationflags=subprocess.CREATE_NO_WINDOW)
+            os._exit(0)
+
+        self.protocol("WM_DELETE_WINDOW", Closure)
         self.mainloop()
 
 if __name__ == "__main__":
