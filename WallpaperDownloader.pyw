@@ -39,10 +39,11 @@ class DLL:
         self.transl = language()
         self.account = "ruiiixx"
         self.appid_dict = {"Wallpaper Engine": "431960"}
+        self.config_template = ["Sava_Path", "Account", "Application", "window_x", "window_y", "window_width", "window_height"]
 
         # 依賴載入路徑
         self.id_json = self.current_dir / "APPID/ID.json"
-        self.config_cfg = self.current_dir / "Config.cfg"
+        self.config_cfg = self.current_dir / "Config.json"
         self.save_path = self.current_dir / self.output_folder
         self.icon_ico = self.current_dir / "Icon/DepotDownloader.ico"
         self.depot_exe = self.current_dir / "DepotdownloaderMod/DepotDownloadermod.exe"
@@ -58,20 +59,41 @@ class DLL:
             except Exception as e:
                 print(f"{self.transl('讀取配置文件時出錯')}: {e}")
 
+        self.config_data = {} # 空數據宣告
         if self.config_cfg.exists():
             try:
-                record_str = self.config_cfg.read_text(encoding="utf-8").strip()
-                record_path = Path(record_str)
+                config_dict = json.loads(self.config_cfg.read_text(encoding="utf-8"))
+
+                self.config_data = {key: config_dict.get(key, "") for key in self.config_template} # 解構數據
+                record_path = Path(self.config_data.get("Sava_Path"))
 
                 if record_path.is_absolute():
                     self.save_path = record_path if record_path.name == self.output_folder else record_path / self.output_folder
             except Exception as e:
                 print(f"{self.transl('讀取配置文件時出錯')}: {e}") # 除錯用
 
+    def save_config(self, data):
+        old_data = {}
+        if self.config_cfg.exists():
+            old_data = json.loads(self.config_cfg.read_text(encoding="utf-8"))
+        old_data.update(data)
+
+        self.final_config = {key: old_data.get(key, "") for key in self.config_template}
+        self.config_cfg.write_text(
+            json.dumps(old_data, indent=4, separators=(',',':')),
+            encoding="utf-8"
+        )
+
 class GUI:
     def __init__(self):
         self.title(f"Wallpaper Engine {self.transl('創意工坊下載器')}")
-        self.geometry("600x650")
+
+        x = self.config_data.get('window_x', 200)
+        y = self.config_data.get('window_y', 200)
+        width = self.config_data.get('window_width', 550)
+        height = self.config_data.get('window_height', 600)
+
+        self.geometry(f"{width}x{height}+{x}+{y}")
         self.minsize(550, 600)
 
         try:
@@ -113,14 +135,15 @@ class GUI:
         username_label.grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(10, 10))
 
         self.username = tk.StringVar(self)
-        self.username.set(f"{self.transl('帳號')}->{self.acc_list[0]}")
+        self.username.set(f"{self.transl('帳號')}->{self.config_data.get('Account', self.acc_list[0])}")
         self.username_menu = ttk.Combobox(self.select_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), width=15, cursor="hand2", justify="center", state="readonly", values=self.acc_list)
         self.username_menu.grid(row=0, column=1, sticky="w", padx=(0, 20))
 
         self.serverid = tk.StringVar(self)
-        self.serverid.set(f"{self.transl('應用')}->{self.appid_list[0]}")
-        self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10),  cursor="hand2", justify="center", values=self.appid_list)
+        self.serverid.set(f"{self.transl('應用')}->{self.config_data.get('App', self.app_list[0])}")
+        self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10),  cursor="hand2", justify="center")
         self.serverid_menu.grid(row=0, column=2, sticky="we")
+        self.serverid_menu.configure(values=self.app_list)
         self.server_search()
 
         self.path_button = tk.Button(self.select_frame, text=self.transl('修改路徑'), font=("Microsoft JhengHei", 10, "bold"), cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.save_settings)
@@ -149,7 +172,7 @@ class GUI:
         self.input_text.grid(row=1, column=0, sticky="nsew")
         threading.Thread(target=self.listen_clipboard).start()
 
-        self.run_button = tk.Button(self.operate_frame, text=self.transl('下載'), font=("Microsoft JhengHei", 14, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=self.download_trigger)
+        self.run_button = tk.Button(self.operate_frame, text=self.transl('下載'), font=("Microsoft JhengHei", 14, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=lambda: threading.Thread(target=self.download_trigger).start())
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
 
 class Backend:
@@ -173,8 +196,8 @@ class Backend:
         # 緩存任務數據 用於未完成恢復
         self.task_cache = OrderedDict()
 
+        self.app_list = list(self.appid_dict.keys())
         self.acc_list = list(self.account_dict.keys())
-        self.appid_list = list(self.appid_dict.keys())
 
         self.illegal_regular = re.compile(r'[<>:"/\\|?*\x00-\x1F]')
         self.parse_regular = re.compile(r'(\d{8,10})(?:&searchtext=(.*))?')
@@ -184,10 +207,22 @@ class Backend:
         self.error_rule = {
             "Microsoft.NETCore.App": self.transl("下載失敗 請先安裝 .NET 9 執行庫"),
             "Unable to locate manifest ID for published file": self.transl("下載失敗 請設置正確的應用"),
-            "TryAnotherCM": [self.transl("下載失敗 請嘗試變更帳號後在下載")] # 以列表返回, 代表需要強制中止
+            "STEAM GUARD": [self.transl("下載失敗 請嘗試變更帳號後在下載")],
         }
+        # 重用
+        self.error_rule["AccountDisabled"] = self.error_rule["STEAM GUARD"]
 
     def Closure(self):
+        username, app = self.get_config(True)
+        self.save_config({
+            "Account": username,
+            "Application": app,
+            "window_x": self.winfo_x(),
+            "window_y": self.winfo_y(),
+            "window_width": self.winfo_width(),
+            "window_height": self.winfo_height()
+        })
+
         subprocess.Popen("taskkill /f /im DepotDownloadermod.exe", creationflags=subprocess.CREATE_NO_WINDOW)
         os._exit(0)
 
@@ -197,7 +232,7 @@ class Backend:
         if path:
             self.save_path = Path(path) / self.output_folder
             self.save_path_label.config(text=self.save_path)
-            self.config_cfg.write_text(str(self.save_path), encoding="utf-8")
+            self.save_config({"Sava_Path": str(self.save_path)})
 
     def copy_save_path(self, event):
         pyperclip.copy(self.save_path)
@@ -245,11 +280,11 @@ class Backend:
             return match_generator()
 
         # 編譯前綴樹
-        appid_trie = build_trie(self.appid_list)
+        appid_trie = build_trie(self.app_list)
 
         def on_input(event):
             prefix = event.widget.get().lower()
-            matches = search_trie(appid_trie, prefix) if prefix else self.appid_list
+            matches = search_trie(appid_trie, prefix) if prefix else self.app_list
             self.serverid_menu.configure(values=list(matches))
 
         def on_click(event):
@@ -261,7 +296,7 @@ class Backend:
                 self.serverid_menu.unbind("<Button-1>")
 
         def on_select(event):
-            self.serverid_menu.configure(values=self.appid_list)
+            self.serverid_menu.configure(values=self.app_list)
 
         self.serverid_menu.bind("<KeyRelease>", on_input)
         self.serverid_menu.bind("<Button-1>", on_click)
@@ -424,6 +459,20 @@ class Backend:
     """ ====== 下載處理區塊 ====== """
 
     """ ====== 觸發與UI處理區塊 ====== """
+    def get_config(self, original=False):
+        username, password = next(iter(
+            self.account_dict.get(self.username.get(), self.account_dict.get(self.account)).items()
+            )
+        )
+
+        if original:
+            for app in [self.serverid.get(), self.app_list[0]]:
+                if app in self.appid_dict:
+                    return username, app
+        else:
+            appid = self.appid_dict.get(self.serverid.get(), next(iter(self.appid_dict.values())))
+            return appid, username, password
+
     def listen_clipboard(self):
         while True:
             clipboard = pyperclip.paste()
@@ -457,41 +506,33 @@ class Backend:
             self.token = True # 重設令牌
             self.capture_record.clear() # 重設擷取紀錄
 
+    def input_stream(self):
+        while True:
+            lines = self.input_text.get("1.0", "end").splitlines()
+            if not lines or not lines[0].strip(): break # 避免空數據
+            self.input_text.delete("1.0", "2.0")
+            yield unquote(lines[0]).strip()
+
     def download_trigger(self):
-        def trigger():
-            appid = self.appid_dict.get(self.serverid.get(), next(iter(self.appid_dict.values())))
-            username, password = next(iter(
-                self.account_dict.get(self.username.get(), self.account_dict.get(self.account)).items()
-                )
-            )
+        self.status_switch("disabled")
+        appid, username, password = self.get_config()
 
-            self.status_switch("disabled")
+        for link in self.input_stream():
+            if link:
+                match = self.parse_regular.search(link)
+                if match:
+                    self.capture_record.add(link)
 
-            for link in stream():
-                if link:
-                    match = self.parse_regular.search(link)
-                    if match:
-                        self.capture_record.add(link)
+                    match_gp1 = match.group(1)
+                    task_id = f"{appid}-{match_gp1}"
 
-                        match_gp1 = match.group(1)
-                        task_id = f"{appid}-{match_gp1}"
+                    if task_id not in self.complete_record:
+                        self.task_cache[task_id] = link
+                        self.download(task_id, appid, match_gp1, match.group(2), username, password)
+                else:
+                    self.console_update(f"{self.transl('無效連結')}：{link}\n")
 
-                        if task_id not in self.complete_record:
-                            self.task_cache[task_id] = link
-                            self.download(task_id, appid, match_gp1, match.group(2), username, password)
-                    else:
-                        self.console_update(f"{self.transl('無效連結')}：{link}\n")
-  
-            self.status_switch("normal")
-
-            def stream():
-                while True:
-                    lines = self.input_text.get("1.0", "end").splitlines()
-                    if not lines or not lines[0].strip(): break # 避免空數據
-                    self.input_text.delete("1.0", "2.0")
-                    yield unquote(lines[0]).strip()
-
-        threading.Thread(target=trigger).start()
+        self.status_switch("normal")
     """ ====== 觸發與UI處理區塊 ====== """
 
 def language(lang=None):
@@ -605,6 +646,7 @@ class Controller(DLL, tk.Tk, Backend, GUI):
         GUI.__init__(self)
 
         self.protocol("WM_DELETE_WINDOW", self.Closure)
+        self.update_idletasks()
         self.mainloop()
 
 if __name__ == "__main__":
