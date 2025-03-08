@@ -1,12 +1,13 @@
-# 標準庫 - 系統 & 平台
 import os
 import sys
+import shutil
+import atexit
 import platform
 import traceback
 import threading
 import subprocess
+import tkinter as tk
 
-# 標準庫 - 數據處理
 import re
 import json
 import time
@@ -14,17 +15,13 @@ import base64
 import locale
 import ctypes
 
-# 標準庫 - 文件 & 解析
 from pathlib import Path
 from urllib.parse import unquote
 from types import SimpleNamespace
-from collections import OrderedDict, defaultdict
-
-# GUI (Tkinter)
-import tkinter as tk
+from collections import defaultdict
 from tkinter import ttk, scrolledtext, filedialog, messagebox
 
-# 第三方庫
+import psutil
 import pyperclip
 
 SysPlat = platform.system()
@@ -187,12 +184,12 @@ class GUI:
 
         self.input_text = scrolledtext.ScrolledText(self.operate_frame, font=("Microsoft JhengHei", 10, "bold"), borderwidth=2, relief="sunken", wrap="none")
         self.input_text.grid(row=1, column=0, sticky="nsew")
-        threading.Thread(target=self.listen_clipboard).start()
+        threading.Thread(target=self.listen_clipboard, daemon=True).start()
 
         for task in self.cfg_data.get(self.CK.Task, []): # 添加舊任務數據
             self.input_text.insert("end", f"{task}\n")
 
-        self.run_button = tk.Button(self.operate_frame, text=self.transl('下載'), font=("Microsoft JhengHei", 14, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=lambda: threading.Thread(target=self.download_trigger).start())
+        self.run_button = tk.Button(self.operate_frame, text=self.transl('下載'), font=("Microsoft JhengHei", 14, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=lambda: threading.Thread(target=self.download_trigger, daemon=True).start())
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
 
 class Backend:
@@ -212,7 +209,7 @@ class Backend:
         self.complete_record = set()
 
         # 緩存任務數據 用於未完成恢復
-        self.task_cache = OrderedDict()
+        self.task_cache = {}
 
         self.app_list = list(self.appid_dict.keys())
         self.acc_list = list(self.account_dict.keys())
@@ -229,10 +226,12 @@ class Backend:
         }
         # 重用
         self.error_rule["AccountDisabled"] = self.error_rule["STEAM GUARD"]
+        atexit.register(self.process_cleanup)
 
+    """ ====== 關閉清理 ====== """
     def Closure(self):
         username, app = self.get_config(True)
-        undone = list(set(self.task_cache.values()) | set(self.input_stream()))
+        undone = list({cache['url'] for cache in self.task_cache.values()} | set(self.input_stream()))
 
         self.save_config({
             "Account": username,
@@ -244,15 +243,34 @@ class Backend:
             "Tasks": undone
         })
 
-        processName = "DepotDownloadermod.exe"
+        self.destroy()
 
-        if SysPlat == "Windows":
-            subprocess.Popen(f"taskkill /f /im {processName}", creationflags=subprocess.CREATE_NO_WINDOW)
-        elif SysPlat in ["Linux", "Darwin"]:
-            subprocess.Popen(f"pkill -f {processName}", shell=True)
+    def process_cleanup(self):
+        pids = []
+        processName = "DepotDownloaderMod.exe"
+        for proc in psutil.process_iter(['pid', 'name']):
+            try:
+                if proc.info['name'].lower() == processName.lower():
+                    pids.append(proc.pid)
+                    proc.kill()
+            except:
+                continue
+        self.del_error_file(pids)
 
-        os._exit(0)
+    def del_error_file(self, pids):
+        for task in self.task_cache.values():
+            path = task['path']
 
+            if Path(path).exists():
+                for _ in range(10): # 最多等待10秒
+                    if not any(psutil.pid_exists(pid) for pid in pids):
+                        try:
+                            shutil.rmtree(path)
+                            break
+                        except:continue
+                    time.sleep(1)
+
+    """ ====== 設定配置 ====== """
     def save_settings(self):
         path = filedialog.askdirectory(title=self.transl('選擇資料夾'))
 
@@ -329,7 +347,7 @@ class Backend:
         self.serverid_menu.bind("<Button-1>", on_click)
         self.serverid_menu.bind("<<ComboboxSelected>>", on_select)
 
-    """ ====== 檔案整合區塊 ====== """
+    """ ====== 檔案整合 ====== """
     def get_save_data(self):
         file_data = defaultdict(list)
         for file in self.save_path.rglob("*"):
@@ -421,13 +439,11 @@ class Backend:
             print_button.pack(pady=(5, 15))
         else:
             messagebox.showwarning(title=self.transl('獲取失敗'), message=self.transl('沒有可整合的檔案'), parent=self)
-    """ ====== 檔案整合區塊 ====== """
 
-    """ ====== 下載處理區塊 ====== """
+    """ ====== 下載處理 ====== """
     def console_analysis(self, text):
         for Key, message in self.error_rule.items():
             if Key in text:
-                self.token = False
                 return message
 
     def get_unique_path(self, path):
@@ -448,6 +464,7 @@ class Backend:
         if not self.token: return
 
         try:
+            end_message = self.transl('下載完成')
             process_name = self.illegal_regular.sub("-", searchText if searchText else pubId).strip()
 
             self.console_update(f"\n> {self.transl('開始下載')} [{process_name}]\n", "important")
@@ -455,40 +472,50 @@ class Backend:
             if not self.save_path.exists():
                 self.save_path.mkdir(parents=True, exist_ok=True)
 
-            dir_path = self.get_unique_path(self.save_path / process_name)
-            command = f"{self.depot_exe} -app {appId} -pubfile {pubId} -verify-all -username {Username} -password {Password} -dir \"{dir_path}\""
+            task_path = self.get_unique_path(self.save_path / process_name)
+            self.task_cache[taskId]['path'] = task_path # 再添加下載路徑
 
-            end_message = self.transl('下載完成')
-            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,creationflags=subprocess.CREATE_NO_WINDOW)
+            # 避免 Command Injection
+            command = [
+                self.depot_exe, "-app", str(appId), "-pubfile", str(pubId),
+                "-verify-all", "-username", Username, "-password", Password,
+                "-dir", task_path
+            ]
+
+            process = subprocess.Popen(
+                command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
 
             for line in process.stdout:
                 self.console_update(line)
-                state = self.console_analysis(line)
+                err_message = self.console_analysis(line)
 
-                # 錯誤時更改消息
-                if isinstance(state, list):
-                    end_message = state[0]
+                # 消息是列表狀態, 代表需要強制中止
+                if isinstance(err_message, list):
+                    self.token = False
                     process.terminate()
-                    break
+                    end_message = err_message[0]
+                    return
 
-                elif state: end_message = state
+                elif err_message: end_message = err_message
 
             process.stdout.close()
             process.wait()
 
-            if self.token and Path(dir_path).exists():
-                del self.task_cache[taskId] # 刪除已下載緩存
+            if end_message == self.transl('下載完成') and Path(task_path).exists():
+                self.task_cache.pop(taskId, None) # 刪除已下載緩存
                 self.complete_record.add(taskId) # 添加下載完成紀錄
             else:
-                end_message = end_message if end_message != self.transl('下載完成') else self.transl('下載失敗')
+                # 這邊因為進程可能還需要繼續, 而不刪除錯誤的文件
+                end_message = end_message if end_message != self.transl('下載完成') else self.transl('下載失敗') # 用於顯示不在 console_analysis 中的錯誤
 
             self.console_update(f"> [{process_name}] {end_message}\n", "important")
         except:
             self.console_update(f"> {self.transl('例外中止')}\n", "important")
             messagebox.showerror(self.transl('例外'), traceback.format_exc(), parent=self)
-    """ ====== 下載處理區塊 ====== """
 
-    """ ====== 觸發與UI處理區塊 ====== """
+    """ ====== 觸發與 UI 操作 ====== """
     def get_config(self, original=False):
         username, password = next(iter(
                 self.account_dict.get(self.username.get().split("->")[-1], self.account_dict.get(self.account)).items()
@@ -527,9 +554,10 @@ class Backend:
             pyperclip.copy("") # 重設剪貼簿 避免 record 清除後再次擷取
 
             for task in self.task_cache.values():
-                self.input_text.insert("end", f"{task}\n")
+                self.input_text.insert("end", f"{task['url']}\n")
 
             self.token = True # 重設令牌
+            self.task_cache.clear() # 重設任務緩存
             self.capture_record.clear() # 重設擷取紀錄
 
     def input_stream(self):
@@ -553,13 +581,12 @@ class Backend:
                     task_id = f"{appid}-{match_gp1}"
 
                     if task_id not in self.complete_record:
-                        self.task_cache[task_id] = link
+                        self.task_cache[task_id] = {'url': link}
                         self.download(task_id, appid, match_gp1, match.group(2), username, password)
                 else:
                     self.console_update(f"{self.transl('無效連結')}：{link}\n")
 
         self.status_switch("normal")
-    """ ====== 觸發與UI處理區塊 ====== """
 
 def language(lang=None):
         Word = {
