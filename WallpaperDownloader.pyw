@@ -223,9 +223,9 @@ class Backend:
 
         self.token = True
         self.error_rule = {
-            "Microsoft.NETCore.App": self.transl("下載失敗 請先安裝 .NET 9 執行庫"),
-            "Unable to locate manifest ID for published file": self.transl("下載失敗 請設置正確的應用"),
-            "STEAM GUARD": [self.transl("下載失敗 請嘗試變更帳號後在下載")],
+            "Microsoft.NETCore.App": self.transl("下載失敗: 請先安裝 .NET 9 執行庫"),
+            "Unable to locate manifest ID for published file": self.transl("下載失敗: 該項目可能已被刪除，或應用設置錯誤"),
+            "STEAM GUARD": [self.transl("下載失敗: 請嘗試變更帳號後在下載")],
         }
         # 重用
         self.error_rule["AccountDisabled"] = self.error_rule["STEAM GUARD"]
@@ -480,7 +480,7 @@ class Backend:
                 del self.task_cache[taskId] # 刪除已下載緩存
                 self.complete_record.add(taskId) # 添加下載完成紀錄
             else:
-                end_message = self.transl('下載失敗')
+                end_message = end_message if end_message != self.transl('下載完成') else self.transl('下載失敗')
 
             self.console_update(f"> [{process_name}] {end_message}\n", "important")
         except:
@@ -518,15 +518,9 @@ class Backend:
 
     def status_switch(self, state):
         if state == "disabled":
-            self.username_menu.config(state="disabled", cursor="no")
-            self.serverid_menu.config(state="disabled", cursor="no")
-            self.path_button.config(state="disabled", cursor="no")
             self.merge_button.config(state="disabled", cursor="no")
             self.run_button.config(state="disabled", cursor="no")
         else:
-            self.username_menu.config(state="readonly", cursor="hand2")
-            self.serverid_menu.config(state="normal", cursor="hand2")
-            self.path_button.config(state="normal", cursor="hand2")
             self.merge_button.config(state="normal", cursor="hand2")
             self.run_button.config(state="normal", cursor="hand2")
 
@@ -547,12 +541,12 @@ class Backend:
 
     def download_trigger(self):
         self.status_switch("disabled")
-        appid, username, password = self.get_config()
 
         for link in self.input_stream():
             if link:
                 match = self.parse_regular.search(link)
                 if match:
+                    appid, username, password = self.get_config() # 允許臨時變更, 所以每次重獲取
                     self.capture_record.add(link)
 
                     match_gp1 = match.group(1)
@@ -600,9 +594,9 @@ def language(lang=None):
                 "例外中止": "例外中止",
                 "無效連結": "无效链接",
                 "下載失敗": "下载失败",
-                "下載失敗 請先安裝 .NET 9 執行庫": "下载失败 请先安装 .NET 9 运行库",
-                "下載失敗 請設置正確的應用": "下载失败 请设置正确的应用",
-                "下載失敗 請嘗試變更帳號後在下載": "下载失败 请尝试更换帐号后再下载",
+                "下載失敗: 請先安裝 .NET 9 執行庫": "下载失败: 请先安装 .NET 9 运行库",
+                "下載失敗: 該項目可能已被刪除，或應用設置錯誤": "下载失败: 该项目可能已被删除，或应用设置错误",
+                "下載失敗: 請嘗試變更帳號後在下載": "下载失败: 请尝试变更帐号后再下载",
                 "找不到": "找不到",
                 "依賴錯誤": "依赖错误",
                 "讀取配置文件時出錯": "读取配置文件时出错"
@@ -637,9 +631,9 @@ def language(lang=None):
                 "例外中止": "Exception Aborted",
                 "無效連結": "Invalid Link",
                 "下載失敗": "Download Failed",
-                "下載失敗 請先安裝 .NET 9 執行庫": "Download Failed. Please install .NET 9 runtime first",
-                "下載失敗 請設置正確的應用": "Download Failed. Please set the correct application",
-                "下載失敗 請嘗試變更帳號後在下載": "Download Failed. Please try changing the account and retry",
+                "下載失敗: 請先安裝 .NET 9 執行庫": "Download Failed: Please install .NET 9 Runtime first",
+                "下載失敗: 該項目可能已被刪除，或應用設置錯誤": "Download Failed: The project may have been deleted, or the application settings are incorrect",
+                "下載失敗: 請嘗試變更帳號後在下載": "Download Failed: Please try changing the account and then download",
                 "找不到": "Not Found",
                 "依賴錯誤": "Dependency Error",
                 "讀取配置文件時出錯": "Error Reading Configuration File"
