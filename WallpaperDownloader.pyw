@@ -204,12 +204,12 @@ class Backend:
             }.items()
         }
 
+        # 緩存任務數據 用於未完成恢復
+        self.task_cache = {}
+
         # 除重用
         self.capture_record = set()
         self.complete_record = set()
-
-        # 緩存任務數據 用於未完成恢復
-        self.task_cache = {}
 
         self.app_list = list(self.appid_dict.keys())
         self.acc_list = list(self.account_dict.keys())
@@ -218,15 +218,14 @@ class Backend:
         self.parse_regular = re.compile(r'(\d{8,10})(?:&searchtext=(.*))?')
         self.link_regular = re.compile(r'^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$')
 
-        self.token = True
+        self.token = True # 可強制停止所有任務
         self.error_rule = {
             "Microsoft.NETCore.App": self.transl("下載失敗: 請先安裝 .NET 9 執行庫"),
             "Unable to locate manifest ID for published file": self.transl("下載失敗: 該項目可能已被刪除，或應用設置錯誤"),
-            "STEAM GUARD": [self.transl("下載失敗: 請嘗試變更帳號後在下載")],
+            "STEAM GUARD": [self.transl("下載失敗: 請嘗試變更帳號後在下載")], # 列表為可觸發強制停止任務
         }
-        # 重用
-        self.error_rule["AccountDisabled"] = self.error_rule["STEAM GUARD"]
-        atexit.register(self.process_cleanup)
+        self.error_rule["AccountDisabled"] = self.error_rule["STEAM GUARD"] # 重用
+        atexit.register(self.process_cleanup) # 關閉清理
 
     """ ====== 關閉清理 ====== """
     def Closure(self):
@@ -253,8 +252,7 @@ class Backend:
                 if proc.info['name'].lower() == processName.lower():
                     pids.append(proc.pid)
                     proc.kill()
-            except:
-                continue
+            except:continue
         self.del_error_file(pids)
 
     def del_error_file(self, pids):
