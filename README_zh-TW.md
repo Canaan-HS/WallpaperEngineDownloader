@@ -1,6 +1,6 @@
-# 桌布引擎創意工坊下載器
+# 桌布引擎創意工坊下載器 重製版
 
-一款簡單復刻 [WallpaperEngineWorkshopDownloader](https://github.com/oureveryday/WallpaperEngineWorkshopDownloader) 重寫 UI 的專案
+一款基於 [WallpaperEngineWorkshopDownloader](https://github.com/oureveryday/WallpaperEngineWorkshopDownloader) 重寫 UI 並添加多個新功能的專案
 
 ## 預覽
 
