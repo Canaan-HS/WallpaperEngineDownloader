@@ -17,6 +17,7 @@ import ctypes
 # 標準庫 - 文件 & 解析
 from pathlib import Path
 from urllib.parse import unquote
+from types import SimpleNamespace
 from collections import OrderedDict, defaultdict
 
 # GUI (Tkinter)
@@ -41,12 +42,19 @@ class DLL:
         self.transl = language()
         self.account = "ruiiixx"
         self.appid_dict = {"Wallpaper Engine": "431960"}
-        # 保存數據的模板, 目前取索引值的方式, 不能隨意變動順序, 只能變動名稱
-        self.template = ["Sava_Path", "Account", "Application", "window_x", "window_y", "window_width", "window_height", "Tasks"]
+
+        # 配置模板 (Key 是調用值, Value 是輸出值)
+        self.cfg_key = {
+            "Save": "Sava_Path",
+            "Acc": "Account", "App": "Application",
+            "X": "window_x", "Y": "window_y",
+            "W": "window_width", "H": "window_height",
+            "Task": "Tasks"
+        }
 
         # 依賴載入路徑
         self.id_json = self.current_dir / "APPID/ID.json"
-        self.config_cfg = self.current_dir / "Config.json"
+        self.config_json = self.current_dir / "Config.json"
         self.save_path = self.current_dir / self.output_folder
         self.icon_ico = self.current_dir / "Icon/DepotDownloader.ico"
         self.depot_exe = self.current_dir / "DepotdownloaderMod/DepotDownloadermod.exe"
@@ -62,13 +70,15 @@ class DLL:
             except Exception as e:
                 print(f"{self.transl('讀取配置文件時出錯')}: {e}")
 
-        self.config_data = {} # 空數據宣告
-        if self.config_cfg.exists():
-            try:
-                config_dict = json.loads(self.config_cfg.read_text(encoding="utf-8"))
+        self.cfg_data = {}
+        self.CK = SimpleNamespace(**self.cfg_key) # 方便簡短調用
 
-                self.config_data = {key: config_dict[key] for key in self.template if key in config_dict} # 解構數據
-                record_path = Path(self.config_data.get(self.template[0], ""))
+        if self.config_json.exists():
+            try:
+                config_dict = json.loads(self.config_json.read_text(encoding="utf-8"))
+
+                self.cfg_data = {val: config_dict[val] for val in self.cfg_key.values() if val in config_dict} # 解構數據
+                record_path = Path(self.cfg_data.get(self.CK.Save, ""))
 
                 if record_path.is_absolute():
                     self.save_path = record_path if record_path.name == self.output_folder else record_path / self.output_folder
@@ -79,15 +89,15 @@ class DLL:
         old_data = {}
         cache_data = ""
 
-        if self.config_cfg.exists():
-            old_data = json.loads(self.config_cfg.read_text(encoding="utf-8"))
+        if self.config_json.exists():
+            old_data = json.loads(self.config_json.read_text(encoding="utf-8"))
             cache_data = old_data.copy()
 
         old_data.update(data)
-        self.final_config = {key: old_data.get(key, "") for key in self.template if key in old_data}  
+        self.final_config = {val: old_data.get(val, "") for val in self.cfg_key.values() if val in old_data}  
 
         if cache_data != self.final_config:
-            self.config_cfg.write_text(
+            self.config_json.write_text(
                 json.dumps(old_data, indent=4, separators=(',',':')),
                 encoding="utf-8"
             )
@@ -96,10 +106,10 @@ class GUI:
     def __init__(self):
         self.title(f"Wallpaper Engine {self.transl('創意工坊下載器')}")
 
-        x = self.config_data.get(self.template[3], 200)
-        y = self.config_data.get(self.template[4], 200)
-        width = self.config_data.get(self.template[5], 600)
-        height = self.config_data.get(self.template[6], 700)
+        x = self.cfg_data.get(self.CK.X, 200)
+        y = self.cfg_data.get(self.CK.Y, 200)
+        width = self.cfg_data.get(self.CK.W, 600)
+        height = self.cfg_data.get(self.CK.H, 700)
 
         self.geometry(f"{width}x{height}+{x}+{y}")
         self.minsize(350, 250)
@@ -143,12 +153,12 @@ class GUI:
         username_label.grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(10, 10))
 
         self.username = tk.StringVar(self)
-        self.username.set(f"{self.transl('帳號')}->{self.config_data.get(self.template[1], self.acc_list[0])}") # 下面取用數據時, 會進行判斷是否存在, 這邊直接填充
+        self.username.set(f"{self.transl('帳號')}->{self.cfg_data.get(self.CK.Acc, self.acc_list[0])}") # 下面取用數據時, 會進行判斷是否存在, 這邊直接填充
         self.username_menu = ttk.Combobox(self.select_frame, textvariable=self.username, font=("Microsoft JhengHei", 10), width=15, cursor="hand2", justify="center", state="readonly", values=self.acc_list)
         self.username_menu.grid(row=0, column=1, sticky="w", padx=(0, 20))
 
         self.serverid = tk.StringVar(self)
-        self.serverid.set(f"{self.transl('應用')}->{self.config_data.get(self.template[2], self.app_list[0])}")
+        self.serverid.set(f"{self.transl('應用')}->{self.cfg_data.get(self.CK.App, self.app_list[0])}")
         self.serverid_menu = ttk.Combobox(self.select_frame, textvariable=self.serverid, font=("Microsoft JhengHei", 10),  cursor="hand2", justify="center", values=self.app_list)
         self.serverid_menu.grid(row=0, column=2, sticky="we")
         self.server_search()
@@ -179,7 +189,7 @@ class GUI:
         self.input_text.grid(row=1, column=0, sticky="nsew")
         threading.Thread(target=self.listen_clipboard).start()
 
-        for task in self.config_data.get(self.template[7], []): # 添加舊任務數據
+        for task in self.cfg_data.get(self.CK.Task, []): # 添加舊任務數據
             self.input_text.insert("end", f"{task}\n")
 
         self.run_button = tk.Button(self.operate_frame, text=self.transl('下載'), font=("Microsoft JhengHei", 14, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=lambda: threading.Thread(target=self.download_trigger).start())
@@ -653,8 +663,7 @@ def language(lang=None):
                 lang = locale.getlocale()[1].replace('cp', '')
 
         if lang.isdigit():
-            lang = Locale.get(lang, 'en_US')
-            ML = Word.get(lang)
+            ML = Word.get(Locale.get(lang, 'en_US'), lang)
         else:
             ML = Word.get(lang, 'en_US') 
 
