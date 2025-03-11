@@ -532,7 +532,7 @@ class Backend:
         pyperclip.copy("") # 避免開啟直接貼上
 
         while True:
-            clipboard = unquote(pyperclip.paste()) # unquote 是沒必要的, 方便觀看而已, 但會有額外性能開銷
+            clipboard = unquote(pyperclip.paste()).strip() # unquote 是沒必要的, 方便觀看而已, 但會有額外性能開銷
 
             if self.link_regular.match(clipboard) and clipboard not in self.capture_record:
                 self.capture_record.add(clipboard)
@@ -556,7 +556,7 @@ class Backend:
 
             self.token = True # 重設令牌
             self.task_cache.clear() # 重設任務緩存
-            self.capture_record.clear() # 重設擷取紀錄
+            # self.capture_record.clear()
 
     def input_stream(self):
         while True:
