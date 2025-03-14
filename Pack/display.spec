@@ -4,8 +4,8 @@ a = Analysis(
     ['WallpaperDownloader.pyw'],
     pathex=[],
     binaries=[],
-    datas=[('./Icon/DepotDownloader.ico', '.')], # 程式所需的依賴檔案 (例如Icon)
-    hiddenimports=[], # 排除不需要的模塊
+    datas=[('./Icon/DepotDownloader.ico', '.')],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -24,11 +24,11 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='WallpaperDownloader', # 打包後的 exe 文件名
+    name='WallpaperDownloader',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True, # 啟用 upx 壓縮 (需要再 Scripts , 放入 upx.exe)
+    upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
@@ -37,6 +37,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    version='version_info.txt', # 添加版本文件
-    icon=['./Icon/DepotDownloader.ico'], # 添加Icon
+    version='version_info.txt',
+    icon=['./Icon/DepotDownloader.ico'],
 )
