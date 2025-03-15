@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 a = Analysis(
-    ['WallpaperDownloader.pyw'],
+    ['../WallpaperDownloader.pyw'],
     pathex=[],
     binaries=[],
     datas=[('../Icon/DepotDownloader.ico', '.')],
