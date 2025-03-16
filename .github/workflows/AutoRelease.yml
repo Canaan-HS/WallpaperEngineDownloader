@@ -64,7 +64,7 @@ jobs:
 
       - name: 壓縮發佈文件
         run: |
-          7z a -tzip -m0=lzma2 -mx=9 -mfb=128 -md=2048m -ms=1g -mqs=on WallpaperEngineDownloader.zip WallpaperEngineDownloader
+          7z a -tzip -mx=9 WallpaperEngineDownloader.zip WallpaperEngineDownloader
 
       - name: 讀取版本信息
         id: version
