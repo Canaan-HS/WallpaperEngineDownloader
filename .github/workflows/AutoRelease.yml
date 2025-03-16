@@ -45,23 +45,26 @@ jobs:
       - name: 使用 PyInstaller 編譯
         run: pyinstaller Pack/display.spec
 
-      - name: 合併發佈文件
+      - name: 組合發佈文件
         run: |
           # 移動編譯好的 exe
-          Move-Item -Path "dist/*.exe" -Destination "WallpaperEngineDownloader/" -Force
+          Get-ChildItem -Path "dist" -Filter "*.exe" | Move-Item -Destination "WallpaperEngineDownloader/" -Force
 
           # 移動 APPID 資料夾 (刪除 AutoCrawl.js)
-          mkdir -p "WallpaperEngineDownloader/APPID"
+          New-Item -Path "WallpaperEngineDownloader/APPID" -ItemType Directory -Force
           Get-ChildItem -Path "APPID" -Exclude "AutoCrawl.js" | Copy-Item -Destination "WallpaperEngineDownloader/APPID" -Recurse
 
           # 移動其他必要資料夾
           Copy-Item -Path "DepotDownloaderMod" -Destination "WallpaperEngineDownloader/" -Recurse
           Copy-Item -Path "Icon" -Destination "WallpaperEngineDownloader/" -Recurse
 
+      - name: 安裝 7-Zip
+        run: |
+          choco install 7zip -y
+
       - name: 壓縮發佈文件
         run: |
-          # 使用最高壓縮等級 9
-          Compress-Archive -Path "WallpaperEngineDownloader" -DestinationPath "WallpaperEngineDownloader.zip" -CompressionLevel Optimal -Force
+          7z a -tzip -m0=lzma2 -mx=9 -mfb=128 -md=2048m -ms=1g -mqs=on WallpaperEngineDownloader.zip WallpaperEngineDownloader
 
       - name: 讀取版本信息
         id: version
