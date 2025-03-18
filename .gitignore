@@ -1,10 +1,6 @@
 *.cfg
 *.cmd
-*.txt
-*.spec
 Config.json
 
 PackSpace*
-DepotDownloaderMod
-
 !requirements.txt
