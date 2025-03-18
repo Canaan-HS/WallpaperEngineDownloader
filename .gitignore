@@ -2,5 +2,6 @@
 *.cmd
 Config.json
 
-PackSpace*
+VENV*
+Pack/nuitka.txt
 !requirements.txt
