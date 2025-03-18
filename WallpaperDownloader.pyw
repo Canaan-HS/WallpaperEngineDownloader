@@ -220,7 +220,7 @@ class Backend:
 
         self.token = True # 可強制停止所有任務
         self.error_rule = {
-            "Microsoft.NETCore.App": self.transl("下載失敗: 請先安裝 .NET 9 執行庫"),
+            ".NET": self.transl("下載失敗: 請先安裝 .NET 9 執行庫"),
             "Unable to locate manifest ID for published file": self.transl("下載失敗: 該項目可能已被刪除，或應用設置錯誤"),
             "STEAM GUARD": [self.transl("下載失敗: 請嘗試變更帳號後在下載")], # 列表為可觸發強制停止任務
         }
