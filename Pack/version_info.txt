@@ -4,7 +4,6 @@
 # http://msdn.microsoft.com/en-us/library/ms646997.aspx
 VSVersionInfo(
   ffi=FixedFileInfo(
-    # 文件版本號 (必須有4個值)
     filevers=(1, 0, 0, 0),
     prodvers=(1, 0, 0, 0),
     # Contains a bitmask that specifies the valid bits 'flags'r
@@ -23,7 +22,6 @@ VSVersionInfo(
     # Creation date and time stamp.
     date=(0, 0)
     ),
-  # 上面基本不用更改(改下面)
   kids=[
     StringFileInfo(
       [
