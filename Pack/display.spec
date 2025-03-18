@@ -4,7 +4,7 @@ a = Analysis(
     ['WallpaperDownloader.pyw'],
     pathex=[],
     binaries=[],
-    datas=[('./Icon/DepotDownloader.ico', '.')],
+    datas=[('../Icon/DepotDownloader.ico', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -38,5 +38,5 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     version='version_info.txt',
-    icon=['./Icon/DepotDownloader.ico'],
+    icon=['../Icon/DepotDownloader.ico'],
 )
