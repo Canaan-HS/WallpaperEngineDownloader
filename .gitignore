@@ -1,7 +1,8 @@
 *.cfg
 *.cmd
+*.txt
 Config.json
 
-VENV*
-Pack/nuitka.txt
+VENV
+__pycache__
 !requirements.txt
