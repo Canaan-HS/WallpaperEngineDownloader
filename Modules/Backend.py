@@ -359,6 +359,7 @@ class Backend:
 
             pyperclip.copy("") # 重設剪貼簿 避免 record 清除後再次擷取
 
+            self.input_text.delete("1.0", "end")
             for task in self.task_cache.values():
                 self.input_text.insert("end", f"{task['url']}\n")
 
