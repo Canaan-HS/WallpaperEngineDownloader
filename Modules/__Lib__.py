@@ -16,6 +16,7 @@ import locale
 import ctypes
 
 from pathlib import Path
+from operator import itemgetter
 from urllib.parse import unquote
 from types import SimpleNamespace
 from collections import defaultdict
