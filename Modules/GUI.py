@@ -1,16 +1,17 @@
 from .__Lib__ import *
 
 class GUI:
-    def __init__(self):
-        self.title(f"Wallpaper Engine {self.transl('創意工坊下載器')}")
+    def __init__(self): # 方便還原
+        self.win_title = f"Wallpaper Engine {self.transl('創意工坊下載器')}"
 
         x = self.cfg_data.get(self.CK.X, 200)
         y = self.cfg_data.get(self.CK.Y, 200)
         width = self.cfg_data.get(self.CK.W, 600)
         height = self.cfg_data.get(self.CK.H, 700)
 
-        self.geometry(f"{width}x{height}+{x}+{y}")
+        self.title(self.win_title)
         self.minsize(350, 250)
+        self.geometry(f"{width}x{height}+{x}+{y}")
 
         try:
             self.iconbitmap(self.icon_ico)
