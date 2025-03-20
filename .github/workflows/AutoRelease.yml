@@ -44,8 +44,11 @@ jobs:
           $tag = $(.\Pack\yq.exe -o=json e '.tag' version.yaml).Trim('"')
           $version = $(.\Pack\yq.exe -o=json e '.version' version.yaml).Trim('"')
 
+          # 讀取描述但保持換行格式
           $description = $(.\Pack\yq.exe -r e '.description' version.yaml)
-          $description = $description -replace "`r`n", "`n" -replace "`n", "%0A"
+
+          # 為了在 GitHub Actions 輸出中保留換行，將換行符轉換為特殊標記
+          $descriptionOutput = $description -replace "`r`n", "`n" -replace "`n", "%0A"
 
           # 輸出到控制台以便檢查
           Write-Host "Tag: $tag"
@@ -55,7 +58,7 @@ jobs:
           # 輸出到 GitHub Output
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
           echo "TAG=$tag" >> $env:GITHUB_OUTPUT
-          echo "DESCRIPTION=$description" >> $env:GITHUB_OUTPUT
+          echo "DESCRIPTION=$descriptionOutput" >> $env:GITHUB_OUTPUT
 
       - name: 設定 Python 環境
         uses: actions/setup-python@v4
@@ -63,28 +66,47 @@ jobs:
           python-version: "3.13.2"
           cache: "pip" # 啟用 pip 緩存
 
-      - name: 緩存 Python 依賴
+      - name: 緩存 Python 下載
         uses: actions/cache@v4.2.3
+        id: cache-pip-downloads
         with:
           path: |
             ~\AppData\Local\pip\Cache
             ~\.cache\pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('Pack/requirements.txt') }}
+          key: ${{ runner.os }}-pip-downloads-${{ hashFiles('Pack/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-pip-downloads-
 
-      - name: 安裝 Python 套件
+      - name: 緩存 Python 虛擬環境
+        uses: actions/cache@v4.2.3
+        id: cache-venv
+        with:
+          path: |
+            .venv
+            ~\AppData\Roaming\Python
+            ~\AppData\Local\Programs\Python
+          key: ${{ runner.os }}-venv-py3.13.2-${{ hashFiles('Pack/requirements.txt') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-venv-py3.13.2-
+
+      - name: 創建並設置虛擬環境
         run: |
+          if (-not (Test-Path ".venv")) {
+            python -m venv .venv
+          }
+          .\.venv\Scripts\Activate.ps1
           python -m pip install --upgrade pip
-          pip install -r Pack/requirements.txt
+          # 始終更新依賴庫到最新版本
+          pip install --upgrade -r Pack/requirements.txt
 
       - name: 緩存 PyInstaller
         uses: actions/cache@v4.2.3
         with:
           path: |
             ~\AppData\Local\pyinstaller
+            ~\AppData\Roaming\pyinstaller
             build
-          key: ${{ runner.os }}-pyinstaller-${{ hashFiles('Pack/display.spec', 'WallpaperDownloader.pyw') }}
+          key: ${{ runner.os }}-pyinstaller-${{ hashFiles('Pack/display.spec', 'WallpaperDownloader.pyw', 'Pack/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pyinstaller-
 
@@ -94,7 +116,9 @@ jobs:
           Copy-Item -Path "Pack/upx.exe" -Destination $pythonPath -Force
 
       - name: PyInstaller 編譯
-        run: pyinstaller Pack/display.spec
+        run: |
+          .\.venv\Scripts\Activate.ps1
+          pyinstaller Pack/display.spec
 
       - name: 組合發佈文件
         run: |
@@ -130,6 +154,14 @@ jobs:
             }
           result-encoding: string
 
+      - name: 準備發布描述
+        id: prepare_description
+        run: |
+          $description = '${{ steps.version.outputs.DESCRIPTION }}'.replace(/%0A/g, '\n')
+          echo "FORMATTED_DESCRIPTION<<EOF" >> $env:GITHUB_OUTPUT
+          echo "$description" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+
       - name: 更新現有發佈
         if: steps.check_release.outputs.result == 'exists'
         uses: actions/github-script@v6
@@ -144,16 +176,13 @@ jobs:
               tag: '${{ steps.version.outputs.TAG }}'
             });
 
-            // 處理描述中的換行符
-            const description = '${{ steps.version.outputs.DESCRIPTION }}'.replace(/%0A/g, '\n');
-
             // 更新發佈信息
             await github.rest.repos.updateRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: release.data.id,
               name: 'Release ${{ steps.version.outputs.VERSION }}',
-              body: description
+              body: `${{ steps.prepare_description.outputs.FORMATTED_DESCRIPTION }}`
             });
 
             // 刪除現有資產
@@ -188,7 +217,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.TAG }}
           name: Release ${{ steps.version.outputs.VERSION }}
-          body: ${{ steps.version.outputs.DESCRIPTION }}
+          body: ${{ steps.prepare_description.outputs.FORMATTED_DESCRIPTION }}
           draft: false
           prerelease: false
           files: WallpaperEngineDownloader.zip
