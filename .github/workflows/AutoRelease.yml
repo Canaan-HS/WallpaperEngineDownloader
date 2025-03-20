@@ -28,12 +28,19 @@ jobs:
           # 創建發佈文件夾
           mkdir WallpaperEngineDownloader
 
-          # 讀取版本信息
-          $versionYaml = .\Pack\yq.exe e '.' version.yaml
-          $tag = ($versionYaml | Select-String -Pattern '(?<=tag: ).*' | ForEach-Object { $_.Matches[0].Value }).Trim()
-          $version = ($versionYaml | Select-String -Pattern '(?<=version: ).*' | ForEach-Object { $_.Matches[0].Value }).Trim()
-          $description = ($versionYaml | Select-String -Pattern '(?<=description: ).*' | ForEach-Object { $_.Matches[0].Value }).Trim()
-
+          # 讀取版本信息 - 使用 yq 直接輸出 JSON 格式
+          $tag = $(.\Pack\yq.exe -o=json e '.tag' version.yaml).Trim('"')
+          $version = $(.\Pack\yq.exe -o=json e '.version' version.yaml).Trim('"')
+          $description = $(.\Pack\yq.exe -o=json e '.description' version.yaml).Trim('"')
+          
+          # 輸出到控制台以便檢查
+          Write-Host "Tag: $tag"
+          Write-Host "Version: $version"
+          Write-Host "Description: $description"
+          
+          # 處理多行描述內容
+          $description = $description -replace "`n", "%0A"
+          
           # 輸出到 GitHub Output
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
           echo "TAG=$tag" >> $env:GITHUB_OUTPUT
@@ -98,21 +105,24 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-
+            
             // 獲取現有發佈
             const release = await github.rest.repos.getReleaseByTag({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag: '${{ steps.version.outputs.TAG }}'
             });
-
+            
+            // 處理描述中的換行符
+            const description = '${{ steps.version.outputs.DESCRIPTION }}'.replace(/%0A/g, '\n');
+            
             // 更新發佈信息
             await github.rest.repos.updateRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: release.data.id,
               name: 'Release ${{ steps.version.outputs.VERSION }}',
-              body: '${{ steps.version.outputs.DESCRIPTION }}'
+              body: description
             });
 
             // 刪除現有資產
