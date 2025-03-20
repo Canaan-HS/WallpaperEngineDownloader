@@ -31,7 +31,9 @@ jobs:
           # 讀取版本信息 - 使用 yq 直接輸出 JSON 格式
           $tag = $(.\Pack\yq.exe -o=json e '.tag' version.yaml).Trim('"')
           $version = $(.\Pack\yq.exe -o=json e '.version' version.yaml).Trim('"')
-          $description = $(.\Pack\yq.exe -o=json e '.description' version.yaml).Trim('"')
+
+          $description = $(.\Pack\yq.exe -r e '.description' version.yaml)
+          $description = $description -replace "`r`n", "`n" -replace "`n", "%0A"
           
           # 輸出到控制台以便檢查
           Write-Host "Tag: $tag"
