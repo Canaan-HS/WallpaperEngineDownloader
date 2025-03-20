@@ -261,11 +261,48 @@ class Backend:
             index += 1
         return path
 
+    def listen_network(self, process):
+        net_io = psutil.net_io_counters()
+        bytes_initial = net_io.bytes_sent + net_io.bytes_recv  # 計算初始的總流量
+
+        while process.poll() is None:
+            net_io = psutil.net_io_counters()
+            bytes_current = net_io.bytes_sent + net_io.bytes_recv  # 當前總流量
+
+            # 計算流量速度，轉換為 Mbps
+            total_speed = ((bytes_current - bytes_initial) * 8) / 1e6
+            speed_text = f"{(total_speed / 1000):.2f} Gbps" if total_speed >= 1000 else f"{total_speed:.2f} Mbps"
+            self.title(f"{self.win_title} （{speed_text}）")
+
+            bytes_initial = bytes_current
+            time.sleep(1)
+
     def console_update(self, message, *args):
         self.console.config(state="normal")
         self.console.insert("end", message, *args)
         self.console.yview("end")
         self.console.config(state="disabled")
+        
+    def status_switch(self, state):
+        if state == "disabled":
+            self.merge_button.config(state="disabled", cursor="no")
+            self.run_button.config(state="disabled", cursor="no")
+        else:
+            self.token = True # 重設令牌
+            pyperclip.copy("") # 重設剪貼簿 避免 record 清除後再次擷取
+            self.title(self.win_title) # 重設標題
+            # self.capture_record.clear()
+
+            if self.task_cache:
+                self.process_cleanup()
+
+                self.input_text.delete("1.0", "end")
+                for task in self.task_cache.values():
+                    self.input_text.insert("end", f"{task['url']}\n")
+                self.task_cache.clear() # 重設任務緩存
+
+            self.merge_button.config(state="normal", cursor="hand2")
+            self.run_button.config(state="normal", cursor="hand2")
 
     def download(self, taskId, appId, pubId, searchText, Username, Password):
         if not self.token: return
@@ -295,6 +332,7 @@ class Backend:
                 creationflags=subprocess.CREATE_NO_WINDOW
             )
 
+            threading.Thread(target=self.listen_network, args=(process,), daemon=True).start()
             for line in process.stdout:
                 self.console_update(line)
 
@@ -329,7 +367,7 @@ class Backend:
             self.console_update(f"> {self.transl('例外中止')}\n", "important")
             messagebox.showerror(self.transl('例外'), traceback.format_exc(), parent=self)
 
-    """ ====== 觸發與 UI 操作 ====== """
+    """ ====== 處理數據 與 下載觸發 ====== """
     def get_config(self, original=False):
         username, password = next(iter(
                 self.account_dict.get(self.username.get().split("->")[-1], self.account_dict.get(self.account)).items()
@@ -356,26 +394,6 @@ class Backend:
                 self.input_text.yview("end")
 
             time.sleep(0.3)
-
-    def status_switch(self, state):
-        if state == "disabled":
-            self.merge_button.config(state="disabled", cursor="no")
-            self.run_button.config(state="disabled", cursor="no")
-        else:
-            self.token = True # 重設令牌
-            pyperclip.copy("") # 重設剪貼簿 避免 record 清除後再次擷取
-            # self.capture_record.clear()
-
-            if self.task_cache:
-                self.process_cleanup()
-
-                self.input_text.delete("1.0", "end")
-                for task in self.task_cache.values():
-                    self.input_text.insert("end", f"{task['url']}\n")
-                self.task_cache.clear() # 重設任務緩存
-
-            self.merge_button.config(state="normal", cursor="hand2")
-            self.run_button.config(state="normal", cursor="hand2")
 
     def input_stream(self):
         while True:
