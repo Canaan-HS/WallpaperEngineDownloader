@@ -50,6 +50,12 @@ winget install Microsoft.DotNet.SDK.9
 - **Queue Management**
   Users can continuously add links, which will be sequentially added to the download queue until the input field is empty. If a link is manually deleted from the input field before being processed (i.e., before removal), it will not be added to the download queue.
 
+## **Auto Save**
+- **Save Settings**  
+  When the program is closed, the window size and position will be automatically saved, and these settings will be applied the next time the program is opened.
+- **Restore Records**  
+  URLs that are present in the task list, as well as those that are being downloaded but not yet completed, will be saved when the program is closed. Upon reopening, these URLs will automatically be restored to the task list.
+
 ## **File Integration**
 - **File Selection**
   Lists all files in the output path (excluding the `!【Integrate】!` folder), displaying file types and supporting single selection or multi-selection via `Ctrl`/`Shift` keys.
