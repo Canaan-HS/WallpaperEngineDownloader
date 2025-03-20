@@ -43,11 +43,11 @@ a = Analysis(
 )
 
 # 排除不需要的二進制文件
-a.binaries = [
-    binary for binary in a.binaries
-    if not any(binary[0].startswith(prefix) for prefix in excluded_packages)
-    and not any(binary[1].lower().endswith(ext) for ext in excluded_file_types)
-]
+#a.binaries = [
+#    binary for binary in a.binaries
+#    if not any(binary[0].startswith(prefix) for prefix in excluded_packages)
+#    and not any(binary[1].lower().endswith(ext) for ext in excluded_file_types)
+#]
 
 # 最大化壓縮設置
 pyz = PYZ(a.pure, a.zipped_data, compress=True)
@@ -66,7 +66,7 @@ exe = EXE(
     strip=True,
     console=False,
     upx=True,
-    upx_exclude=[],
+    upx_exclude=['python3.dll', 'libcrypto-3.dll'],
     runtime_tmpdir=None,
     bootloader_ignore_signals=False,
     disable_windowed_traceback=True,
