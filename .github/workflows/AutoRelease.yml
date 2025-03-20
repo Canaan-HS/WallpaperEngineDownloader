@@ -157,7 +157,8 @@ jobs:
       - name: 準備發布描述
         id: prepare_description
         run: |
-          $description = '${{ steps.version.outputs.DESCRIPTION }}'.replace(/%0A/g, '\n')
+          $description = '${{ steps.version.outputs.DESCRIPTION }}'
+          $description = $description -replace '%0A', "`n"
           echo "FORMATTED_DESCRIPTION<<EOF" >> $env:GITHUB_OUTPUT
           echo "$description" >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
