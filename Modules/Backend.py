@@ -61,6 +61,7 @@ class Backend:
                     pids.append(proc.pid)
                     proc.kill()
             except:continue
+
         self.del_error_file(pids)
 
     def del_error_file(self, pids):
@@ -100,23 +101,23 @@ class Backend:
         popup.after(800, popup.destroy)
 
     def server_search(self):
+
         # 編譯前綴樹函數
         def build_trie(data_list):
-            trie = {}
+            trie = defaultdict(dict)
             for appid in data_list:
                 current = trie
                 for char in appid.lower():
-                    if char not in current:
-                        current[char] = {}
-                    current = current[char]
+                    current = current.setdefault(char, {})
                 current["$"] = appid
             return trie
+
         # 搜尋前綴樹函數
         def search_trie(trie, prefix):
             current = trie
             for char in prefix:
                 if char not in current:
-                    return iter([])
+                    return iter([])  # 前綴無法匹配，返回空的迭代器
                 current = current[char]
 
             def match_generator():
@@ -134,7 +135,7 @@ class Backend:
         appid_trie = build_trie(self.app_list)
 
         def on_input(event):
-            prefix = event.widget.get().lower()
+            prefix = event.widget.get().lower() # 忽略大小寫
             matches = search_trie(appid_trie, prefix) if prefix else self.app_list
             self.serverid_menu.configure(values=list(matches))
 
@@ -270,6 +271,7 @@ class Backend:
         if not self.token: return
 
         try:
+            full_download = False
             end_message = self.transl('下載完成')
             process_name = self.illegal_regular.sub("-", searchText if searchText else pubId).strip()
 
@@ -295,9 +297,13 @@ class Backend:
 
             for line in process.stdout:
                 self.console_update(line)
-                err_message = self.console_analysis(line)
 
-                # 消息是列表狀態, 代表需要強制中止
+                # 檢查是否下載完成
+                if "Total downloaded" in line:
+                    full_download = True
+
+                # 分析可能的錯誤訊息, 消息是列表狀態, 代表需要強制中止
+                err_message = self.console_analysis(line)
                 if isinstance(err_message, list):
                     self.token = False
                     process.terminate()
@@ -309,12 +315,14 @@ class Backend:
             process.stdout.close()
             process.wait()
 
-            if end_message == self.transl('下載完成') and Path(task_path).exists():
+            # 雖然可能不需要這麼多檢測, 但避免例外
+            if full_download and end_message == self.transl('下載完成') and Path(task_path).exists():
                 self.task_cache.pop(taskId, None) # 刪除已下載緩存
                 self.complete_record.add(taskId) # 添加下載完成紀錄
             else:
-                # 這邊因為進程可能還需要繼續, 而不刪除錯誤的文件
-                end_message = end_message if end_message != self.transl('下載完成') else self.transl('下載失敗') # 用於顯示不在 console_analysis 中的錯誤
+                # 進程可能還需要繼續, 不刪除錯誤的文件
+                # 用於顯示不在 console_analysis 中的錯誤
+                end_message = end_message if end_message != self.transl('下載完成') else self.transl('下載失敗')
 
             self.console_update(f"> [{process_name}] {end_message}\n", "important")
         except:
@@ -354,18 +362,20 @@ class Backend:
             self.merge_button.config(state="disabled", cursor="no")
             self.run_button.config(state="disabled", cursor="no")
         else:
+            self.token = True # 重設令牌
+            pyperclip.copy("") # 重設剪貼簿 避免 record 清除後再次擷取
+            # self.capture_record.clear()
+
+            if self.task_cache:
+                self.process_cleanup()
+
+                self.input_text.delete("1.0", "end")
+                for task in self.task_cache.values():
+                    self.input_text.insert("end", f"{task['url']}\n")
+                self.task_cache.clear() # 重設任務緩存
+
             self.merge_button.config(state="normal", cursor="hand2")
             self.run_button.config(state="normal", cursor="hand2")
-
-            pyperclip.copy("") # 重設剪貼簿 避免 record 清除後再次擷取
-
-            self.input_text.delete("1.0", "end")
-            for task in self.task_cache.values():
-                self.input_text.insert("end", f"{task['url']}\n")
-
-            self.token = True # 重設令牌
-            self.task_cache.clear() # 重設任務緩存
-            # self.capture_record.clear()
 
     def input_stream(self):
         while True:
