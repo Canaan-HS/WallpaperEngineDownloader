@@ -1,5 +1,5 @@
 from .__Lib__ import *
 
-from .DLL import DLL
+from .ENV import ENV
 from .GUI import GUI
 from .Backend import Backend
