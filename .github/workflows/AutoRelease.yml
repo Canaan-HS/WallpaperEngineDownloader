@@ -6,6 +6,9 @@ on:
     branches: [main]
     paths:
       - "version.yaml"
+      - "Pack/**"
+      - "APPID/**"
+      - "DepotDownloaderMod/**"
   workflow_dispatch:
 
 permissions:
@@ -22,6 +25,15 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: 緩存工具文件
+        uses: actions/cache@v4.2.3
+        with:
+          path: |
+            Pack/7z.exe
+            Pack/yq.exe
+            Pack/upx.exe
+          key: ${{ runner.os }}-tools-${{ hashFiles('Pack/7z.exe', 'Pack/yq.exe', 'Pack/upx.exe') }}
+
       - name: 初始化依賴
         id: version
         run: |
@@ -34,15 +46,12 @@ jobs:
 
           $description = $(.\Pack\yq.exe -r e '.description' version.yaml)
           $description = $description -replace "`r`n", "`n" -replace "`n", "%0A"
-          
+
           # 輸出到控制台以便檢查
           Write-Host "Tag: $tag"
           Write-Host "Version: $version"
           Write-Host "Description: $description"
-          
-          # 處理多行描述內容
-          $description = $description -replace "`n", "%0A"
-          
+
           # 輸出到 GitHub Output
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
           echo "TAG=$tag" >> $env:GITHUB_OUTPUT
@@ -52,12 +61,32 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.13.2"
-          cache: "pip"
+          cache: "pip" # 啟用 pip 緩存
+
+      - name: 緩存 Python 依賴
+        uses: actions/cache@v4.2.3
+        with:
+          path: |
+            ~\AppData\Local\pip\Cache
+            ~\.cache\pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('Pack/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: 安裝 Python 套件
         run: |
           python -m pip install --upgrade pip
           pip install -r Pack/requirements.txt
+
+      - name: 緩存 PyInstaller
+        uses: actions/cache@v4.2.3
+        with:
+          path: |
+            ~\AppData\Local\pyinstaller
+            build
+          key: ${{ runner.os }}-pyinstaller-${{ hashFiles('Pack/display.spec', 'WallpaperDownloader.pyw') }}
+          restore-keys: |
+            ${{ runner.os }}-pyinstaller-
 
       - name: 複製 UPX 到外帶環境
         run: |
@@ -107,17 +136,17 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            
+
             // 獲取現有發佈
             const release = await github.rest.repos.getReleaseByTag({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag: '${{ steps.version.outputs.TAG }}'
             });
-            
+
             // 處理描述中的換行符
             const description = '${{ steps.version.outputs.DESCRIPTION }}'.replace(/%0A/g, '\n');
-            
+
             // 更新發佈信息
             await github.rest.repos.updateRelease({
               owner: context.repo.owner,
