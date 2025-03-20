@@ -48,7 +48,7 @@ a.binaries = [
     and not any(binary[1].lower().endswith(ext) for ext in excluded_file_types)
 ]
 
-pyz = PYZ(a.pure, a.zipped_data)
+pyz = PYZ(a.pure, a.zipped_data, compress=True)
 
 exe = EXE(
     pyz,
@@ -62,7 +62,7 @@ exe = EXE(
     icon=['../Icon/DepotDownloader.ico'],
     debug=False,
     bootloader_ignore_signals=False,
-    strip=False,
+    strip=True,
     upx=True,
     upx_exclude=['python3.dll', 'libcrypto-3.dll'],
     runtime_tmpdir=None,
