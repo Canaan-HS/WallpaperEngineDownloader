@@ -36,20 +36,19 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],  # 傳遞排除庫的列表
+    excludes=excludes ,  # 傳遞排除庫的列表
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     noarchive=False
 )
 
 # 排除不需要的二進制文件
-#a.binaries = [
-#    binary for binary in a.binaries
-#    if not any(binary[0].startswith(prefix) for prefix in excluded_packages)
-#    and not any(binary[1].lower().endswith(ext) for ext in excluded_file_types)
-#]
+a.binaries = [
+    binary for binary in a.binaries
+    if not any(binary[0].startswith(prefix) for prefix in excluded_packages)
+    and not any(binary[1].lower().endswith(ext) for ext in excluded_file_types)
+]
 
-# 最大化壓縮設置
 pyz = PYZ(a.pure, a.zipped_data, compress=True)
 
 exe = EXE(
@@ -74,6 +73,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    optimize=2,
     clean=True
 )
