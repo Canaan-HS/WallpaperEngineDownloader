@@ -49,7 +49,7 @@ a.binaries = [
     and not any(binary[1].lower().endswith(ext) for ext in excluded_file_types)
 ]
 
-pyz = PYZ(a.pure, a.zipped_data, compress=True)
+pyz = PYZ(a.pure, a.zipped_data)
 
 exe = EXE(
     pyz,
