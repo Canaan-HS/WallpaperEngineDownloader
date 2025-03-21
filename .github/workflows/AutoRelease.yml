@@ -25,15 +25,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: 緩存工具文件
-        uses: actions/cache@v4.2.3
-        with:
-          path: |
-            Pack/7z.exe
-            Pack/yq.exe
-            Pack/upx.exe
-          key: ${{ runner.os }}-tools-${{ hashFiles('Pack/7z.exe', 'Pack/yq.exe', 'Pack/upx.exe') }}
-
       - name: 初始化依賴
         id: version
         run: |
@@ -137,90 +128,94 @@ jobs:
         run: |
           .\Pack\7z.exe a -tzip -mx=9 WallpaperEngineDownloader.zip WallpaperEngineDownloader
 
-      - name: 檢查發佈是否已存在
-        id: check_release
-        uses: actions/github-script@v6
-        with:
-          script: |
-            try {
-              const release = await github.rest.repos.getReleaseByTag({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag: '${{ steps.version.outputs.TAG }}'
-              });
-              return 'exists';
-            } catch (error) {
-              return 'not_exists';
-            }
-          result-encoding: string
-
-      - name: 準備發布描述
-        id: prepare_description
-        run: |
-          $description = '${{ steps.version.outputs.DESCRIPTION }}'
-          $description = $description -replace '%0A', "`n"
-          echo "FORMATTED_DESCRIPTION<<EOF" >> $env:GITHUB_OUTPUT
-          echo "$description" >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
-
-      - name: 更新現有發佈
-        if: steps.check_release.outputs.result == 'exists'
+      - name: 檢查發佈是否已存在並進行發佈
         uses: actions/github-script@v6
         with:
           script: |
             const fs = require('fs');
-
-            // 獲取現有發佈
-            const release = await github.rest.repos.getReleaseByTag({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag: '${{ steps.version.outputs.TAG }}'
-            });
-
-            // 更新發佈信息
-            await github.rest.repos.updateRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: release.data.id,
-              name: 'Release ${{ steps.version.outputs.VERSION }}',
-              body: `${{ steps.prepare_description.outputs.FORMATTED_DESCRIPTION }}`
-            });
-
-            // 刪除現有資產
-            for (const asset of release.data.assets) {
-              await github.rest.repos.deleteReleaseAsset({
+            
+            // 處理描述中的換行符
+            const description = '${{ steps.version.outputs.DESCRIPTION }}'.replace(/%0A/g, '\n');
+            const tag = '${{ steps.version.outputs.TAG }}';
+            const version = '${{ steps.version.outputs.VERSION }}';
+            
+            try {
+              // 嘗試獲取現有發佈
+              const existingRelease = await github.rest.repos.getReleaseByTag({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                asset_id: asset.id
+                tag: tag
               });
-            }
-
-            // 上傳新資產
-            const zipPath = 'WallpaperEngineDownloader.zip';
-            const zipStats = fs.statSync(zipPath);
-            const zipData = fs.readFileSync(zipPath);
-
-            await github.rest.repos.uploadReleaseAsset({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: release.data.id,
-              name: 'WallpaperEngineDownloader.zip',
-              data: zipData,
-              headers: {
-                'content-type': 'application/zip',
-                'content-length': zipStats.size
+              
+              console.log('找到現有發佈，準備更新...');
+              
+              // 更新發佈信息
+              await github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: existingRelease.data.id,
+                name: `Release ${version}`,
+                body: description
+              });
+              
+              // 刪除現有資產
+              for (const asset of existingRelease.data.assets) {
+                await github.rest.repos.deleteReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  asset_id: asset.id
+                });
               }
-            });
-
-      - name: 創建新發佈
-        if: steps.check_release.outputs.result == 'not_exists'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.version.outputs.TAG }}
-          name: Release ${{ steps.version.outputs.VERSION }}
-          body: ${{ steps.prepare_description.outputs.FORMATTED_DESCRIPTION }}
-          draft: false
-          prerelease: false
-          files: WallpaperEngineDownloader.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              
+              // 上傳新資產
+              const zipPath = 'WallpaperEngineDownloader.zip';
+              const zipStats = fs.statSync(zipPath);
+              const zipData = fs.readFileSync(zipPath);
+              
+              await github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: existingRelease.data.id,
+                name: 'WallpaperEngineDownloader.zip',
+                data: zipData,
+                headers: {
+                  'content-type': 'application/zip',
+                  'content-length': zipStats.size
+                }
+              });
+              
+              console.log('現有發佈已更新');
+              
+            } catch (error) {
+              console.log('沒有找到現有發佈，創建新發佈...');
+              
+              // 創建新發佈
+              const newRelease = await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: tag,
+                name: `Release ${version}`,
+                body: description,
+                draft: false,
+                prerelease: false
+              });
+              
+              // 上傳資產
+              const zipPath = 'WallpaperEngineDownloader.zip';
+              const zipStats = fs.statSync(zipPath);
+              const zipData = fs.readFileSync(zipPath);
+              
+              await github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: newRelease.data.id,
+                name: 'WallpaperEngineDownloader.zip',
+                data: zipData,
+                headers: {
+                  'content-type': 'application/zip',
+                  'content-length': zipStats.size
+                }
+              });
+              
+              console.log('新發佈已創建');
+            }
