@@ -56,59 +56,23 @@ jobs:
           python-version: "3.13.2"
           cache: "pip" # 啟用 pip 緩存
 
-      - name: 計算緩存鍵
-        id: cache-key
-        run: |
-          $reqHash = (Get-FileHash -Path Pack/requirements.txt -Algorithm SHA256).Hash
-          echo "REQ_HASH=$reqHash" >> $env:GITHUB_OUTPUT
-          echo "使用緩存鍵: $reqHash"
-
       - name: 緩存 Python 下載
         uses: actions/cache@v4.2.3
-        id: cache-pip-downloads
         with:
           path: |
             ~\AppData\Local\pip\Cache
             ~\.cache\pip
-          key: ${{ runner.os }}-pip-downloads-${{ steps.cache-key.outputs.REQ_HASH }}
+          key: ${{ runner.os }}-pip-downloads-${{ hashFiles('Pack/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-downloads-
 
-      - name: 緩存 Python 虛擬環境
-        uses: actions/cache@v4.2.3
-        id: cache-venv
-        with:
-          path: |
-            .venv
-          key: ${{ runner.os }}-venv-py3.13.2-${{ steps.cache-key.outputs.REQ_HASH }}
-          restore-keys: |
-            ${{ runner.os }}-venv-py3.13.2-
-
-      - name: 檢查緩存狀態
+      - name: 安裝 Python 依賴
         run: |
-          echo "Python 下載緩存命中: ${{ steps.cache-pip-downloads.outputs.cache-hit }}"
-          echo "Python 虛擬環境緩存命中: ${{ steps.cache-venv.outputs.cache-hit }}"
-
-      - name: 創建並設置虛擬環境
-        run: |
-          if (-not (Test-Path ".venv")) {
-            Write-Host "創建新的虛擬環境..."
-            python -m venv .venv
-          } else {
-            Write-Host "使用已緩存的虛擬環境"
-          }
-          .\.venv\Scripts\Activate.ps1
-
-          # 始終更新依賴庫到最新版本
           python -m pip install --upgrade pip
           pip install --upgrade -r Pack/requirements.txt
 
-          Write-Host "已安裝的套件版本:"
-          pip freeze
-
       - name: 緩存 PyInstaller
         uses: actions/cache@v4.2.3
-        id: cache-pyinstaller
         with:
           path: |
             ~\AppData\Local\pyinstaller
@@ -118,18 +82,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pyinstaller-
 
-      - name: 檢查 PyInstaller 緩存狀態
-        run: |
-          echo "PyInstaller 存在緩存: ${{ steps.cache-pyinstaller.outputs.cache-hit }}"
-
-      - name: 複製 UPX 到外帶環境
+      - name: 複製 UPX 到 Python 路徑
         run: |
           $pythonPath = Split-Path -Parent (Get-Command python).Path
           Copy-Item -Path "Pack/upx.exe" -Destination $pythonPath -Force
 
       - name: PyInstaller 編譯
         run: |
-          .\.venv\Scripts\Activate.ps1
           pyinstaller Pack/display.spec
 
       - name: 組合發佈文件
