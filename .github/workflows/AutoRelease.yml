@@ -38,8 +38,8 @@ jobs:
           # 讀取描述但保持換行格式
           $description = $(.\Pack\yq.exe -r e '.description' version.yaml)
 
-          # 為了在 GitHub Actions 輸出中保留換行，將換行符轉換為特殊標記
-          $descriptionOutput = $description -replace "`r`n", "`n" -replace "`n", "%0A"
+          # 將描述寫入Markdown文件
+          $description | Out-File -FilePath "release_notes.md" -Encoding utf8
 
           # 輸出到控制台以便檢查
           Write-Host "Tag: $tag"
@@ -49,13 +49,19 @@ jobs:
           # 輸出到 GitHub Output
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
           echo "TAG=$tag" >> $env:GITHUB_OUTPUT
-          echo "DESCRIPTION=$descriptionOutput" >> $env:GITHUB_OUTPUT
 
       - name: 設定 Python 環境
         uses: actions/setup-python@v4
         with:
           python-version: "3.13.2"
           cache: "pip" # 啟用 pip 緩存
+
+      - name: 計算緩存鍵
+        id: cache-key
+        run: |
+          $reqHash = (Get-FileHash -Path Pack/requirements.txt -Algorithm SHA256).Hash
+          echo "REQ_HASH=$reqHash" >> $env:GITHUB_OUTPUT
+          echo "使用緩存鍵: $reqHash"
 
       - name: 緩存 Python 下載
         uses: actions/cache@v4.2.3
@@ -64,7 +70,7 @@ jobs:
           path: |
             ~\AppData\Local\pip\Cache
             ~\.cache\pip
-          key: ${{ runner.os }}-pip-downloads-${{ hashFiles('Pack/requirements.txt') }}
+          key: ${{ runner.os }}-pip-downloads-${{ steps.cache-key.outputs.REQ_HASH }}
           restore-keys: |
             ${{ runner.os }}-pip-downloads-
 
@@ -74,32 +80,47 @@ jobs:
         with:
           path: |
             .venv
-            ~\AppData\Roaming\Python
-            ~\AppData\Local\Programs\Python
-          key: ${{ runner.os }}-venv-py3.13.2-${{ hashFiles('Pack/requirements.txt') }}-${{ github.run_id }}
+          key: ${{ runner.os }}-venv-py3.13.2-${{ steps.cache-key.outputs.REQ_HASH }}
           restore-keys: |
             ${{ runner.os }}-venv-py3.13.2-
+
+      - name: 檢查緩存狀態
+        run: |
+          echo "Python 下載緩存命中: ${{ steps.cache-pip-downloads.outputs.cache-hit }}"
+          echo "Python 虛擬環境緩存命中: ${{ steps.cache-venv.outputs.cache-hit }}"
 
       - name: 創建並設置虛擬環境
         run: |
           if (-not (Test-Path ".venv")) {
+            Write-Host "創建新的虛擬環境..."
             python -m venv .venv
+          } else {
+            Write-Host "使用已緩存的虛擬環境"
           }
           .\.venv\Scripts\Activate.ps1
-          python -m pip install --upgrade pip
+
           # 始終更新依賴庫到最新版本
+          python -m pip install --upgrade pip
           pip install --upgrade -r Pack/requirements.txt
+
+          Write-Host "已安裝的套件版本:"
+          pip freeze
 
       - name: 緩存 PyInstaller
         uses: actions/cache@v4.2.3
+        id: cache-pyinstaller
         with:
           path: |
             ~\AppData\Local\pyinstaller
             ~\AppData\Roaming\pyinstaller
             build
-          key: ${{ runner.os }}-pyinstaller-${{ hashFiles('Pack/display.spec', 'WallpaperDownloader.pyw', 'Pack/requirements.txt') }}
+          key: ${{ runner.os }}-pyinstaller-${{ hashFiles('Pack/display.spec', 'WallpaperDownloader.pyw') }}
           restore-keys: |
             ${{ runner.os }}-pyinstaller-
+
+      - name: 檢查 PyInstaller 緩存狀態
+        run: |
+          echo "PyInstaller 存在緩存: ${{ steps.cache-pyinstaller.outputs.cache-hit }}"
 
       - name: 複製 UPX 到外帶環境
         run: |
@@ -133,12 +154,12 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            
-            // 處理描述中的換行符
-            const description = '${{ steps.version.outputs.DESCRIPTION }}'.replace(/%0A/g, '\n');
+
+            // 從文件讀取描述
+            const description = fs.readFileSync('release_notes.md', 'utf8');
             const tag = '${{ steps.version.outputs.TAG }}';
             const version = '${{ steps.version.outputs.VERSION }}';
-            
+
             try {
               // 嘗試獲取現有發佈
               const existingRelease = await github.rest.repos.getReleaseByTag({
@@ -146,9 +167,9 @@ jobs:
                 repo: context.repo.repo,
                 tag: tag
               });
-              
+
               console.log('找到現有發佈，準備更新...');
-              
+
               // 更新發佈信息
               await github.rest.repos.updateRelease({
                 owner: context.repo.owner,
@@ -157,7 +178,7 @@ jobs:
                 name: `Release ${version}`,
                 body: description
               });
-              
+
               // 刪除現有資產
               for (const asset of existingRelease.data.assets) {
                 await github.rest.repos.deleteReleaseAsset({
@@ -166,12 +187,12 @@ jobs:
                   asset_id: asset.id
                 });
               }
-              
+
               // 上傳新資產
               const zipPath = 'WallpaperEngineDownloader.zip';
               const zipStats = fs.statSync(zipPath);
               const zipData = fs.readFileSync(zipPath);
-              
+
               await github.rest.repos.uploadReleaseAsset({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -183,12 +204,12 @@ jobs:
                   'content-length': zipStats.size
                 }
               });
-              
+
               console.log('現有發佈已更新');
-              
+
             } catch (error) {
               console.log('沒有找到現有發佈，創建新發佈...');
-              
+
               // 創建新發佈
               const newRelease = await github.rest.repos.createRelease({
                 owner: context.repo.owner,
@@ -199,12 +220,12 @@ jobs:
                 draft: false,
                 prerelease: false
               });
-              
+
               // 上傳資產
               const zipPath = 'WallpaperEngineDownloader.zip';
               const zipStats = fs.statSync(zipPath);
               const zipData = fs.readFileSync(zipPath);
-              
+
               await github.rest.repos.uploadReleaseAsset({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -216,6 +237,6 @@ jobs:
                   'content-length': zipStats.size
                 }
               });
-              
+
               console.log('新發佈已創建');
             }
