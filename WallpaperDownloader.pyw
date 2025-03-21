@@ -1,7 +1,32 @@
 from Modules import *
 
+IsFrozen = getattr(sys, "frozen", False)
+
 class Controller(ENV, tk.Tk, Backend, GUI):
     def __init__(self, default_config):
+        log_path = Path(default_config["current_dir"]) / "Errors.log"
+
+        if IsFrozen:
+            logging.basicConfig(
+                level=logging.WARNING,
+                format="%(asctime)s - %(levelname)s: %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+                filename=str(log_path),
+                force=True,
+            )
+        else:
+            logging.basicConfig(
+                level=logging.DEBUG,
+                format="%(asctime)s - %(levelname)s: %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+                force=True
+            )
+
+        sys.excepthook = lambda *args: (
+            logging.error(exc_info=args),
+            sys.__excepthook__(*args),
+        )
+
         ENV.__init__(self, default_config)
         tk.Tk.__init__(self)
         Backend.__init__(self)
@@ -12,10 +37,14 @@ class Controller(ENV, tk.Tk, Backend, GUI):
 
 if __name__ == "__main__":
     #! key 值不能隨意修改 (需要同時修改 ENV)
-    Controller({
-        "language": None, # 自動偵測
-        "output_folder": "Wallpaper_Output",
-        "integrate_folder": "!【Integrate】!",
-        "appid_dict": {"Wallpaper Engine": "431960"},
-        "current_dir": Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).parent # pyinstaller 打包 與 原碼執行要抓不同路徑
-    })
+    Controller(
+        {
+            "language": None,  # 自動偵測
+            "output_folder": "Wallpaper_Output",
+            "integrate_folder": "!【Integrate】!",
+            "appid_dict": {"Wallpaper Engine": "431960"},
+            "current_dir": (
+                Path(sys.executable).parent if IsFrozen else Path(__file__).parent
+            ),  # pyinstaller 打包 與 原碼執行要抓不同路徑
+        }
+    )
