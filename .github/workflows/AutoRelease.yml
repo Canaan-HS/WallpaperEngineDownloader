@@ -32,7 +32,6 @@ jobs:
           $version = $(.\Pack\yq.exe -o=json e '.version' version.yaml).Trim('"')
           $description = $(.\Pack\yq.exe -r e '.description' version.yaml)
           $description | Out-File -FilePath "Release_notes.md" -Encoding utf8
-
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
           echo "TAG=$tag" >> $env:GITHUB_OUTPUT
 
@@ -42,20 +41,7 @@ jobs:
           python-version: "3.13.2"
           cache: "pip" # 啟用 pip 緩存，加速依賴下載
 
-      - name: 緩存 Python 環境
-        id: cache-python-env
-        uses: actions/cache@v4.2.3
-        with:
-          path: |
-            C:\hostedtoolcache\windows\Python\3.13.2\x64\Lib\site-packages
-            C:\hostedtoolcache\windows\Python\3.13.2\x64\Scripts
-            ~\AppData\Local\pip\Cache
-          key: ${{ runner.os }}-python-3.13.2-${{ hashFiles('Pack/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-python-3.13.2-
-
       - name: 安裝 Python 依賴
-        if: steps.cache-python-env.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade -r Pack/requirements.txt
@@ -64,16 +50,8 @@ jobs:
 
       - name: 複製 UPX 到 Python 路徑
         run: |
-          Copy-Item -Path "Pack/upx.exe" -Destination "C:\hostedtoolcache\windows\Python\3.13.2\x64\Scripts\upx.exe" -Force
-
-      - name: 緩存 PyInstaller 中間產物
-        id: cache-pyinstaller
-        uses: actions/cache@v4.2.3
-        with:
-          path: build
-          key: ${{ runner.os }}-pyinstaller-${{ hashFiles('Pack/display.spec', 'WallpaperDownloader.pyw', 'Pack/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pyinstaller-
+          $pythonPath = Split-Path -Parent (Get-Command python).Path
+          Copy-Item -Path "Pack/upx.exe" -Destination "$pythonPath\upx.exe" -Force
 
       - name: PyInstaller 編譯
         run: |
