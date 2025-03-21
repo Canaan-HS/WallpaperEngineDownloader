@@ -60,7 +60,9 @@ class Backend:
                 if proc.info['name'].lower() == processName.lower():
                     pids.append(proc.pid)
                     proc.kill()
-            except:continue
+            except Exception as e:
+                logging.info(e)
+                continue
 
         self.del_error_file(pids)
 
@@ -74,7 +76,9 @@ class Backend:
                         try:
                             shutil.rmtree(path)
                             break
-                        except:continue
+                        except Exception as e:
+                            logging.info(e)
+                            continue
                     time.sleep(1)
 
     """ ====== 設定配置 ====== """
@@ -174,7 +178,9 @@ class Backend:
 
             try:
                 merge_window.iconbitmap(self.icon_ico)
-            except: pass
+            except Exception as e:
+                logging.warning(e)
+                pass
 
             width = 500
             height = 550
@@ -365,7 +371,10 @@ class Backend:
             self.console_update(f"> [{process_name}] {end_message}\n", "important")
         except:
             self.console_update(f"> {self.transl('例外中止')}\n", "important")
-            messagebox.showerror(self.transl('例外'), traceback.format_exc(), parent=self)
+
+            exception = traceback.format_exc()
+            logging.error(exception)
+            messagebox.showerror(self.transl('例外'), exception, parent=self)
 
     """ ====== 處理數據 與 下載觸發 ====== """
     def get_config(self, original=False):

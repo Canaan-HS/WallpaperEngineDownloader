@@ -35,7 +35,7 @@ class ENV:
                 id_dict = json.loads(self.id_json.read_text(encoding="utf-8"))
                 self.appid_dict.update(id_dict)
             except Exception as e:
-                print(f"{self.transl('讀取配置文件時出錯')}: {e}")
+                logging.error(f"\n{self.transl('讀取配置文件時出錯')}: {e}")
 
         self.cfg_data = {}
         self.CK = SimpleNamespace(**self.cfg_key) # 方便簡短調用
@@ -50,7 +50,7 @@ class ENV:
                 if record_path.is_absolute():
                     self.save_path = record_path if record_path.name == self.output_folder else record_path / self.output_folder
             except Exception as e:
-                print(f"{self.transl('讀取配置文件時出錯')}: {e}") # 除錯用
+                logging.error(f"\n{self.transl('讀取配置文件時出錯')}: {e}")
 
     def save_config(self, data):
         old_data = {}

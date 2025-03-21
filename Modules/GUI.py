@@ -15,7 +15,9 @@ class GUI:
 
         try:
             self.iconbitmap(self.icon_ico)
-        except: pass
+        except Exception as e:
+            logging.warning(e)
+            pass
 
         self.primary_color = "#383d48"
         self.consolo_color = "#272727"
