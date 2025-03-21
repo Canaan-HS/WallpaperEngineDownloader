@@ -27,7 +27,8 @@ class ENV:
         self.depot_exe = current_dir / "DepotdownloaderMod/DepotDownloadermod.exe"
 
         if not self.depot_exe.exists():
-            messagebox.showerror(self.transl('依賴錯誤'), f"{self.transl('找不到')} {self.depot_exe}")
+            logging.error(f"{self.transl('找不到')}: {self.depot_exe}")
+            messagebox.showerror(self.transl('依賴錯誤'), f"{self.transl('找不到')}: {self.depot_exe}")
             os._exit(0)
 
         if self.id_json.exists():
@@ -35,7 +36,7 @@ class ENV:
                 id_dict = json.loads(self.id_json.read_text(encoding="utf-8"))
                 self.appid_dict.update(id_dict)
             except Exception as e:
-                logging.error(f"\n{self.transl('讀取配置文件時出錯')}: {e}")
+                logging.error(f"{self.transl('讀取 ID.json 時出錯')}: {e}")
 
         self.cfg_data = {}
         self.CK = SimpleNamespace(**self.cfg_key) # 方便簡短調用
@@ -50,15 +51,19 @@ class ENV:
                 if record_path.is_absolute():
                     self.save_path = record_path if record_path.name == self.output_folder else record_path / self.output_folder
             except Exception as e:
-                logging.error(f"\n{self.transl('讀取配置文件時出錯')}: {e}")
+                logging.error(f"{self.transl('讀取 Config.json 時出錯')}: {e}")
 
     def save_config(self, data):
         old_data = {}
         cache_data = ""
 
         if self.config_json.exists():
-            old_data = json.loads(self.config_json.read_text(encoding="utf-8"))
-            cache_data = old_data.copy()
+            try:
+                old_data = json.loads(self.config_json.read_text(encoding="utf-8"))
+                cache_data = old_data.copy()
+            except Exception as e:
+                logging.info(e)
+                # 靜默繼續
 
         old_data.update(data)
         self.final_config = {val: old_data.get(val, "") for val in self.cfg_key.values() if val in old_data}  
