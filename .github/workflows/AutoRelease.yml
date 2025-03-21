@@ -36,6 +36,12 @@ jobs:
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
           echo "TAG=$tag" >> $env:GITHUB_OUTPUT
 
+      - name: 設定 Python 環境
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13.2"
+          cache: "pip" # 啟用 pip 緩存，加速依賴下載
+
       - name: 緩存 Python 環境
         id: cache-python-env
         uses: actions/cache@v4.2.3
@@ -48,18 +54,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-python-3.13.2-
 
-      - name: 設定 Python 環境
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.13.2"
-          cache: "pip" # 啟用 pip 緩存，加速依賴下載
-
       - name: 安裝 Python 依賴
         if: steps.cache-python-env.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade -r Pack/requirements.txt
-
           echo "已安裝的套件："
           pip freeze
 
