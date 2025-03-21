@@ -1,4 +1,3 @@
-# GitHub Actions
 name: 自動發佈
 
 on:
@@ -39,7 +38,7 @@ jobs:
           $description = $(.\Pack\yq.exe -r e '.description' version.yaml)
 
           # 將描述寫入Markdown文件
-          $description | Out-File -FilePath "release_notes.md" -Encoding utf8
+          $description | Out-File -FilePath "Release_notes.md" -Encoding utf8
 
           # 輸出到控制台以便檢查
           Write-Host "Tag: $tag"
@@ -56,42 +55,54 @@ jobs:
           python-version: "3.13.2"
           cache: "pip" # 啟用 pip 緩存
 
-      - name: 緩存 Python 下載
+      - name: 獲取 Python 路徑
+        id: python-path
+        run: |
+          $pythonRoot = python -c "import sys; print(sys.exec_prefix)"
+          echo "PYTHON_ROOT=$pythonRoot" >> $env:GITHUB_OUTPUT
+          echo "Python root path: $pythonRoot"
+
+      - name: 緩存 site-packages
         uses: actions/cache@v4.2.3
+        id: cache-site-packages
         with:
-          path: |
-            ~\AppData\Local\pip\Cache
-            ~\.cache\pip
-          key: ${{ runner.os }}-pip-downloads-${{ hashFiles('Pack/requirements.txt') }}
+          path: ${{ steps.python-path.outputs.PYTHON_ROOT }}\Lib\site-packages
+          key: ${{ runner.os }}-site-packages-${{ hashFiles('Pack/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pip-downloads-
+            ${{ runner.os }}-site-packages-
 
       - name: 安裝 Python 依賴
+        if: steps.cache-site-packages.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade -r Pack/requirements.txt
+          echo "已安裝的套件："
+          pip freeze
 
-      - name: 緩存 PyInstaller
+      - name: 緩存 PyInstaller 和 UPX
         uses: actions/cache@v4.2.3
+        id: cache-pyinstaller
         with:
           path: |
             ~\AppData\Local\pyinstaller
             ~\AppData\Roaming\pyinstaller
             build
-          key: ${{ runner.os }}-pyinstaller-${{ hashFiles('Pack/display.spec', 'WallpaperDownloader.pyw') }}
+            ${{ steps.python-path.outputs.PYTHON_ROOT }}\Scripts\upx.exe
+          key: ${{ runner.os }}-pyinstaller-${{ hashFiles('Pack/display.spec', 'WallpaperDownloader.pyw', 'Pack/requirements.txt', 'Pack/upx.exe') }}
           restore-keys: |
             ${{ runner.os }}-pyinstaller-
 
       - name: 複製 UPX 到 Python 路徑
+        if: steps.cache-pyinstaller.outputs.cache-hit != 'true'
         run: |
           $pythonPath = Split-Path -Parent (Get-Command python).Path
-          Copy-Item -Path "Pack/upx.exe" -Destination $pythonPath -Force
+          Copy-Item -Path "Pack/upx.exe" -Destination "$pythonPath\upx.exe" -Force
 
       - name: PyInstaller 編譯
         run: |
           pyinstaller Pack/display.spec
 
-      - name: 組合發佈文件
+      - name: 組合文件
         run: |
           # 移動編譯好的 exe
           Get-ChildItem -Path "dist" -Filter "*.exe" | Move-Item -Destination "WallpaperEngineDownloader/" -Force
@@ -104,18 +115,18 @@ jobs:
           Copy-Item -Path "DepotDownloaderMod" -Destination "WallpaperEngineDownloader/" -Recurse
           Copy-Item -Path "Icon" -Destination "WallpaperEngineDownloader/" -Recurse
 
-      - name: 壓縮發佈文件
+      - name: 壓縮文件
         run: |
           .\Pack\7z.exe a -tzip -mx=9 WallpaperEngineDownloader.zip WallpaperEngineDownloader
 
-      - name: 檢查發佈是否已存在並進行發佈
+      - name: 進行發佈
         uses: actions/github-script@v6
         with:
           script: |
             const fs = require('fs');
 
             // 從文件讀取描述
-            const description = fs.readFileSync('release_notes.md', 'utf8');
+            const description = fs.readFileSync('Release_notes.md', 'utf8');
             const tag = '${{ steps.version.outputs.TAG }}';
             const version = '${{ steps.version.outputs.VERSION }}';
 
