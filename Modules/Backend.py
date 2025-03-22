@@ -286,7 +286,7 @@ class Backend:
             bytes_current = net_io.bytes_sent + net_io.bytes_recv  # 當前總流量
 
             # 計算流量速度
-            speed_text = f"{(total_speed := (bytes_current - bytes_initial) / 1024) / 1024:.2f} MB/s" if total_speed >= 1024 else f"{total_speed:.2f} KB/s"
+            speed_text = f"{total_speed:.2f} KB/s" if (total_speed := (bytes_current - bytes_initial) / 1e3) < 1e3 else f"{(total_speed / 1e3):.2f} MB/s"
             self.title(f"{self.win_title} （{speed_text}）")
 
             bytes_initial = bytes_current
