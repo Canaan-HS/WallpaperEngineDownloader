@@ -33,7 +33,7 @@ class Backend:
             "STEAM GUARD": [self.transl("下載失敗: 請嘗試變更帳號後在下載")], # 列表為可觸發強制停止任務
         }
         self.error_rule["AccountDisabled"] = self.error_rule["STEAM GUARD"] # 重用
-        atexit.register(self.process_cleanup) # 關閉清理
+        atexit.register(self.process_cleanup) # 關閉進程清理
 
     """ ====== 關閉清理 ====== """
     def Closure(self):
@@ -51,6 +51,16 @@ class Backend:
         })
 
         self.destroy()
+
+    def log_cleanup(self, log_path):
+        try:
+            for handler in logging.root.handlers[:]:
+                handler.close()
+
+            if log_path.exists() and log_path.stat().st_size == 0:
+                log_path.unlink()
+        except Exception as e:
+            logging.error(e)
 
     def process_cleanup(self):
         pids = []
