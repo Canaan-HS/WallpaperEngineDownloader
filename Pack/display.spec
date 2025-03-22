@@ -3,7 +3,7 @@
 # 排除標準庫和第三方庫
 excludes = [
     # 標準庫，常見的測試和文檔相關功能
-    'unittest', 'pydoc', 'doctest', 'test', 'pydoc_data', 'lib2to3', 'argparse', 'logging', 'pickle',
+    'unittest', 'pydoc', 'doctest', 'test', 'pydoc_data', 'lib2to3', 'argparse', 'pickle',
     'calendar', 'pytz', 'pdb', 'sqlite3', 'distutils', 'setuptools', 'pip', '_distutils_hack',
     'pkg_resources.py2_warn', 'lib2to3', '_pytest', 'pytest',
     # 網絡和文件處理相關庫
