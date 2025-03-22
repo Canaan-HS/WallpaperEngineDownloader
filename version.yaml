@@ -1,6 +1,5 @@
 tag: v1.0.2
 version: v1.0.2
 description: |
-  1. Add network indicator
-  2. Add automatic cleanup of failed task files
-lastEdit: 2025-03-21 09:30
+  1. Modify network indicators
+lastEdit: 2025-03-23 04:06
