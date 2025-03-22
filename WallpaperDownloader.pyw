@@ -4,7 +4,7 @@ IsFrozen = getattr(sys, "frozen", False)
 
 class Controller(ENV, tk.Tk, Backend, GUI):
     def __init__(self, default_config):
-        log_path = Path(default_config["current_dir"]) / "Errors.log"
+        log_path = Path(default_config["current_dir"]) / "Info.log"
 
         if IsFrozen:
             logging.basicConfig(
@@ -33,6 +33,7 @@ class Controller(ENV, tk.Tk, Backend, GUI):
         GUI.__init__(self)
 
         self.protocol("WM_DELETE_WINDOW", self.Closure)
+        atexit.register(self.log_cleanup, log_path)
         self.mainloop()
 
 if __name__ == "__main__":
