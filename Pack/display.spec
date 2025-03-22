@@ -37,9 +37,8 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=excludes,
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
     noarchive=False,
+    optimize=2,
 )
 
 a.binaries = [
