@@ -33,8 +33,9 @@ class ENV:
 
         if self.id_json.exists():
             try:
-                id_dict = json.loads(self.id_json.read_text(encoding="utf-8"))
-                self.appid_dict.update(id_dict)
+                self.appid_dict.update(
+                    json.loads(self.id_json.read_text(encoding="utf-8"))
+                )
             except Exception as e:
                 logging.error(f"{self.transl('讀取 ID.json 時出錯')}: {e}")
 
@@ -43,13 +44,18 @@ class ENV:
 
         if self.config_json.exists():
             try:
-                config_dict = json.loads(self.config_json.read_text(encoding="utf-8"))
+                self.cfg_data = {
+                    val: config[val]
+                    for val in self.cfg_key.values()
+                    if val in (config := json.loads(self.config_json.read_text(encoding="utf-8")))
+                }
 
-                self.cfg_data = {val: config_dict[val] for val in self.cfg_key.values() if val in config_dict} # 解構數據
                 record_path = Path(self.cfg_data.get(self.CK.Save, ""))
-
-                if record_path.is_absolute():
-                    self.save_path = record_path if record_path.name == self.output_folder else record_path / self.output_folder
+                self.save_path = (
+                    record_path
+                    if record_path.is_absolute() and record_path.name == self.output_folder
+                    else record_path / self.output_folder
+                )
             except Exception as e:
                 logging.error(f"{self.transl('讀取 Config.json 時出錯')}: {e}")
 
@@ -59,11 +65,9 @@ class ENV:
 
         if self.config_json.exists():
             try:
-                old_data = json.loads(self.config_json.read_text(encoding="utf-8"))
-                cache_data = old_data.copy()
+                cache_data = (old_data := json.loads(self.config_json.read_text(encoding="utf-8"))).copy()
             except Exception as e:
                 logging.info(e)
-                # 靜默繼續
 
         old_data.update(data)
         self.final_config = {val: old_data.get(val, "") for val in self.cfg_key.values() if val in old_data}  
