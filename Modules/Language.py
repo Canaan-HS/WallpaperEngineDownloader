@@ -38,7 +38,8 @@ def Language(lang=None):
                 "下載失敗: 請嘗試變更帳號後在下載": "下载失败: 请尝试变更帐号后再下载",
                 "找不到": "找不到",
                 "依賴錯誤": "依赖错误",
-                "讀取配置文件時出錯": "读取配置文件时出错"
+                "讀取 ID.json 時出錯": "读取 ID.json 时出错",
+                "讀取 Config.json 時出錯": "读取 Config.json 时出错",
             },
             'en_US': {
                 "創意工坊下載器": "Workshop Downloader",
@@ -75,7 +76,8 @@ def Language(lang=None):
                 "下載失敗: 請嘗試變更帳號後在下載": "Download Failed: Please try changing the account and then download",
                 "找不到": "Not Found",
                 "依賴錯誤": "Dependency Error",
-                "讀取配置文件時出錯": "Error Reading Configuration File"
+                "讀取 ID.json 時出錯": "Failed to read ID.json",
+                "讀取 Config.json 時出錯": "Failed to read Config.json",
             }
         }
 
