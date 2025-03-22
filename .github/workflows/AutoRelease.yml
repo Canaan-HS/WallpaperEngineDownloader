@@ -48,14 +48,9 @@ jobs:
           echo "已安裝的套件："
           pip freeze
 
-      - name: 複製 UPX 到 Python 路徑
-        run: |
-          $pythonPath = Split-Path -Parent (Get-Command python).Path
-          Copy-Item -Path "Pack/upx.exe" -Destination "$pythonPath\upx.exe" -Force
-
       - name: PyInstaller 編譯
         run: |
-          pyinstaller Pack/display.spec
+          pyinstaller Pack/display.spec --upx-dir Pack
 
       - name: 組合文件
         run: |
