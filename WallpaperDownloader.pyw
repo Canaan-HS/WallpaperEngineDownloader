@@ -6,22 +6,21 @@ class Controller(ENV, tk.Tk, Backend, GUI):
     def __init__(self, default_config):
         log_path = Path(default_config["current_dir"]) / "Info.log"
 
-        if IsFrozen:
-            logging.basicConfig(
-                level=logging.WARNING,
-                format="%(asctime)s - %(levelname)s: %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
-                filename=str(log_path),
-                force=True,
-            )
-        else:
-            logging.basicConfig(
-                level=logging.DEBUG,
-                format="%(asctime)s - %(levelname)s: %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S",
-                force=True
-            )
+        Config = {
+            "level": logging.DEBUG,
+            "format": "%(asctime)s - %(levelname)s: %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "force": True
+        }
 
+        if IsFrozen:
+            Config.update({
+                "level": logging.WARNING,
+                "filename": str(log_path),
+                "encoding": "utf-8"
+            })
+
+        logging.basicConfig(**Config)
         sys.excepthook = lambda *args: (
             logging.error(exc_info=args),
             sys.__excepthook__(*args),
