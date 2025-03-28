@@ -85,21 +85,26 @@ def Language(lang=None):
             '950': 'zh_TW', '936': 'zh_CN', '1252': 'en_US'
         }
 
-        # 總是有人系統怪怪的
-        if lang is None:
-            if SysPlat == 'Windows':
-                buffer = ctypes.create_unicode_buffer(85)
-                ctypes.windll.kernel32.GetUserDefaultLocaleName(buffer, len(buffer))
-                lang = buffer.value.replace('-', '_')
-            elif SysPlat == 'Linux' or SysPlat == 'Darwin':
-                lang = os.environ.get("LANG").split('.')[0]
-            else:
-                locale.setlocale(locale.LC_ALL, '')
-                lang = locale.getlocale()[1].replace('cp', '')
+        ML = {}
+        default = 'en_US'
 
-        if lang.isdigit():
-            ML = Word.get(Locale.get(lang, 'en_US'), lang)
-        else:
-            ML = Word.get(lang, 'en_US') 
+        try:
+            if lang is None:
+                if SysPlat == 'Windows':
+                    buffer = ctypes.create_unicode_buffer(85)
+                    ctypes.windll.kernel32.GetUserDefaultLocaleName(buffer, len(buffer))
+                    lang = buffer.value.replace('-', '_')
+                elif SysPlat in ['Linux', 'Darwin']:
+                    lang = os.environ.get('LANG', '').split('.')[0]
+                else:
+                    locale.setlocale(locale.LC_ALL, '')
+                    lang = locale.getlocale()[1].replace('cp', '')
+        except Exception as e:
+            logging.info(e)
+            lang = default
+
+        ML = Word.get(lang) if isinstance(lang, str) and lang in Word else \
+            Word.get(Locale.get(lang)) if isinstance(lang, str) and lang in Locale else \
+            Word.get(default)
 
         return lambda text: ML.get(text, text)
