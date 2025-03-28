@@ -2,6 +2,7 @@ from Modules import *
 
 IsFrozen = getattr(sys, "frozen", False)
 
+
 class Controller(ENV, tk.Tk, Backend, GUI):
     def __init__(self, default_config):
         log_path = Path(default_config["current_dir"]) / "Info.log"
@@ -10,15 +11,17 @@ class Controller(ENV, tk.Tk, Backend, GUI):
             "level": logging.DEBUG,
             "format": "%(asctime)s - %(levelname)s: %(message)s",
             "datefmt": "%Y-%m-%d %H:%M:%S",
-            "force": True
+            "force": True,
         }
 
         if IsFrozen:
-            Config.update({
-                "level": logging.WARNING,
-                "filename": str(log_path),
-                "encoding": "utf-8"
-            })
+            Config.update(
+                {
+                    "level": logging.WARNING,
+                    "filename": str(log_path),
+                    "encoding": "utf-8",
+                }
+            )
 
         logging.basicConfig(**Config)
         sys.excepthook = lambda *args: (
@@ -34,6 +37,7 @@ class Controller(ENV, tk.Tk, Backend, GUI):
         self.protocol("WM_DELETE_WINDOW", self.Closure)
         atexit.register(self.log_cleanup, log_path)
         self.mainloop()
+
 
 if __name__ == "__main__":
     #! key 值不能隨意修改 (需要同時修改 ENV)
