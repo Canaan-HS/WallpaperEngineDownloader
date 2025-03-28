@@ -94,7 +94,7 @@ def Language(lang=None):
                     buffer = ctypes.create_unicode_buffer(85)
                     ctypes.windll.kernel32.GetUserDefaultLocaleName(buffer, len(buffer))
                     lang = buffer.value.replace('-', '_')
-                elif SysPlat in ['Linux', 'Darwin']:
+                elif SysPlat in ('Linux', 'Darwin'):
                     lang = os.environ.get('LANG', '').split('.')[0]
                 else:
                     locale.setlocale(locale.LC_ALL, '')
