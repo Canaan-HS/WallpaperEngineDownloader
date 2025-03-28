@@ -1,5 +1,5 @@
-tag: v1.0.2
-version: v1.0.2
+tag: v1.0.3
+version: v1.0.3
 description: |
-  1. Modify network indicators
-lastEdit: 2025-03-23 04:06
+  1. Fixed language import exception handling
+lastEdit: 2025-03-28 17:30
