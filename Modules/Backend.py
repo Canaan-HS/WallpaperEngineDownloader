@@ -1,14 +1,15 @@
 from .__Lib__ import *
 
+
 class Backend:
     def __init__(self):
         self.account_dict = {
-            key: {**value, key: base64.b64decode(value[key]).decode('utf-8')}
+            key: {**value, key: base64.b64decode(value[key]).decode("utf-8")}
             for key, value in {
-                'ruiiixx': {'ruiiixx': 'UzY3R0JUQjgzRDNZ'},
-                'vAbuDy': {'vAbuDy': 'Qm9vbHE4dmlw'},
-                'adgjl1182': {'adgjl1182': 'UUVUVU85OTk5OQ=='},
-                '787109690': {'787109690': 'SHVjVXhZTVFpZzE1'}
+                "ruiiixx": {"ruiiixx": "UzY3R0JUQjgzRDNZ"},
+                "vAbuDy": {"vAbuDy": "Qm9vbHE4dmlw"},
+                "adgjl1182": {"adgjl1182": "UUVUVU85OTk5OQ=="},
+                "787109690": {"787109690": "SHVjVXhZTVFpZzE1"},
             }.items()
         }
 
@@ -23,32 +24,44 @@ class Backend:
         self.acc_list = list(self.account_dict.keys())
 
         self.illegal_regular = re.compile(r'[<>:"/\\|?*\x00-\x1F]')
-        self.parse_regular = re.compile(r'(\d{8,10})(?:&searchtext=(.*))?')
-        self.link_regular = re.compile(r'^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$')
+        self.parse_regular = re.compile(r"(\d{8,10})(?:&searchtext=(.*))?")
+        self.link_regular = re.compile(
+            r"^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$"
+        )
 
-        self.token = True # 可強制停止所有任務
+        self.token = True  # 可強制停止所有任務
         self.error_rule = {
             ".NET": self.transl("下載失敗: 請先安裝 .NET 9 執行庫"),
-            "Unable to locate manifest ID for published file": self.transl("下載失敗: 該項目可能已被刪除，或應用設置錯誤"),
-            "STEAM GUARD": [self.transl("下載失敗: 請嘗試變更帳號後在下載")], # 列表為可觸發強制停止任務
+            "Unable to locate manifest ID for published file": self.transl(
+                "下載失敗: 該項目可能已被刪除，或應用設置錯誤"
+            ),
+            "STEAM GUARD": [
+                self.transl("下載失敗: 請嘗試變更帳號後在下載")
+            ],  # 列表為可觸發強制停止任務
         }
-        self.error_rule["AccountDisabled"] = self.error_rule["STEAM GUARD"] # 重用
-        atexit.register(self.process_cleanup) # 關閉進程清理
+        self.error_rule["AccountDisabled"] = self.error_rule["STEAM GUARD"]  # 重用
+        atexit.register(self.process_cleanup)  # 關閉進程清理
 
     """ ====== 關閉清理 ====== """
+
     def Closure(self):
         username, app = self.get_config(True)
-        undone = list({cache['url'] for cache in self.task_cache.values()} | set(self.input_stream()))
+        undone = list(
+            {cache["url"] for cache in self.task_cache.values()}
+            | set(self.input_stream())
+        )
 
-        self.save_config({
-            "Account": username,
-            "Application": app,
-            "window_x": self.winfo_x(),
-            "window_y": self.winfo_y(),
-            "window_width": self.winfo_width(),
-            "window_height": self.winfo_height(),
-            "Tasks": undone
-        })
+        self.save_config(
+            {
+                "Account": username,
+                "Application": app,
+                "window_x": self.winfo_x(),
+                "window_y": self.winfo_y(),
+                "window_width": self.winfo_width(),
+                "window_height": self.winfo_height(),
+                "Tasks": undone,
+            }
+        )
 
         self.destroy()
 
@@ -65,9 +78,9 @@ class Backend:
     def process_cleanup(self):
         pids = []
         processName = "DepotDownloaderMod.exe"
-        for proc in psutil.process_iter(['pid', 'name']):
+        for proc in psutil.process_iter(["pid", "name"]):
             try:
-                if proc.info['name'].lower() == processName.lower():
+                if proc.info["name"].lower() == processName.lower():
                     pids.append(proc.pid)
                     proc.kill()
             except Exception as e:
@@ -78,10 +91,10 @@ class Backend:
 
     def del_error_file(self, pids):
         for task in self.task_cache.values():
-            path = task['path']
+            path = task["path"]
 
             if Path(path).exists():
-                for _ in range(10): # 最多等待10秒
+                for _ in range(10):  # 最多等待10秒
                     if not any(psutil.pid_exists(pid) for pid in pids):
                         try:
                             shutil.rmtree(path)
@@ -92,8 +105,9 @@ class Backend:
                     time.sleep(1)
 
     """ ====== 設定配置 ====== """
+
     def save_settings(self):
-        path = filedialog.askdirectory(title=self.transl('選擇資料夾'))
+        path = filedialog.askdirectory(title=self.transl("選擇資料夾"))
 
         if path:
             self.save_path = Path(path) / self.output_folder
@@ -106,11 +120,21 @@ class Backend:
         popup.overrideredirect(True)
         popup.attributes("-topmost", True)
 
-        label = tk.Label(popup, text=self.transl('已複製'), font=("Microsoft JhengHei", 10), bg="#333333", fg="#FFFFFF", padx=5, pady=5)
+        label = tk.Label(
+            popup,
+            text=self.transl("已複製"),
+            font=("Microsoft JhengHei", 10),
+            bg="#333333",
+            fg="#FFFFFF",
+            padx=5,
+            pady=5,
+        )
         label.pack()
 
-        popup.update_idletasks() # 更新窗口以計算 label 的大小
-        popup.geometry(f"{label.winfo_reqwidth()}x{label.winfo_reqheight()}+{event.x_root - 25}+{event.y_root - 35}")
+        popup.update_idletasks()  # 更新窗口以計算 label 的大小
+        popup.geometry(
+            f"{label.winfo_reqwidth()}x{label.winfo_reqheight()}+{event.x_root - 25}+{event.y_root - 35}"
+        )
         popup.grab_set()
         popup.after(800, popup.destroy)
 
@@ -143,13 +167,14 @@ class Backend:
                     for char, subtree in node.items():
                         if char != "$":
                             stack.append(subtree)
+
             return match_generator()
 
         # 編譯前綴樹
         appid_trie = build_trie(self.app_list)
 
         def on_input(event):
-            prefix = event.widget.get().lower() # 忽略大小寫
+            prefix = event.widget.get().lower()  # 忽略大小寫
             matches = search_trie(appid_trie, prefix) if prefix else self.app_list
             self.serverid_menu.configure(values=list(matches))
 
@@ -169,12 +194,13 @@ class Backend:
         self.serverid_menu.bind("<<ComboboxSelected>>", on_select)
 
     """ ====== 檔案整合 ====== """
+
     def get_save_data(self):
         file_data = defaultdict(list)
         for file in self.save_path.rglob("*"):
             if file.is_file() and self.integrate_folder not in file.parts:
                 file_data[file.suffix].append(file)
-        return dict( # 數量多到少排序, 相同數量按字母排序, 組合 key 為副檔名, value 為檔案列表 回傳字典
+        return dict(  # 數量多到少排序, 相同數量按字母排序, 組合 key 為副檔名, value 為檔案列表 回傳字典
             sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
         )
 
@@ -183,7 +209,7 @@ class Backend:
 
         if data_table:
             merge_window = tk.Toplevel(self)
-            merge_window.title(self.transl('檔案整合'))
+            merge_window.title(self.transl("檔案整合"))
             merge_window.configure(bg=self.primary_color)
 
             try:
@@ -195,12 +221,20 @@ class Backend:
             width = 500
             height = 550
 
-            merge_window.geometry(f"{width}x{height}+{int((self.winfo_screenwidth() - width) / 2)}+{int((self.winfo_screenheight() - height) / 2)}")
+            merge_window.geometry(
+                f"{width}x{height}+{int((self.winfo_screenwidth() - width) / 2)}+{int((self.winfo_screenheight() - height) / 2)}"
+            )
             merge_window.minsize(400, 450)
 
             tip_frame = tk.Frame(merge_window, bg=self.primary_color)
             tip_frame.pack(fill="x", padx=10, pady=10)
-            tip = tk.Label(tip_frame, text=self.transl('選擇整合的類型'), font=("Microsoft JhengHei", 18, "bold"), bg=self.primary_color, fg=self.text_color)
+            tip = tk.Label(
+                tip_frame,
+                text=self.transl("選擇整合的類型"),
+                font=("Microsoft JhengHei", 18, "bold"),
+                bg=self.primary_color,
+                fg=self.text_color,
+            )
             tip.pack()
 
             display_frame = tk.Frame(merge_window, bg=self.primary_color)
@@ -213,12 +247,29 @@ class Backend:
             scroll_y.pack(side="right", fill="y")
 
             style = ttk.Style()
-            style.configure("Custom.Treeview", font=("Microsoft JhengHei", 14, "bold"), foreground=self.text_color, background=self.consolo_color, rowheight=30)
-            style.configure("Custom.Treeview.Heading", font=("Microsoft JhengHei", 16, "bold"), foreground="#0066CC")
+            style.configure(
+                "Custom.Treeview",
+                font=("Microsoft JhengHei", 14, "bold"),
+                foreground=self.text_color,
+                background=self.consolo_color,
+                rowheight=30,
+            )
+            style.configure(
+                "Custom.Treeview.Heading",
+                font=("Microsoft JhengHei", 16, "bold"),
+                foreground="#0066CC",
+            )
 
-            treeview = ttk.Treeview(display_frame, columns=("Type", "Count"), show="headings", yscrollcommand=scroll_y.set, cursor="hand2", style="Custom.Treeview")
-            treeview.heading("Type", text=self.transl('檔案類型'))
-            treeview.heading("Count", text=self.transl('檔案數量'))
+            treeview = ttk.Treeview(
+                display_frame,
+                columns=("Type", "Count"),
+                show="headings",
+                yscrollcommand=scroll_y.set,
+                cursor="hand2",
+                style="Custom.Treeview",
+            )
+            treeview.heading("Type", text=self.transl("檔案類型"))
+            treeview.heading("Count", text=self.transl("檔案數量"))
             treeview.column("Type", anchor="center")
             treeview.column("Count", anchor="center")
 
@@ -230,7 +281,11 @@ class Backend:
 
             def move_save_file():
                 if len(treeview.selection()) == 0:
-                    messagebox.showwarning(title=self.transl('操作提示'), message=self.transl('請選擇要整合的類型'), parent=merge_window)
+                    messagebox.showwarning(
+                        title=self.transl("操作提示"),
+                        message=self.transl("請選擇要整合的類型"),
+                        parent=merge_window,
+                    )
                     return
 
                 selected = []
@@ -240,9 +295,13 @@ class Backend:
                     values = treeview.item(item, "values")  # 取得對應的數據
                     selected.append(values[0])
 
-                confirm = messagebox.askquestion(self.transl('操作確認'), f"{self.transl('整合以下類型的檔案')}?\n\n{selected}", parent=merge_window)
+                confirm = messagebox.askquestion(
+                    self.transl("操作確認"),
+                    f"{self.transl('整合以下類型的檔案')}?\n\n{selected}",
+                    parent=merge_window,
+                )
                 if confirm == "yes":
-                    for item in selected_items: # 移除選中的項目
+                    for item in selected_items:  # 移除選中的項目
                         treeview.delete(item)
 
                     merge_path = self.save_path / self.integrate_folder
@@ -251,19 +310,40 @@ class Backend:
 
                     for files in move_file:
                         for file in files:
-                            relative_path = file.relative_to(self.save_path) # 獲取 file 在 self.save_path 下的相對路徑
-                            top_folder = relative_path.parts[0] # 取得最上層資料夾名稱
+                            relative_path = file.relative_to(
+                                self.save_path
+                            )  # 獲取 file 在 self.save_path 下的相對路徑
+                            top_folder = relative_path.parts[0]  # 取得最上層資料夾名稱
 
                             file.rename(merge_path / f"[{top_folder}] {file.name}")
 
-                    messagebox.showinfo(title=self.transl('操作完成'), message=f"{self.transl('檔案整合完成')}\n{merge_path}", parent=merge_window)
+                    messagebox.showinfo(
+                        title=self.transl("操作完成"),
+                        message=f"{self.transl('檔案整合完成')}\n{merge_path}",
+                        parent=merge_window,
+                    )
 
-            print_button = tk.Button(output_frame, text=self.transl('整合輸出'), font=("Microsoft JhengHei", 12, "bold"), borderwidth=2, cursor="hand2", relief="raised", bg=self.secondary_color, fg=self.text_color, command=move_save_file)
+            print_button = tk.Button(
+                output_frame,
+                text=self.transl("整合輸出"),
+                font=("Microsoft JhengHei", 12, "bold"),
+                borderwidth=2,
+                cursor="hand2",
+                relief="raised",
+                bg=self.secondary_color,
+                fg=self.text_color,
+                command=move_save_file,
+            )
             print_button.pack(pady=(5, 15))
         else:
-            messagebox.showwarning(title=self.transl('獲取失敗'), message=self.transl('沒有可整合的檔案'), parent=self)
+            messagebox.showwarning(
+                title=self.transl("獲取失敗"),
+                message=self.transl("沒有可整合的檔案"),
+                parent=self,
+            )
 
     """ ====== 下載處理 ====== """
+
     def console_analysis(self, text):
         for Key, message in self.error_rule.items():
             if Key in text:
@@ -286,7 +366,11 @@ class Backend:
             bytes_current = net_io.bytes_sent + net_io.bytes_recv  # 當前總流量
 
             # 計算流量速度
-            speed_text = f"{total_speed:.2f} KB/s" if (total_speed := (bytes_current - bytes_initial) / 1e3) < 1e3 else f"{(total_speed / 1e3):.2f} MB/s"
+            speed_text = (
+                f"{total_speed:.2f} KB/s"
+                if (total_speed := (bytes_current - bytes_initial) / 1e3) < 1e3
+                else f"{(total_speed / 1e3):.2f} MB/s"
+            )
             self.title(f"{self.win_title} （{speed_text}）")
 
             bytes_initial = bytes_current
@@ -297,15 +381,15 @@ class Backend:
         self.console.insert("end", message, *args)
         self.console.yview("end")
         self.console.config(state="disabled")
-        
+
     def status_switch(self, state):
         if state == "disabled":
             self.merge_button.config(state="disabled", cursor="no")
             self.run_button.config(state="disabled", cursor="no")
         else:
-            self.token = True # 重設令牌
-            pyperclip.copy("") # 重設剪貼簿 避免 record 清除後再次擷取
-            self.title(self.win_title) # 重設標題
+            self.token = True  # 重設令牌
+            pyperclip.copy("")  # 重設剪貼簿 避免 record 清除後再次擷取
+            self.title(self.win_title)  # 重設標題
             # self.capture_record.clear()
 
             if self.task_cache:
@@ -314,40 +398,59 @@ class Backend:
                 self.input_text.delete("1.0", "end")
                 for task in self.task_cache.values():
                     self.input_text.insert("end", f"{task['url']}\n")
-                self.task_cache.clear() # 重設任務緩存
+                self.task_cache.clear()  # 重設任務緩存
 
             self.merge_button.config(state="normal", cursor="hand2")
             self.run_button.config(state="normal", cursor="hand2")
 
     def download(self, taskId, appId, pubId, searchText, Username, Password):
-        if not self.token: return
+        if not self.token:
+            return
 
         try:
             full_download = False
-            end_message = self.transl('下載完成')
-            process_name = self.illegal_regular.sub("-", searchText if searchText else pubId).strip()
+            end_message = self.transl("下載完成")
+            process_name = self.illegal_regular.sub(
+                "-", searchText if searchText else pubId
+            ).strip()
 
-            self.console_update(f"\n> {self.transl('開始下載')} [{process_name}]\n", "important")
+            self.console_update(
+                f"\n> {self.transl('開始下載')} [{process_name}]\n", "important"
+            )
 
             if not self.save_path.exists():
                 self.save_path.mkdir(parents=True, exist_ok=True)
 
             task_path = self.get_unique_path(self.save_path / process_name)
-            self.task_cache[taskId]['path'] = task_path # 再添加下載路徑
+            self.task_cache[taskId]["path"] = task_path  # 再添加下載路徑
 
             # 避免 Command Injection
             command = [
-                self.depot_exe, "-app", str(appId), "-pubfile", str(pubId),
-                "-verify-all", "-username", Username, "-password", Password,
-                "-dir", task_path
+                self.depot_exe,
+                "-app",
+                str(appId),
+                "-pubfile",
+                str(pubId),
+                "-verify-all",
+                "-username",
+                Username,
+                "-password",
+                Password,
+                "-dir",
+                task_path,
             ]
 
             process = subprocess.Popen(
-                command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
-                creationflags=subprocess.CREATE_NO_WINDOW
+                command,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                creationflags=subprocess.CREATE_NO_WINDOW,
             )
 
-            threading.Thread(target=self.listen_network, args=(process,), daemon=True).start()
+            threading.Thread(
+                target=self.listen_network, args=(process,), daemon=True
+            ).start()
             for line in process.stdout:
                 self.console_update(line)
 
@@ -363,19 +466,28 @@ class Backend:
                     end_message = err_message[0]
                     return
 
-                elif err_message: end_message = err_message
+                elif err_message:
+                    end_message = err_message
 
             process.stdout.close()
             process.wait()
 
             # 雖然可能不需要這麼多檢測, 但避免例外
-            if full_download and end_message == self.transl('下載完成') and Path(task_path).exists():
-                self.task_cache.pop(taskId, None) # 刪除已下載緩存
-                self.complete_record.add(taskId) # 添加下載完成紀錄
+            if (
+                full_download
+                and end_message == self.transl("下載完成")
+                and Path(task_path).exists()
+            ):
+                self.task_cache.pop(taskId, None)  # 刪除已下載緩存
+                self.complete_record.add(taskId)  # 添加下載完成紀錄
             else:
                 # 進程可能還需要繼續, 不刪除錯誤的文件
                 # 用於顯示不在 console_analysis 中的錯誤
-                end_message = end_message if end_message != self.transl('下載完成') else self.transl('下載失敗')
+                end_message = (
+                    end_message
+                    if end_message != self.transl("下載完成")
+                    else self.transl("下載失敗")
+                )
 
             self.console_update(f"> [{process_name}] {end_message}\n", "important")
         except:
@@ -383,12 +495,17 @@ class Backend:
 
             exception = traceback.format_exc()
             logging.error(exception)
-            messagebox.showerror(self.transl('例外'), exception, parent=self)
+            messagebox.showerror(self.transl("例外"), exception, parent=self)
 
     """ ====== 處理數據 與 下載觸發 ====== """
+
     def get_config(self, original=False):
-        username, password = next(iter(
-                self.account_dict.get(self.username.get().split("->")[-1], self.account_dict.get(self.account)).items()
+        username, password = next(
+            iter(
+                self.account_dict.get(
+                    self.username.get().split("->")[-1],
+                    self.account_dict.get(self.account),
+                ).items()
             )
         )
 
@@ -397,16 +514,23 @@ class Backend:
                 if app in self.appid_dict:
                     return username, app
         else:
-            appid = self.appid_dict.get(self.serverid.get(), next(iter(self.appid_dict.values())))
+            appid = self.appid_dict.get(
+                self.serverid.get(), next(iter(self.appid_dict.values()))
+            )
             return appid, username, password
 
     def listen_clipboard(self):
-        pyperclip.copy("") # 避免開啟直接貼上
+        pyperclip.copy("")  # 避免開啟直接貼上
 
         while True:
-            clipboard = unquote(pyperclip.paste()).strip() # unquote 是沒必要的, 方便觀看而已, 但會有額外性能開銷
+            clipboard = unquote(
+                pyperclip.paste()
+            ).strip()  # unquote 是沒必要的, 方便觀看而已, 但會有額外性能開銷
 
-            if self.link_regular.match(clipboard) and clipboard not in self.capture_record:
+            if (
+                self.link_regular.match(clipboard)
+                and clipboard not in self.capture_record
+            ):
                 self.capture_record.add(clipboard)
                 self.input_text.insert("end", f"{clipboard}\n")
                 self.input_text.yview("end")
@@ -416,7 +540,8 @@ class Backend:
     def input_stream(self):
         while True:
             lines = self.input_text.get("1.0", "end").splitlines()
-            if not lines or not lines[0].strip(): break # 避免空數據
+            if not lines or not lines[0].strip():
+                break  # 避免空數據
             self.input_text.delete("1.0", "2.0")
             yield unquote(lines[0]).strip()
 
@@ -427,15 +552,24 @@ class Backend:
             if link:
                 match = self.parse_regular.search(link)
                 if match:
-                    appid, username, password = self.get_config() # 允許臨時變更, 所以每次重獲取
+                    appid, username, password = (
+                        self.get_config()
+                    )  # 允許臨時變更, 所以每次重獲取
                     self.capture_record.add(link)
 
                     match_gp1 = match.group(1)
                     task_id = f"{appid}-{match_gp1}"
 
                     if task_id not in self.complete_record:
-                        self.task_cache[task_id] = {'url': link}
-                        self.download(task_id, appid, match_gp1, match.group(2), username, password)
+                        self.task_cache[task_id] = {"url": link}
+                        self.download(
+                            task_id,
+                            appid,
+                            match_gp1,
+                            match.group(2),
+                            username,
+                            password,
+                        )
                 else:
                     self.console_update(f"{self.transl('無效連結')}：{link}\n")
 

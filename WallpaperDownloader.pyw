@@ -40,7 +40,7 @@ class Controller(ENV, tk.Tk, Backend, GUI):
 
 
 if __name__ == "__main__":
-    #! key 值不能隨意修改 (需要同時修改 ENV)
+    # ! key 值不能隨意修改 (需要同時修改 ENV)
     Controller(
         {
             "language": None,  # 自動偵測
