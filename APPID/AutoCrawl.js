@@ -10,34 +10,36 @@
 
 // @run-at       document-start
 // @grant        GM_registerMenuCommand
+
+// @require      https://update.greasyfork.org/scripts/487608/1561380/SyntaxLite_min.js
 // ==/UserScript==
 
 (async () => {
-    GM_registerMenuCommand("開始獲取", async () => {
-        const data = new Map();
+  const UseDelay = false;
+
+  Syn.Menu({
+    "Start Get ID": {
+      func: () => {
+        const new_data = {};
 
         function Task() {
-            for (const tr of document.querySelectorAll("#table-apps tr.app")) {
-                const name = tr.querySelector(".applogo").nextElementSibling.textContent;
-                const id = tr.getAttribute("data-appid");
-                data.set(name, id);
-            };
+          for (const tr of Syn.$qa("#table-apps tr.app")) {
+            const name = tr.$q(".applogo").nextElementSibling.$text();
+            const id = tr.$gAttr("data-appid");
+            new_data[name] = id;
+          }
 
-            const next = document.querySelector("button.next");
-            if (!next.getAttribute("tabindex")) {
-                next.click(); // 沒在給你延遲的
-                Task();
-            } else {
-                const json = JSON.stringify(Object.fromEntries(data), null, 4);
-                const blob = new Blob([json], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "ID.json";
-                a.click();
-            };
-        };
+          const next = Syn.$q("button.next");
+          if (!next.$gAttr("tabindex")) {
+            next.click();
+            UseDelay ? requestAnimationFrame(Task) : Task();
+          } else {
+            Syn.OutputJson(new_data, "ID");
+          }
+        }
 
         Task();
-    });
+      },
+    },
+  });
 })();
