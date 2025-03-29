@@ -47,8 +47,7 @@ class Backend:
     def Closure(self):
         username, app = self.get_config(True)
         undone = list(
-            {cache["url"] for cache in self.task_cache.values()}
-            | set(self.input_stream())
+            {cache["url"] for cache in self.task_cache.values()} | set(self.input_stream())
         )
 
         self.save_config(
@@ -414,9 +413,7 @@ class Backend:
                 "-", searchText if searchText else pubId
             ).strip()
 
-            self.console_update(
-                f"\n> {self.transl('開始下載')} [{process_name}]\n", "important"
-            )
+            self.console_update(f"\n> {self.transl('開始下載')} [{process_name}]\n", "important")
 
             if not self.save_path.exists():
                 self.save_path.mkdir(parents=True, exist_ok=True)
@@ -448,9 +445,7 @@ class Backend:
                 creationflags=subprocess.CREATE_NO_WINDOW,
             )
 
-            threading.Thread(
-                target=self.listen_network, args=(process,), daemon=True
-            ).start()
+            threading.Thread(target=self.listen_network, args=(process,), daemon=True).start()
             for line in process.stdout:
                 self.console_update(line)
 
@@ -514,9 +509,7 @@ class Backend:
                 if app in self.appid_dict:
                     return username, app
         else:
-            appid = self.appid_dict.get(
-                self.serverid.get(), next(iter(self.appid_dict.values()))
-            )
+            appid = self.appid_dict.get(self.serverid.get(), next(iter(self.appid_dict.values())))
             return appid, username, password
 
     def listen_clipboard(self):
@@ -527,10 +520,7 @@ class Backend:
                 pyperclip.paste()
             ).strip()  # unquote 是沒必要的, 方便觀看而已, 但會有額外性能開銷
 
-            if (
-                self.link_regular.match(clipboard)
-                and clipboard not in self.capture_record
-            ):
+            if self.link_regular.match(clipboard) and clipboard not in self.capture_record:
                 self.capture_record.add(clipboard)
                 self.input_text.insert("end", f"{clipboard}\n")
                 self.input_text.yview("end")
@@ -552,9 +542,7 @@ class Backend:
             if link:
                 match = self.parse_regular.search(link)
                 if match:
-                    appid, username, password = (
-                        self.get_config()
-                    )  # 允許臨時變更, 所以每次重獲取
+                    appid, username, password = self.get_config()  # 允許臨時變更, 所以每次重獲取
                     self.capture_record.add(link)
 
                     match_gp1 = match.group(1)
