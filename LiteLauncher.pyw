@@ -1,4 +1,4 @@
-from Modules import *
+from LiteModules import *
 
 IsFrozen = getattr(sys, "frozen", False)
 
