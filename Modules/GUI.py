@@ -149,9 +149,7 @@ class GUI:
             bg=self.consolo_color,
             fg=self.text_color,
         )
-        self.console.tag_configure(
-            "important", foreground="#00DB00", font=("Consolas", 12, "bold")
-        )
+        self.console.tag_configure("important", foreground="#00DB00", font=("Consolas", 12, "bold"))
         self.console.grid(row=1, column=0, sticky="nsew")
 
     def input_element(self):
@@ -186,8 +184,6 @@ class GUI:
             relief="raised",
             bg=self.secondary_color,
             fg=self.text_color,
-            command=lambda: threading.Thread(
-                target=self.download_trigger, daemon=True
-            ).start(),
+            command=lambda: threading.Thread(target=self.download_trigger, daemon=True).start(),
         )
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
