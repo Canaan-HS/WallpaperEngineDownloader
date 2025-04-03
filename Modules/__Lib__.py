@@ -28,6 +28,7 @@ import pyperclip
 
 SysPlat = platform.system()
 
+
 def Elapsed_Time(stime=None, lable=""):
     """
     stime = Elapsed_Time()

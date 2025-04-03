@@ -1,10 +1,19 @@
 from .__Lib__ import *
 from .Language import Language
 
+
 class ENV:
     def __init__(self, default_config):
-        getter = itemgetter("language", "output_folder", "integrate_folder", "appid_dict", "current_dir")
-        lang, self.output_folder, self.integrate_folder, self.appid_dict, current_dir = getter(default_config)
+        getter = itemgetter(
+            "language", "output_folder", "integrate_folder", "appid_dict", "current_dir"
+        )
+        (
+            lang,
+            self.output_folder,
+            self.integrate_folder,
+            self.appid_dict,
+            current_dir,
+        ) = getter(default_config)
 
         # 配置預設值
         self.transl = Language(lang)
@@ -13,10 +22,13 @@ class ENV:
         # 配置模板 (Key 是調用值, Value 是輸出值)
         self.cfg_key = {
             "Save": "Sava_Path",
-            "Acc": "Account", "App": "Application",
-            "X": "window_x", "Y": "window_y",
-            "W": "window_width", "H": "window_height",
-            "Task": "Tasks"
+            "Acc": "Account",
+            "App": "Application",
+            "X": "window_x",
+            "Y": "window_y",
+            "W": "window_width",
+            "H": "window_height",
+            "Task": "Tasks",
         }
 
         # 依賴載入路徑
@@ -28,7 +40,9 @@ class ENV:
 
         if not self.depot_exe.exists():
             logging.error(f"{self.transl('找不到')}: {self.depot_exe}")
-            messagebox.showerror(self.transl('依賴錯誤'), f"{self.transl('找不到')}: {self.depot_exe}")
+            messagebox.showerror(
+                self.transl("依賴錯誤"), f"{self.transl('找不到')}: {self.depot_exe}"
+            )
             os._exit(0)
 
         if self.id_json.exists():
@@ -40,20 +54,26 @@ class ENV:
                 logging.error(f"{self.transl('讀取 ID.json 時出錯')}: {e}")
 
         self.cfg_data = {}
-        self.CK = SimpleNamespace(**self.cfg_key) # 方便簡短調用
+        self.CK = SimpleNamespace(**self.cfg_key)  # 方便簡短調用
 
         if self.config_json.exists():
             try:
                 self.cfg_data = {
                     val: config[val]
                     for val in self.cfg_key.values()
-                    if val in (config := json.loads(self.config_json.read_text(encoding="utf-8")))
+                    if val
+                    in (
+                        config := json.loads(
+                            self.config_json.read_text(encoding="utf-8")
+                        )
+                    )
                 }
 
                 record_path = Path(self.cfg_data.get(self.CK.Save, ""))
                 self.save_path = (
                     record_path
-                    if record_path.is_absolute() and record_path.name == self.output_folder
+                    if record_path.is_absolute()
+                    and record_path.name == self.output_folder
                     else record_path / self.output_folder
                 )
             except Exception as e:
@@ -65,15 +85,20 @@ class ENV:
 
         if self.config_json.exists():
             try:
-                cache_data = (old_data := json.loads(self.config_json.read_text(encoding="utf-8"))).copy()
+                cache_data = (
+                    old_data := json.loads(self.config_json.read_text(encoding="utf-8"))
+                ).copy()
             except Exception as e:
                 logging.info(e)
 
         old_data.update(data)
-        self.final_config = {val: old_data.get(val, "") for val in self.cfg_key.values() if val in old_data}  
+        self.final_config = {
+            val: old_data.get(val, "")
+            for val in self.cfg_key.values()
+            if val in old_data
+        }
 
         if cache_data != self.final_config:
             self.config_json.write_text(
-                json.dumps(old_data, indent=4, separators=(',',':')),
-                encoding="utf-8"
+                json.dumps(old_data, indent=4, separators=(",", ":")), encoding="utf-8"
             )
