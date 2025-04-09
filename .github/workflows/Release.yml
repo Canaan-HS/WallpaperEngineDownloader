@@ -42,7 +42,7 @@ jobs:
       - name: 設定 Python 環境
         uses: actions/setup-python@v4
         with:
-          python-version: "3.13.2"
+          python-version: "3.13.x"
           cache: "pip" # 啟用 pip 緩存，加速依賴下載
 
       - name: 安裝 Python 依賴
