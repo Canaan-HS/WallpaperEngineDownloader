@@ -6,4 +6,6 @@ Config.json
 VENV
 TEST
 __pycache__
-!requirements.txt
+
+!*Version.txt
+!*Requirements.txt
