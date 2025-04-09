@@ -4,12 +4,14 @@ from .__Lib__ import *
 class Backend:
     def __init__(self):
         self.account_dict = {
-            key: {**value, key: base64.b64decode(value[key]).decode("utf-8")}
+            key: {key: base64.b64decode(value).decode("utf-8")}
             for key, value in {
-                "ruiiixx": {"ruiiixx": "UzY3R0JUQjgzRDNZ"},
-                "vAbuDy": {"vAbuDy": "Qm9vbHE4dmlw"},
-                "adgjl1182": {"adgjl1182": "UUVUVU85OTk5OQ=="},
-                "787109690": {"787109690": "SHVjVXhZTVFpZzE1"},
+                "ruiiixx": "UzY3R0JUQjgzRDNZ",
+                "premexilmenledgconis": "M3BYYkhaSmxEYg==",
+                "vAbuDy": "Qm9vbHE4dmlw",
+                "adgjl1182": "UUVUVU85OTk5OQ==",
+                "gobjj16182": "enVvYmlhbzgyMjI=",
+                "787109690": "SHVjVXhZTVFpZzE1",
             }.items()
         }
 
@@ -35,11 +37,13 @@ class Backend:
             "Unable to locate manifest ID for published file": self.transl(
                 "下載失敗: 該項目可能已被刪除，或應用設置錯誤"
             ),
-            "STEAM GUARD": [
-                self.transl("下載失敗: 請嘗試變更帳號後在下載")
-            ],  # 列表為可觸發強制停止任務
+            # 列表為可觸發強制停止任務
+            **dict.fromkeys(
+                ["STEAM GUARD", "Authentication", "AccountDisabled"],
+                self.transl("下載失敗: 請嘗試變更帳號後再下載"),
+            ),
         }
-        self.error_rule["AccountDisabled"] = self.error_rule["STEAM GUARD"]  # 重用
+
         atexit.register(self.process_cleanup)  # 關閉進程清理
 
     """ ====== 關閉清理 ====== """
