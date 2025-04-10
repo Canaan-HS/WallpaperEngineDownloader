@@ -32,10 +32,13 @@ class ENV:
         }
 
         # 依賴載入路徑
-        self.id_json = current_dir / "APPID/ID.json"
-        self.config_json = current_dir / "Config.json"
         self.save_path = current_dir / self.output_folder
         self.icon_ico = current_dir / "Icon/DepotDownloader.ico"
+
+        self.id_json = current_dir / "APPID/ID.json"
+        self.config_json = current_dir / "Config.json"
+
+        self.repkg_exe = current_dir / "RePkg/RePkg.exe"
         self.depot_exe = current_dir / "DepotdownloaderMod/DepotDownloadermod.exe"
 
         if not self.depot_exe.exists():
@@ -44,6 +47,9 @@ class ENV:
                 self.transl("依賴錯誤"), f"{self.transl('找不到')}: {self.depot_exe}"
             )
             os._exit(0)
+
+        # 判斷是否運行 RePkg
+        self.repkg = True if self.repkg_exe.exists() else False
 
         if self.id_json.exists():
             try:
