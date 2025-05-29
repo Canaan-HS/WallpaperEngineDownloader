@@ -51,6 +51,9 @@ class GUI:
         self.input_element()
 
     def settings_element(self):
+        # ! GUI 的顯示值是直接取用 cfg 的數據, 不會驗證該參數是否存在, 當手動修改 cfg 時 就算不存在也會顯示
+        # ! 只會在後端 get_config 時進行驗證
+
         username_label = tk.Label(
             self.select_frame,
             text=f"{self.transl('選擇配置')}：",
@@ -174,6 +177,7 @@ class GUI:
 
         for task in self.cfg_data.get(self.CK.Task, []):  # 添加舊任務數據
             self.input_text.insert("end", f"{task}\n")
+        self.input_text.xview_moveto(1.0)  # 將滾動條移至最右
 
         self.run_button = tk.Button(
             self.operate_frame,
