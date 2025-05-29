@@ -1,5 +1,7 @@
-tag: v1.0.3
-version: v1.0.3
+tag: v1.0.4
+version: v1.0.4
 description: |
-  1. Release Lite Version
-lastEdit: 2025-04-09 15:20
+  1. Input field automatically scrolls to the end of text
+  2. Optimized certain usage logic and interface behavior
+  3. Added automatic extraction functionality for Wallpaper Engine Pkg files
+lastEdit: 2025-05-30 06:00
