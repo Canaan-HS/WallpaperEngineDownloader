@@ -46,8 +46,6 @@ class Backend:
             ),
         }
 
-        atexit.register(self.process_cleanup)  # 關閉進程清理
-
     """ ====== 設定保存位置 ====== """
 
     def save_settings(self):
@@ -415,7 +413,7 @@ class Backend:
 
     """ ====== 關閉清理 ====== """
 
-    def Closure(self):
+    def closure(self):
         username, app = self.get_config(True)
         undone = list(
             {cache["url"] for cache in self.task_cache.values()} | set(self.input_stream())
