@@ -182,13 +182,16 @@ class Backend:
                 appId,
                 "-pubfile",
                 pubId,
-                "-verify-all",
                 "-username",
                 Username,
                 "-password",
                 Password,
                 "-dir",
                 task_path,
+                "-max-downloads",
+                "16",
+                "-all-platforms",
+                "-validate",
             ]
 
             process = subprocess.Popen(
