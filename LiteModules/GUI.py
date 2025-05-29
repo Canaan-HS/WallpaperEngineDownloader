@@ -176,6 +176,7 @@ class GUI:
         threading.Thread(target=self.listen_clipboard, daemon=True).start()
 
         for task in self.cfg_data.get(self.CK.Task, []):  # 添加舊任務數據
+            self.capture_record.add(task)  # 避免複製移動位置時擷取
             self.input_text.insert("end", f"{task}\n")
         self.input_text.xview_moveto(1.0)  # 將滾動條移至最右
 
