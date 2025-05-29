@@ -34,8 +34,9 @@ class Controller(ENV, tk.Tk, Backend, GUI):
         Backend.__init__(self)
         GUI.__init__(self)
 
-        self.protocol("WM_DELETE_WINDOW", self.Closure)
-        atexit.register(self.log_cleanup, log_path)
+        self.protocol("WM_DELETE_WINDOW", self.closure)  # 關閉 GUI 與 自動保存
+        atexit.register(self.process_cleanup)  # 關閉後進程清理
+        atexit.register(self.log_cleanup, log_path)  # 關閉後日誌清理
         self.mainloop()
 
 
