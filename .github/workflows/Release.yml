@@ -7,6 +7,7 @@ on:
       - "LiteVersion.yaml"
       - "Pack/**"
       - "APPID/**"
+      - "RePKG/**"
       - "DepotDownloaderMod/**"
   workflow_dispatch:
 
@@ -60,9 +61,11 @@ jobs:
         run: |
           Get-ChildItem -Path "dist" -Filter "*.exe" | Move-Item -Destination "WallpaperEngineDownloader/" -Force
           New-Item -Path "WallpaperEngineDownloader/APPID" -ItemType Directory -Force
+
           Get-ChildItem -Path "APPID" -Exclude "AutoCrawl.js" | Copy-Item -Destination "WallpaperEngineDownloader/APPID" -Recurse
-          Copy-Item -Path "DepotDownloaderMod" -Destination "WallpaperEngineDownloader/" -Recurse
           Copy-Item -Path "Icon" -Destination "WallpaperEngineDownloader/" -Recurse
+          Copy-Item -Path "RePKG" -Destination "WallpaperEngineDownloader/" -Recurse
+          Copy-Item -Path "DepotDownloaderMod" -Destination "WallpaperEngineDownloader/" -Recurse
 
       - name: 壓縮文件
         run: |
