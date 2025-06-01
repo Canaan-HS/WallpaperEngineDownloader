@@ -36,7 +36,7 @@
             WaitLoad(items, 300, () => {
                 items.querySelectorAll(".workshopItem").forEach(div => {
                     const title = div.querySelector(".workshopItemTitle")?.textContent;
-                    title && div.querySelectorAll("a").forEach(a => ReUri(a, title));
+                    title && div.querySelectorAll("a:not(.workshop_author_link)").forEach(a => ReUri(a, title));
                 })
             })
         })
