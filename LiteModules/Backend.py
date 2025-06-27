@@ -190,7 +190,6 @@ class Backend:
                 task_path,
                 "-max-downloads",
                 "16",
-                "-all-platforms",
                 "-validate",
             ]
 
