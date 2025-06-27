@@ -173,7 +173,7 @@ class GUI:
             wrap="none",
         )
         self.input_text.grid(row=1, column=0, sticky="nsew")
-        threading.Thread(target=self.listen_clipboard, daemon=True).start()
+        self.after(100, self.listen_clipboard)  # 避免初始化的微小延遲, 進行延遲排程 (可直接調用, 但會有微小延遲)
 
         for task in self.cfg_data.get(self.CK.Task, []):  # 添加舊任務數據
             self.capture_record.add(task)  # 避免複製移動位置時擷取
