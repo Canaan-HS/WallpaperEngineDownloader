@@ -84,7 +84,7 @@ class Backend:
             if not lines or not lines[0].strip():
                 break  # 避免空數據
             self.input_text.delete("1.0", "2.0")
-            yield unquote(lines[0]).strip()
+            yield lines[0].strip()
 
     def download_trigger(self):
         self.status_switch("disabled")
@@ -105,7 +105,7 @@ class Backend:
                             task_id,
                             appid,
                             match_gp1,
-                            match.group(2),
+                            unquote(match.group(2)),
                             username,
                             password,
                         )
@@ -498,17 +498,20 @@ class Backend:
     def listen_clipboard(self):
         pyperclip.copy("")  # 避免開啟直接貼上
 
-        while True:
-            # unquote 是沒必要的, 方便觀看而已, 但會有額外性能開銷
-            clipboard = unquote(pyperclip.paste()).strip()
+        def loop():
+            clipboard = pyperclip.paste().strip()
 
             if self.link_regular.match(clipboard) and clipboard not in self.capture_record:
                 self.capture_record.add(clipboard)
-                self.input_text.insert("end", f"{clipboard}\n")
+                self.input_text.insert(  # unquote 是沒必要的, 方便觀看而已
+                    "end", f"{unquote(clipboard)}\n"
+                )
                 self.input_text.yview("end")
                 self.input_text.xview_moveto(1.0)
 
-            time.sleep(0.3)
+            self.after(300, loop)
+
+        loop()
 
     def listen_network(self, process):
         net_io = psutil.net_io_counters()
