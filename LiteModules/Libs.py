@@ -26,16 +26,3 @@ from tkinter import ttk, scrolledtext, filedialog, messagebox
 
 import psutil
 import pyperclip
-
-SysPlat = platform.system()
-
-
-def Elapsed_Time(stime=None, lable=""):
-    """
-    stime = Elapsed_Time()
-    run code ...
-    Elapsed_Time(stime, "code name")
-    """
-    if stime is None:
-        return time.perf_counter()
-    print(f"{lable} Elapsed: {time.perf_counter() - stime} s".strip())
