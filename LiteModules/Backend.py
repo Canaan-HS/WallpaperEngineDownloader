@@ -1,4 +1,5 @@
-from .__Lib__ import *
+from .Libs import *
+from .Utils import BuildSuffixTree
 
 
 class Backend:
@@ -416,6 +417,8 @@ class Backend:
     """ ====== 關閉清理 ====== """
 
     def closure(self):
+        self.searcher.clear_tree()  # 清除後墜樹記憶體 (占用很大)
+
         username, app = self.get_config(True)
         undone = list(
             {cache["url"] for cache in self.task_cache.values()} | set(self.input_stream())
@@ -558,60 +561,22 @@ class Backend:
 
     def server_search(self):
 
-        # 編譯後綴樹
-        def build_suffix_tree(data_list):
-            trie = defaultdict(dict)
-            for appid in data_list:
-                word_lower = appid.lower()
-                for i in range(len(word_lower)):
-                    current = trie
-                    suffix = word_lower[i:]  # 從索引 i 開始到結尾，即為一個後綴
-                    for char in suffix:
-                        current = current.setdefault(char, {})
-                    if "$" not in current:
-                        current["$"] = set()
-                    current["$"].add(appid)
-            return trie
+        self.text_cache = ""  # 文本緩存, 用於當取消焦點狀態 且 serverid 內容為空時, 重新填充
+        self.searcher = None  # 後墜樹緩存
 
-        # 後綴樹中搜尋
-        def search_suffix_tree(trie, query):
-            current = trie
-            for char in query:
-                if char not in current:
-                    return iter([])  # 查詢的子字串不存在，返回空
-                current = current[char]
-
-            # 產生匹配結果的生成器
-            def match_generator():
-                yielded_matches = set()
-                stack = [current]
-                while stack:
-                    node = stack.pop()
-                    if "$" in node:
-                        for match in node["$"]:
-                            if match not in yielded_matches:
-                                yielded_matches.add(match)
-                                yield match
-
-                    # 繼續深度遍歷
-                    for char, subtree in node.items():
-                        if char != "$":
-                            stack.append(subtree)
-
-            return match_generator()
-
-        # 編譯後綴樹
-        suffix_index = build_suffix_tree(self.app_list)
-        # 文本緩存, 用於當取消焦點狀態 且 serverid 內容為空時, 重新填充
-        self.text_cache = ""
+        def build_searcher():
+            self.searcher = BuildSuffixTree(self.app_list)
 
         def on_input(event):
             widget = event.widget
             suffix = widget.get().lower()  # 忽略大小寫
-            matches = search_suffix_tree(suffix_index, suffix) if suffix else self.app_list
-            widget.configure(values=list(matches))
+            matches = list(self.searcher.search(suffix)) if suffix else self.app_list
+            widget.configure(values=matches)
 
         def on_click(event):
+            if self.searcher is None:
+                self.after(100, build_searcher)
+
             x = event.x
             widget = event.widget
             text = self.serverid.get()
