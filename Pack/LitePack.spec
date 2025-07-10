@@ -2,20 +2,76 @@
 
 # 排除標準庫和第三方庫
 excludes = [
-    # 標準庫，常見的測試和文檔相關功能
-    'unittest', 'pydoc', 'doctest', 'test', 'pydoc_data', 'lib2to3', 'argparse', 'pickle',
-    'calendar', 'pytz', 'pdb', 'sqlite3', 'distutils', 'setuptools', 'pip', '_distutils_hack',
-    'pkg_resources.py2_warn', 'lib2to3', '_pytest', 'pytest',
-    # 網絡和文件處理相關庫
-    'email', 'html', 'http', 'urllib.request', 'xml', 'ftplib', 'smtplib', 'telnetlib',
-    # 更多不需要的標準庫
-    'asyncio', 'concurrent', 'curses', 'dbm', 'ensurepip', 'idlelib', 'multiprocessing',
-    'turtledemo', 'venv', 'zipapp', 'webbrowser',
-    # PyInstaller 相關工具和包
-    'altgraph', 'pyinstaller_hooks_contrib', '_pyinstaller_hooks_contrib', 
-    'pyinstaller_hooks_contrib',
-    # 其他可能包含但不需要的第三方庫
-    'win32ctypes', 'packaging', 'pefile',
+    # -----------------------------------------------------------------
+    # 1. 測試、文檔和開發工具 (Testing, Docs & Dev Tools)
+    # 這些在發布版本中完全不需要。
+    # -----------------------------------------------------------------
+    'unittest', 'pydoc', 'doctest', 'test', 'tests', 'pydoc_data',
+    'lib2to3', 'pickletools', 'pdb', 'tracemalloc', 'profile', 'cProfile',
+
+    # -----------------------------------------------------------------
+    # 2. 打包與分發工具 (Build & Distribution)
+    # 這些是開發環境工具，不應包含在最終產品中。
+    # -----------------------------------------------------------------
+    'distutils', 'setuptools', 'pip', '_distutils_hack', 'pkg_resources',
+    'ensurepip', 'venv', 'wheel',
+
+    # -----------------------------------------------------------------
+    # 3. 網絡與 Web 服務 (Networking & Web Services)
+    # 沒有網絡請求，可以安全排除所有相關模塊。
+    # -----------------------------------------------------------------
+    'asyncio', 'ssl', '_ssl', 'http', 'urllib.request',
+    'ftplib', 'gopherlib', 'imaplib', 'nntplib', 'poplib', 'smtpd', 'smtplib',
+    'telnetlib', 'wsgiref', 'webbrowser', 'cgi', 'cgitb', 'xmlrpc',
+
+    # -----------------------------------------------------------------
+    # 4. GUI、多媒體與圖形 (GUI, Multimedia & Graphics)
+    # 排除未使用的 Tkinter 擴展、聲音、圖像和顏色處理庫。
+    # -----------------------------------------------------------------
+    'tkinter.tix', 'tkinter.dnd', 'turtledemo', 'turtle', 'curses',
+    'winsound', 'colorsys', 'chunk', 'imghdr', 'sndhdr', 'ossaudiodev',
+
+    # -----------------------------------------------------------------
+    # 5. 數據庫 (Databases)
+    # 不涉及數據庫操作。
+    # -----------------------------------------------------------------
+    'sqlite3', 'dbm', 'dbm.gnu', 'dbm.ndbm', 'dbm.dumb',
+
+    # -----------------------------------------------------------------
+    # 6. 數據格式與解析 (Data Formats & Parsing)
+    # 排除除 JSON 和基本配置外的所有數據格式處理器。
+    # -----------------------------------------------------------------
+    'xml', 'xml.dom', 'xml.sax', 'xml.etree', 'csv', 'configparser',
+    'html', 'email', 'json.tool', 'tarfile', 'zipapp', 'plistlib', 'xdrlib',
+
+    # -----------------------------------------------------------------
+    # 7. 加密與壓縮 (Cryptography & Compression)
+    # -----------------------------------------------------------------
+    'hashlib', 'hmac', 'secrets', 'bz2', 'lzma', 'gzip',
+
+    # -----------------------------------------------------------------
+    # 8. 並發與多進程 (Concurrency & Multiprocessing)
+    # -----------------------------------------------------------------
+    'multiprocessing', 'concurrent',
+
+    # -----------------------------------------------------------------
+    # 9. PyInstaller 與第三方庫的內部組件 (Internals)
+    # 這些是 PyInstaller 的輔助工具或可以安全排除的第三方庫組件。
+    # -----------------------------------------------------------------
+    'altgraph', 'pyinstaller_hooks_contrib', '_pyinstaller_hooks_contrib',
+    'pefile', 'packaging', 'pywin32_system32',
+
+    # -----------------------------------------------------------------
+    # 10. 不常用的標準庫 (Uncommon Standard Libraries)
+    # -----------------------------------------------------------------
+    'argparse', 'getopt', 'optparse', 'getpass', 'gettext', 'calendar',
+    'decimal', 'fractions', 'statistics', 'msilib', 'msvcrt',
+    'pickle', 'shelve', 'symtable', 'tabnanny',
+
+    # -----------------------------------------------------------------
+    # 11. Windows 特定組件 (Windows-Specific Components)
+    # -----------------------------------------------------------------
+    'win32com', 'win32ctypes', 'win32api', 'win32con', 'pywintypes',
 ]
 
 # 排除二進制包
@@ -25,7 +81,7 @@ excluded_packages = [
 ]
 
 # 排除不需要的文件類型
-excluded_file_types = ['.pdb', '.lib', '.a', '.ilk']
+excluded_file_types = ['.pdb', '.lib', '.a', '.ilk', '.exp', '.map']
 
 a = Analysis(
     ['../LiteLauncher.pyw'],
