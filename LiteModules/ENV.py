@@ -1,4 +1,4 @@
-from .__Lib__ import *
+from .Libs import *
 from .Language import Language
 
 
