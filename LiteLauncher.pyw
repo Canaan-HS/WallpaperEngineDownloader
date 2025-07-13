@@ -48,8 +48,6 @@ if __name__ == "__main__":
             "output_folder": "Wallpaper_Output",
             "integrate_folder": "!【Integrate】!",
             "appid_dict": {"Wallpaper Engine": "431960"},
-            "current_dir": (
-                Path(sys.executable).parent if IsFrozen else Path(__file__).parent
-            ),  # pyinstaller 打包 與 原碼執行要抓不同路徑
+            "current_dir": Path(sys.executable if IsFrozen else __file__).parent,
         }
     )
