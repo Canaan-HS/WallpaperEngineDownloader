@@ -1,4 +1,5 @@
-from ..bootstrap import *
+from ..bootstrap import tk, ttk, logging, scrolledtext, threading
+from ..utils import account_list
 
 
 class UI:
@@ -65,7 +66,7 @@ class UI:
 
         self.username = tk.StringVar(self)
         self.username.set(
-            f"{self.transl('帳號')}->{self.cfg_data.get(self.CK.Acc, self.acc_list[0])}"
+            f"{self.transl('帳號')}->{self.cfg_data.get(self.CK.Acc, account_list[0])}"
         )  # 下面取用數據時, 會進行判斷是否存在, 這邊直接填充
         self.username_menu = ttk.Combobox(
             self.select_frame,
@@ -75,7 +76,7 @@ class UI:
             cursor="hand2",
             justify="center",
             state="readonly",
-            values=self.acc_list,
+            values=account_list,
         )
         self.username_menu.grid(row=0, column=1, sticky="w", padx=(0, 20))
 
