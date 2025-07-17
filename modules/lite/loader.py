@@ -1,4 +1,4 @@
-from .bootstrap import *
+from .bootstrap import os, json, Path, logging, itemgetter, messagebox, SimpleNamespace
 from .utils import Language
 
 
@@ -16,8 +16,8 @@ class Loader:
         ) = getter(default_config)
 
         # 配置預設值
-        self.transl = Language(lang)
         self.account = "ruiiixx"
+        self.transl = Language(lang)
 
         # 配置模板 (Key 是調用值, Value 是輸出值)
         self.cfg_key = {
@@ -90,11 +90,11 @@ class Loader:
                 logging.info(e)
 
         old_data.update(data)
-        self.final_config = {
+        final_config = {
             val: old_data.get(val, "") for val in self.cfg_key.values() if val in old_data
         }
 
-        if cache_data != self.final_config:
+        if cache_data != final_config:
             self.config_json.write_text(
                 json.dumps(old_data, indent=4, separators=(",", ":")), encoding="utf-8"
             )
