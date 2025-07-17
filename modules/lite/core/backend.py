@@ -7,7 +7,6 @@ from ..bootstrap import (
     psutil,
     logging,
     unquote,
-    base64,
     threading,
     subprocess,
     traceback,
