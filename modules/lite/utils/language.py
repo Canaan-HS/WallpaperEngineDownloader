@@ -1,5 +1,4 @@
-from ..bootstrap import *
-from ..utils import SysPlat
+from ..bootstrap import os, ctypes, locale, logging, SysPlat
 
 
 def Language(lang=None):
