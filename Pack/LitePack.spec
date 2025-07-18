@@ -86,7 +86,7 @@ excluded_packages = [
 excluded_file_types = ['.pdb', '.lib', '.a', '.ilk', '.exp', '.map']
 
 a = Analysis(
-    ['../lite_launcher.pyw'],
+    ['../Lite_Launcher.pyw'],
     pathex=[],
     binaries=[],
     datas=[('../Icon/DepotDownloader.ico', '.')],
