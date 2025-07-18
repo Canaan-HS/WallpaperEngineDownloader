@@ -8,6 +8,9 @@ A project based on [WallpaperEngineWorkshopDownloader](https://github.com/oureve
 
 ![English Version](https://github.com/user-attachments/assets/7d4786d6-4826-41da-b6ee-ea8faa634077)
 
+https://github.com/user-attachments/assets/5bb342e8-8c1d-48e2-a985-9cb808d57181
+
+
 ## Dependencies
 
 - [DepotDownloaderMod](https://github.com/oureveryday/DepotDownloaderMod)
