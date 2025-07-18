@@ -1,4 +1,4 @@
-from modules.lite import tk, sys, Path, logging, atexit, Loader, Backend, UI, IsFrozen, LogConfig
+from Modules.lite import tk, sys, Path, logging, atexit, Loader, Backend, UI, IsFrozen, LogConfig
 
 
 class Controller(Loader, tk.Tk, Backend, UI):
