@@ -7,5 +7,7 @@ VENV
 TEST
 __pycache__
 
+!*LICENSE*.txt
+
 !*Version.txt
 !*Requirements.txt
