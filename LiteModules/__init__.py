@@ -1,4 +1,4 @@
-from .__Lib__ import *
+from .Libs import *
 
 from .ENV import ENV
 from .GUI import GUI
