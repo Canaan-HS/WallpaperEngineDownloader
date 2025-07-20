@@ -417,7 +417,8 @@ class Backend:
     """ ====== 關閉清理 ====== """
 
     def closure(self):
-        self.searcher.clear_tree()  # 清除後墜樹記憶體 (占用很大)
+        if self.searcher is not None:
+            self.searcher.clear_tree()  # 清除後墜樹記憶體 (占用很大)
 
         username, app = self.get_config(True)
         undone = list(
