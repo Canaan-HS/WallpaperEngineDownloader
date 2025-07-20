@@ -1,4 +1,4 @@
-from .__Lib__ import *
+from .Libs import *
 
 
 class GUI:
