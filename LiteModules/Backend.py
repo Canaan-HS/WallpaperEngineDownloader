@@ -558,58 +558,67 @@ class Backend:
 
     def server_search(self):
 
-        # 編譯前綴樹函數
-        def build_trie(data_list):
+        # 編譯後綴樹
+        def build_suffix_tree(data_list):
             trie = defaultdict(dict)
             for appid in data_list:
-                current = trie
-                for char in appid.lower():
-                    current = current.setdefault(char, {})
-                current["$"] = appid
+                word_lower = appid.lower()
+                for i in range(len(word_lower)):
+                    current = trie
+                    suffix = word_lower[i:]  # 從索引 i 開始到結尾，即為一個後綴
+                    for char in suffix:
+                        current = current.setdefault(char, {})
+                    if "$" not in current:
+                        current["$"] = set()
+                    current["$"].add(appid)
             return trie
 
-        # 搜尋前綴樹函數
-        def search_trie(trie, prefix):
+        # 後綴樹中搜尋
+        def search_suffix_tree(trie, query):
             current = trie
-            for char in prefix:
+            for char in query:
                 if char not in current:
-                    return iter([])  # 前綴無法匹配，返回空的迭代器
+                    return iter([])  # 查詢的子字串不存在，返回空
                 current = current[char]
 
+            # 產生匹配結果的生成器
             def match_generator():
+                yielded_matches = set()
                 stack = [current]
                 while stack:
                     node = stack.pop()
                     if "$" in node:
-                        yield node["$"]
+                        for match in node["$"]:
+                            if match not in yielded_matches:
+                                yielded_matches.add(match)
+                                yield match
+
+                    # 繼續深度遍歷
                     for char, subtree in node.items():
                         if char != "$":
                             stack.append(subtree)
 
             return match_generator()
 
-        # 編譯前綴樹
-        appid_trie = build_trie(self.app_list)
+        # 編譯後綴樹
+        suffix_index = build_suffix_tree(self.app_list)
         # 文本緩存, 用於當取消焦點狀態 且 serverid 內容為空時, 重新填充
         self.text_cache = ""
 
         def on_input(event):
             widget = event.widget
-            prefix = widget.get().lower()  # 忽略大小寫
-            matches = search_trie(appid_trie, prefix) if prefix else self.app_list  # 搜尋對象
-            widget.configure(values=list(matches))  # 添加搜尋結果
+            suffix = widget.get().lower()  # 忽略大小寫
+            matches = search_suffix_tree(suffix_index, suffix) if suffix else self.app_list
+            widget.configure(values=list(matches))
 
         def on_click(event):
             x = event.x
             widget = event.widget
             text = self.serverid.get()
-
-            # 判斷 點擊輸入框 且 文本含有 "->", 清空文本
             if x < widget.winfo_width() - 20 and "->" in text:
                 text = self.clean_text(text)
                 self.serverid.set(text)
                 widget.unbind("<Button-1>")
-
             self.text_cache = text
 
         def on_select(event):
