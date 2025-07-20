@@ -1,5 +1,5 @@
 from .Libs import *
-from .Utils import BuildSuffixTree
+from .Backends import BuildSuffixTree
 
 
 class Backend:
