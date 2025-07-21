@@ -1,6 +1,4 @@
-from ..bootstrap import *
-
-SysPlat = platform.system()
+from ..bootstrap import time, deque, functools
 
 
 def Elapsed_Time(stime=None, lable=""):
