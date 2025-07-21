@@ -525,30 +525,6 @@ class Backend:
             bytes_initial = bytes_current
             time.sleep(1)
 
-    def copy_save_path(self, event):
-        pyperclip.copy(shared.save_path)
-        popup = tk.Toplevel(self)
-        popup.overrideredirect(True)
-        popup.attributes("-topmost", True)
-
-        label = tk.Label(
-            popup,
-            text=shared.transl("已複製"),
-            font=("Microsoft JhengHei", 10),
-            bg="#333333",
-            fg="#FFFFFF",
-            padx=5,
-            pady=5,
-        )
-        label.pack()
-
-        popup.update_idletasks()  # 更新窗口以計算 label 的大小
-        popup.geometry(
-            f"{label.winfo_reqwidth()}x{label.winfo_reqheight()}+{event.x_root - 25}+{event.y_root - 35}"
-        )
-        popup.grab_set()
-        popup.after(800, popup.destroy)
-
     def server_search(self):
 
         self.text_cache = ""  # 文本緩存, 用於當取消焦點狀態 且 serverid 內容為空時, 重新填充

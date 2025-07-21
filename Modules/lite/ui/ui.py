@@ -1,4 +1,4 @@
-from ..bootstrap import tk, ttk, Path, logging, filedialog, scrolledtext, threading
+from ..bootstrap import tk, ttk, Path, logging, filedialog, scrolledtext, threading, pyperclip
 from ..utils import account_list
 from ..core import shared
 
@@ -51,6 +51,8 @@ class UI:
         self.operate_frame.rowconfigure(2, weight=0)
         self.operate_frame.columnconfigure(0, weight=1)
         self.input_element()
+
+    """ ====== 主要元件 ====== """
 
     def settings_element(self):
         # ! GUI 的顯示值是直接取用 cfg 的數據, 不會驗證該參數是否存在, 當手動修改 cfg 時 就算不存在也會顯示
@@ -197,6 +199,8 @@ class UI:
         )
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
 
+    """ ====== 其餘功能 ====== """
+
     def save_settings(self):
         path = filedialog.askdirectory(title=shared.transl("選擇資料夾"))
 
@@ -204,3 +208,29 @@ class UI:
             shared.save_path = Path(path) / shared.output_folder
             self.save_path_label.config(text=shared.save_path)
             shared.save_config({"Sava_Path": str(shared.save_path)})
+
+    def copy_save_path(self, event):
+        pyperclip.copy(shared.save_path)
+
+        popup = tk.Toplevel(self)
+        popup.overrideredirect(True)
+        popup.attributes("-topmost", True)
+
+        label = tk.Label(
+            popup,
+            text=shared.transl("已複製"),
+            font=("Microsoft JhengHei", 10),
+            bg="#333333",
+            fg="#FFFFFF",
+            padx=5,
+            pady=5,
+        )
+        label.pack()
+
+        popup.update_idletasks()  # 更新窗口以計算 label 的大小
+        popup.geometry(
+            f"{label.winfo_reqwidth()}x{label.winfo_reqheight()}+{event.x_root - 25}+{event.y_root - 35}"
+        )
+
+        popup.grab_set()
+        popup.after(800, popup.destroy)
