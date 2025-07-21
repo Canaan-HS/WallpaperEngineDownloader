@@ -1,21 +1,12 @@
-from modules.lite import *
-
-IsFrozen = getattr(sys, "frozen", False)
+from modules.lite import tk, sys, Path, logging, atexit, Loader, Backend, UI, IsFrozen, LogConfig
 
 
 class Controller(Loader, tk.Tk, Backend, UI):
     def __init__(self, default_config):
         log_path = Path(default_config["current_dir"]) / "Info.log"
 
-        Config = {
-            "level": logging.DEBUG,
-            "format": "%(asctime)s - %(levelname)s: %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-            "force": True,
-        }
-
         if IsFrozen:
-            Config.update(
+            LogConfig.update(
                 {
                     "level": logging.WARNING,
                     "filename": str(log_path),
@@ -23,7 +14,7 @@ class Controller(Loader, tk.Tk, Backend, UI):
                 }
             )
 
-        logging.basicConfig(**Config)
+        logging.basicConfig(**LogConfig)
         sys.excepthook = lambda *args: (
             logging.error(exc_info=args),
             sys.__excepthook__(*args),
