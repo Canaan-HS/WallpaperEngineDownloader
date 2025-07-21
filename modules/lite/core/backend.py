@@ -1,20 +1,27 @@
-from ..bootstrap import *
-from ..utils import BuildSuffixTree
+from ..bootstrap import (
+    tk,
+    ttk,
+    time,
+    Path,
+    shutil,
+    psutil,
+    logging,
+    unquote,
+    base64,
+    threading,
+    subprocess,
+    traceback,
+    messagebox,
+    filedialog,
+    defaultdict,
+    pyperclip,
+)
+
+from ..utils import illegal_regex, parse_regex, link_regex, account_dict, BuildSuffixTree
 
 
 class Backend:
     def __init__(self):
-        self.account_dict = {
-            key: {key: base64.b64decode(value).decode("utf-8")}
-            for key, value in {
-                "ruiiixx": "UzY3R0JUQjgzRDNZ",
-                "premexilmenledgconis": "M3BYYkhaSmxEYg==",
-                "vAbuDy": "Qm9vbHE4dmlw",
-                "adgjl1182": "UUVUVU85OTk5OQ==",
-                "gobjj16182": "enVvYmlhbzgyMjI=",
-                "787109690": "SHVjVXhZTVFpZzE1",
-            }.items()
-        }
 
         self.clean_text = lambda text: text.split("->")[-1]
 
@@ -26,13 +33,6 @@ class Backend:
         self.complete_record = set()
 
         self.app_list = list(self.appid_dict.keys())
-        self.acc_list = list(self.account_dict.keys())
-
-        self.illegal_regular = re.compile(r'[<>:"/\\|?*\x00-\x1F]')
-        self.parse_regular = re.compile(r"(\d{8,10})(?:&searchtext=(.*))?")
-        self.link_regular = re.compile(
-            r"^https://steamcommunity\.com/sharedfiles/filedetails/\?id=\d+.*$"
-        )
 
         self.token = True  # 可強制停止所有任務
         self.error_rule = {
@@ -62,9 +62,9 @@ class Backend:
     def get_config(self, original=False):
         username, password = next(
             iter(
-                self.account_dict.get(
+                account_dict.get(
                     self.clean_text(self.username.get()),
-                    self.account_dict.get(self.account),
+                    account_dict.get(self.account),
                 ).items()
             )
         )
@@ -92,7 +92,7 @@ class Backend:
 
         for link in self.input_stream():
             if link:
-                match = self.parse_regular.search(link)
+                match = parse_regex.search(link)
                 if match:
                     appid, username, password = self.get_config()  # 允許臨時變更, 所以每次重獲取
                     self.capture_record.add(link)
@@ -164,9 +164,7 @@ class Backend:
         try:
             full_download = False
             end_message = self.transl("下載完成")
-            process_name = self.illegal_regular.sub(
-                "-", searchText if searchText else pubId
-            ).strip()
+            process_name = illegal_regex.sub("-", searchText if searchText else pubId).strip()
 
             self.console_update(f"\n> {self.transl('開始下載')} [{process_name}]\n", "important")
 
@@ -505,7 +503,7 @@ class Backend:
         def loop():
             clipboard = pyperclip.paste().strip()
 
-            if self.link_regular.match(clipboard) and clipboard not in self.capture_record:
+            if link_regex.match(clipboard) and clipboard not in self.capture_record:
                 self.capture_record.add(clipboard)
                 self.input_text.insert(  # unquote 是沒必要的, 方便觀看而已
                     "end", f"{unquote(clipboard)}\n"
