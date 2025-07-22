@@ -346,9 +346,8 @@ class UI:
                     f"{shared.transl('整合以下類型的檔案')}?\n\n{selected}",
                     parent=merge_window,
                 )
+
                 if confirm == "yes":
-                    for item in selected_items:  # 移除選中的項目
-                        treeview.delete(item)
 
                     def merge_success_show(merge_path):
                         messagebox.showinfo(
@@ -357,7 +356,10 @@ class UI:
                             parent=merge_window,
                         )
 
-                    shared.msg.connect(merge_success_show)
+                        for item in selected_items:  # 移除選中的項目
+                            treeview.delete(item)
+
+                    shared.msg.connect(merge_success_show, True)
                     self.move_files(data_table, selected)
 
             output_button = tk.Button(
