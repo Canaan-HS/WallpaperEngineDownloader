@@ -1,4 +1,4 @@
-from ..bootstrap import time, deque, functools
+from ..bootstrap import time, deque, inspect, functools
 
 
 def Elapsed_Time(func=None, *, label=""):
@@ -22,14 +22,59 @@ def Elapsed_Time(func=None, *, label=""):
 
 class Signal:
     def __init__(self):
-        self._slots = []
+        self._slots = {}
 
-    def connect(self, func):
-        self._slots.append(func)
+    def _can_call(self, slot_info, arg_count):
+        return slot_info["min_args"] <= arg_count <= slot_info["max_args"]
 
-    def emit(self, *args, **kwargs):
-        for slot in self._slots:
-            slot(*args, **kwargs)
+    def connect(self, func, once=False):
+        sig = inspect.signature(func)
+        params = sig.parameters.values()
+
+        required_params = [
+            p
+            for p in params
+            if p.default is inspect.Parameter.empty
+            and p.kind
+            in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+        ]
+        min_args = len(required_params)
+
+        if any(p.kind == inspect.Parameter.VAR_POSITIONAL for p in params):
+            max_args = float("inf")
+        else:
+            max_args = len(
+                [
+                    p
+                    for p in params
+                    if p.kind
+                    in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+                ]
+            )
+
+        self._slots[func.__name__] = {
+            "func": func,
+            "min_args": min_args,
+            "max_args": max_args,
+            "once": once,
+        }
+
+    def emit(self, target=None, *args, **kwargs):
+        if target is None:
+            to_remove = []
+            for name, slot_info in self._slots.items():
+                if self._can_call(slot_info, len(args)):
+                    slot_info["func"](*args, **kwargs)
+                    if slot_info.get("once"):
+                        to_remove.append(name)
+            for name in to_remove:
+                del self._slots[name]
+        else:
+            slot_info = self._slots.get(target)
+            if slot_info:
+                slot_info["func"](*args, **kwargs)
+                if slot_info.get("once"):
+                    del self._slots[target]
 
 
 class _Node:
