@@ -1,15 +1,23 @@
 from ..bootstrap import time, deque, functools
 
 
-def Elapsed_Time(stime=None, lable=""):
+def Elapsed_Time(func=None, *, label=""):
     """
-    stime = Elapsed_Time()
-    run code ...
-    Elapsed_Time(stime, "code name")
+    加上裝飾器 @Elapsed_Time
     """
-    if stime is None:
-        return time.perf_counter()
-    print(f"{lable} Elapsed: {time.perf_counter() - stime} s".strip())
+    if func is None:
+        return lambda f: Elapsed_Time(f, label=label)
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        elapsed = time.time() - start_time
+        source = func.__name__ if not label else label
+        print(f"調用: {source} | 耗時: {elapsed:.4f} 秒")
+        return result
+
+    return wrapper
 
 
 class Signal:
