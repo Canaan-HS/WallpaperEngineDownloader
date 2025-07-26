@@ -56,19 +56,20 @@ class Backend:
         username, password = next(
             iter(
                 account_dict.get(
-                    self.clean_text(self.username.get()),
+                    self.clean_text(shared.msg.request("username")),
                     account_dict.get(shared.account),
                 ).items()
             )
         )
 
         if original:
-            for app in [self.clean_text(self.serverid.get()), self.app_list[0]]:
+            for app in [self.clean_text(shared.msg.request("serverid")), self.app_list[0]]:
                 if app in shared.appid_dict:
                     return username, app
         else:
             appid = shared.appid_dict.get(
-                self.clean_text(self.serverid.get()), next(iter(shared.appid_dict.values()))
+                self.clean_text(shared.msg.request("serverid")),
+                next(iter(shared.appid_dict.values())),
             )
             return appid, username, password
 
@@ -276,19 +277,7 @@ class Backend:
             {cache["url"] for cache in self.task_cache.values()} | set(self.input_stream())
         )
 
-        shared.save_config(
-            {
-                "Account": username,
-                "Application": app,
-                "window_x": self.winfo_x(),
-                "window_y": self.winfo_y(),
-                "window_width": self.winfo_width(),
-                "window_height": self.winfo_height(),
-                "Tasks": undone,
-            }
-        )
-
-        self.destroy()
+        shared.msg.emit("ui_close", username, app, undone)
 
     def log_cleanup(self, log_path):
         try:
@@ -303,6 +292,7 @@ class Backend:
     def process_cleanup(self):
         pids = []
         processName = "DepotDownloaderMod.exe"
+
         for proc in psutil.process_iter(["pid", "name"]):
             try:
                 if proc.info["name"].lower() == processName.lower():
@@ -405,7 +395,7 @@ class Backend:
 
             x = event.x
             widget = event.widget
-            text = self.serverid.get()
+            text = shared.msg.request("serverid")
             if x < widget.winfo_width() - 20 and "->" in text:
                 text = self.clean_text(text)
                 self.serverid.set(text)
@@ -413,11 +403,11 @@ class Backend:
             self.text_cache = text
 
         def on_select(event):
-            self.text_cache = self.serverid.get()
+            self.text_cache = shared.msg.request("serverid")
             event.widget.configure(values=self.app_list)
 
         def of_select(event):
-            if self.serverid.get().strip() == "":
+            if shared.msg.request("serverid") == "":
                 self.serverid.set(self.text_cache)
 
         self.serverid_menu.bind("<KeyRelease>", on_input)
