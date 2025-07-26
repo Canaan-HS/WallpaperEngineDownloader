@@ -74,10 +74,10 @@ class Backend:
 
     def input_stream(self):
         while True:
-            lines = self.input_text.get("1.0", "end").splitlines()
+            lines = shared.msg.request("input_operat", "get", "1.0", "end")
             if not lines or not lines[0].strip():
                 break  # 避免空數據
-            self.input_text.delete("1.0", "2.0")
+            shared.msg.emit("input_operat", "delete", "1.0", "2.0")
             yield lines[0].strip()
 
     def download_trigger(self):
@@ -104,7 +104,7 @@ class Backend:
                             password,
                         )
                 else:
-                    self.console_update(f"{shared.transl('無效連結')}：{link}\n")
+                    shared.msg.emit("console_insert", f"{shared.transl('無效連結')}：{link}\n")
 
         self.status_switch("normal")
 
@@ -114,12 +114,6 @@ class Backend:
         for Key, message in self.error_rule.items():
             if Key in text:
                 return message
-
-    def console_update(self, message, *args):
-        self.console.config(state="normal")
-        self.console.insert("end", message, *args)
-        self.console.yview("end")
-        self.console.config(state="disabled")
 
     def get_unique_path(self, path):
         index = 1
@@ -131,24 +125,22 @@ class Backend:
 
     def status_switch(self, state):
         if state == "disabled":
-            self.merge_button.config(state="disabled", cursor="no")
-            self.run_button.config(state="disabled", cursor="no")
+            shared.msg.emit("button_state_change", "disabled", "no")
         else:
             self.token = True  # 重設令牌
             pyperclip.copy("")  # 重設剪貼簿 避免 record 清除後再次擷取
-            self.title(self.win_title)  # 重設標題
+            shared.msg.emit("title_change")  # 重設標題
             # self.capture_record.clear()
 
             if self.task_cache:
                 self.process_cleanup()
 
-                self.input_text.delete("1.0", "end")
+                shared.msg.emit("input_operat", "delete", "1.0", "end")
                 for task in self.task_cache.values():
-                    self.input_text.insert("end", f"{task['url']}\n")
+                    shared.msg.emit("input_operat", "insert", f"{task['url']}\n")
                 self.task_cache.clear()  # 重設任務緩存
 
-            self.merge_button.config(state="normal", cursor="hand2")
-            self.run_button.config(state="normal", cursor="hand2")
+            shared.msg.emit("button_state_change", "normal", "hand2")
 
     def download(self, taskId, appId, pubId, searchText, Username, Password):
         if not self.token:
@@ -159,7 +151,9 @@ class Backend:
             end_message = shared.transl("下載完成")
             process_name = illegal_regex.sub("-", searchText if searchText else pubId).strip()
 
-            self.console_update(f"\n> {shared.transl('開始下載')} [{process_name}]\n", "important")
+            shared.msg.emit(
+                "console_insert", f"\n> {shared.transl('開始下載')} [{process_name}]\n", "important"
+            )
 
             if not shared.save_path.exists():
                 shared.save_path.mkdir(parents=True, exist_ok=True)
@@ -198,7 +192,7 @@ class Backend:
                 if line.strip() == "":
                     continue
 
-                self.console_update(line)
+                shared.msg.emit("console_insert", line)
 
                 # 分析可能的錯誤訊息, 消息是列表狀態, 代表需要強制中止
                 err_message = self.console_analysis(line)
@@ -241,9 +235,9 @@ class Backend:
                     else shared.transl("下載失敗")
                 )
 
-            self.console_update(f"> [{process_name}] {end_message}\n", "important")
+            shared.msg.emit("console_insert", f"> [{process_name}] {end_message}\n", "important")
         except:
-            self.console_update(f"> {shared.transl('例外中止')}\n", "important")
+            shared.msg.emit("console_insert", f"> {shared.transl('例外中止')}\n", "important")
 
             exception = traceback.format_exc()
             logging.error(exception)
@@ -364,11 +358,9 @@ class Backend:
 
             if link_regex.match(clipboard) and clipboard not in self.capture_record:
                 self.capture_record.add(clipboard)
-                self.input_text.insert(  # unquote 是沒必要的, 方便觀看而已
-                    "end", f"{unquote(clipboard)}\n"
-                )
-                self.input_text.yview("end")
-                self.input_text.xview_moveto(1.0)
+                shared.msg.emit(
+                    "input_operat", "insert-view", f"{unquote(clipboard)}\n"
+                )  # unquote 是沒必要的, 方便觀看而已
 
             self.after(300, loop)
 
@@ -388,7 +380,7 @@ class Backend:
                 if (total_speed := (bytes_current - bytes_initial) / 1e3) < 1e3
                 else f"{(total_speed / 1e3):.2f} MB/s"
             )
-            self.title(f"{self.win_title} （{speed_text}）")
+            shared.msg.emit("title_change", f"{self.win_title} （{speed_text}）")
 
             bytes_initial = bytes_current
             time.sleep(1)
