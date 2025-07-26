@@ -68,10 +68,14 @@ class UI:
         self.operate_frame.columnconfigure(0, weight=1)
         self.input_element()
 
+        shared.msg.connect(lambda: self.username.get().strip(), label="username")
+        shared.msg.connect(lambda: self.serverid.get().strip(), label="serverid")
+
         shared.msg.connect(
             lambda title="": self.title(title.strip() or self.win_title), label="title_change"
         )
 
+        shared.msg.connect(self.ui_close)
         shared.msg.connect(self.input_operat)
         shared.msg.connect(self.console_insert)
         shared.msg.connect(self.button_state_change)
@@ -220,6 +224,21 @@ class UI:
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
 
     """ ====== UI 交互 ====== """
+
+    def ui_close(self, account, application, tasks):
+        shared.save_config(
+            {
+                "Account": account,
+                "Application": application,
+                "window_x": self.winfo_x(),
+                "window_y": self.winfo_y(),
+                "window_width": self.winfo_width(),
+                "window_height": self.winfo_height(),
+                "Tasks": tasks,
+            }
+        )
+
+        self.destroy()
 
     def console_insert(self, message: str, *args):
         self.console.config(state="normal")
