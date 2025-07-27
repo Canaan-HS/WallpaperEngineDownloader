@@ -56,6 +56,12 @@ winget install Microsoft.DotNet.SDK.9
 - **Restore Records**  
   URLs that are present in the task list, as well as those that are being downloaded but not yet completed, will be saved when the program is closed. Upon reopening, these URLs will automatically be restored to the task list.
 
+## **Automatic PKG File Extraction**
+- **Background Processing**  
+  Automatically detects and extracts `.pkg` files from downloaded Wallpaper Engine items. Extraction runs in a separate thread, **without blocking the UI or download queue**.
+- **Silent Execution**  
+  The extraction process runs silently without user prompts. If the program is closed immediately after the last item finishes downloading, any ongoing extraction may be interrupted.
+
 ## **File Integration**
 - **File Selection**
   Lists all files in the output path (excluding the `!【Integrate】!` folder), displaying file types and supporting single selection or multi-selection via `Ctrl`/`Shift` keys.
