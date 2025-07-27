@@ -162,9 +162,7 @@ class Backend:
                 "console_insert", f"\n> {shared.transl('開始下載')} [{process_name}]\n", "important"
             )
 
-            if not shared.save_path.exists():
-                shared.save_path.mkdir(parents=True, exist_ok=True)
-
+            shared.save_path.mkdir(parents=True, exist_ok=True)
             task_path = self.get_unique_path(shared.save_path / process_name)
             self.task_cache[taskId]["path"] = task_path  # 添加下載路徑
 
