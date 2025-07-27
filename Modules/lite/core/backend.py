@@ -41,7 +41,7 @@ class Backend:
             ),
             # 列表為可觸發強制停止任務
             **dict.fromkeys(
-                ["STEAM GUARD", "Authentication", "AccountDisabled"],
+                ["STEAM GUARD", "Authentication", "AccountDisabled", "AlreadyLoggedInElsewhere"],
                 self.transl("下載失敗: 請嘗試變更帳號後再下載"),
             ),
         }
