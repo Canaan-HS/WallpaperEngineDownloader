@@ -3,6 +3,10 @@ from ..core import shared
 
 
 class UI_Operat:
+    """
+    後端與 UI 的交互操作, 由 ui_main 分離出來
+    """
+
     def __init__(self):
         # 目前只用於顯示 請求速度
         shared.msg.connect(
