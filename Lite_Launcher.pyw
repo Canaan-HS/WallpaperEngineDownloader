@@ -30,8 +30,7 @@ class Controller(Init_Loader, UI_Loader):
 if __name__ == "__main__":
     Controller(
         {
-            "language": None,  # auto
-            "output_folder": "Wallpaper_Output",
+            "output_folder": "Workshop_Output",
             "integrate_folder": "!【Integrate】!",
             "appid_dict": {"Wallpaper Engine": "431960"},
             "current_dir": Path(sys.executable if IsFrozen else __file__).parent,
