@@ -84,7 +84,7 @@ class Backend_Tools:
 
             # 如果中途被刪除, 關閉該功能
             if not shared.repkg_exe.exists():
-                shared.repkg = False
+                shared.enable_extract_pkg = False
                 return
 
             for pkg in pkg_path:
