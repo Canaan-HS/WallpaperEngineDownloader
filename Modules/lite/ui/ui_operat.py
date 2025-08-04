@@ -29,8 +29,10 @@ class UI_Operat:
     def ui_close(self, account, application, tasks):
         shared.save_config(
             {
+                "Language": shared.set_lang,
                 "Account": account,
                 "Application": application,
+                "Extract_Pkg": shared.enable_extract_pkg,
                 "window_x": self.winfo_x(),
                 "window_y": self.winfo_y(),
                 "window_width": self.winfo_width(),
@@ -77,22 +79,22 @@ class UI_Operat:
 
             x = event.x
             widget = event.widget
-            text = self.serverid.get()
+            text = self.serverid_var.get()
 
             if x < widget.winfo_width() - 20 and "->" in text:
                 text = self.clean_text(text)
-                self.serverid.set(text)
+                self.serverid_var.set(text)
                 widget.unbind("<Button-1>")
 
             self.text_cache = text
 
         def on_select(event):
-            self.text_cache = self.serverid.get()
+            self.text_cache = self.serverid_var.get()
             event.widget.configure(values=self.app_list)
 
         def of_select(_):
-            if self.serverid.get().strip() == "":
-                self.serverid.set(self.text_cache)
+            if self.serverid_var.get().strip() == "":
+                self.serverid_var.set(self.text_cache)
 
         self.serverid_menu.bind("<KeyRelease>", on_input)
         self.serverid_menu.bind("<Button-1>", on_click)
