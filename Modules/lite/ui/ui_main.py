@@ -378,9 +378,17 @@ class UI_Main:
         data_table = get_ext_groups(shared.save_path, shared.integrate_folder)
 
         if data_table:
+            self.language_menu.config(state="disabled")  # 鎖定語言變更
+
             merge_window = tk.Toplevel(self)
             merge_window.title(shared.transl("檔案整合"))
             merge_window.configure(bg=self.primary_color)
+
+            def merge_window_close():
+                self.language_menu.config(state="readonly")
+                merge_window.destroy()
+
+            merge_window.protocol("WM_DELETE_WINDOW", merge_window_close)  # 關閉觸發
 
             try:
                 merge_window.iconbitmap(shared.icon_ico)
@@ -449,6 +457,43 @@ class UI_Main:
             scroll_y.config(command=treeview.yview)
             treeview.pack(fill="both", expand=True)
 
+            def move_trigger():
+                if len(treeview.selection()) == 0:
+                    messagebox.showwarning(
+                        title=shared.transl("操作提示"),
+                        message=shared.transl("請選擇要整合的類型"),
+                        parent=merge_window,
+                    )
+                    return
+
+                selected = []
+                selected_items = treeview.selection()
+
+                for item in selected_items:
+                    values = treeview.item(item, "values")  # 取得對應的數據
+                    selected.append(values[0])
+
+                confirm = messagebox.askquestion(
+                    shared.transl("操作確認"),
+                    f"{shared.transl('整合以下類型的檔案')}?\n\n{selected}",
+                    parent=merge_window,
+                )
+
+                if confirm == "yes":
+
+                    def merge_success_show(merge_path):
+                        messagebox.showinfo(
+                            title=shared.transl("操作完成"),
+                            message=f"{shared.transl('檔案整合完成')}\n{merge_path}",
+                            parent=merge_window,
+                        )
+
+                        for item in selected_items:  # 移除選中的項目
+                            treeview.delete(item)
+
+                    shared.msg.connect(merge_success_show, once=True)
+                    self.move_files(data_table, selected)
+
             output_button = tk.Button(
                 output_frame,
                 text=shared.transl("整合輸出"),
@@ -458,7 +503,7 @@ class UI_Main:
                 relief="raised",
                 bg=self.secondary_color,
                 fg=self.text_color,
-                command=self.move_trigger,
+                command=move_trigger,
             )
             output_button.pack(pady=(5, 15))
 
