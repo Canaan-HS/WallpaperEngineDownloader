@@ -11,6 +11,7 @@ from ..bootstrap import (
 )
 
 from ..core import shared
+from ..language import translator
 from ..utils import account_list, get_ext_groups
 
 
@@ -40,58 +41,99 @@ class UI_Main:
 
         self.primary_color = "#383d48"
         self.consolo_color = "#272727"
-        self.secondary_color = "#afd4ff"
+        self.secondary_color = "#4dabf7"
         self.text_color = "#ffffff"
         self.configure(bg=self.primary_color)
 
-        self.rowconfigure(0, weight=0)  # select_frame
-        self.rowconfigure(1, weight=0)  # console_frame
-        self.rowconfigure(2, weight=1)  # operate_frame
-        self.columnconfigure(0, weight=1)  # 水平拉伸
+        self.rowconfigure(0, weight=0)
+        self.rowconfigure(1, weight=0)
+        self.rowconfigure(2, weight=0)
+        self.rowconfigure(3, weight=0)
+        self.rowconfigure(4, weight=1)
+        self.rowconfigure(5, weight=0)
+        self.columnconfigure(0, weight=1)
 
-        self.select_frame = tk.Frame(self, bg=self.primary_color)
-        self.select_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
-        self.select_frame.columnconfigure(1, weight=0)
-        self.select_frame.columnconfigure(2, weight=1)
-        self.settings_element()
+        # 選擇配置
+        self.title_frame = tk.Frame(self, bg=self.primary_color)
+        self.title_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
+        self.title_frame.columnconfigure(0, weight=1)
 
+        # 下拉選單
+        self.menus_frame = tk.Frame(self, bg=self.primary_color)
+        self.menus_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
+        self.menus_frame.columnconfigure(0, weight=0)
+        self.menus_frame.columnconfigure(1, weight=0)
+        self.menus_frame.columnconfigure(2, weight=1)
+
+        # 按鈕框架
+        self.buttons_frame = tk.Frame(self, bg=self.primary_color)
+        self.buttons_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
+        self.buttons_frame.columnconfigure(0, weight=1)  # 左側彈性空間
+        self.buttons_frame.columnconfigure(1, weight=0)  # 修改路徑
+        self.buttons_frame.columnconfigure(2, weight=0)  # 檔案整合
+        self.buttons_frame.columnconfigure(3, weight=0)  # 自動提取
+        self.buttons_frame.columnconfigure(4, weight=1)  # 右側彈性空間
+
+        # 路徑文本框架
+        self.path_text_frame = tk.Frame(self, bg=self.primary_color)
+        self.path_text_frame.grid(row=3, column=0, sticky="ew", padx=10, pady=5)
+        self.path_text_frame.columnconfigure(0, weight=1)
+
+        # 控制台框架
         self.console_frame = tk.Frame(self, bg=self.primary_color)
-        self.console_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=5)
+        self.console_frame.grid(row=4, column=0, sticky="nsew", padx=10, pady=5)
         self.console_frame.rowconfigure(1, weight=1)
         self.console_frame.columnconfigure(0, weight=1)
-        self.display_element()
 
+        # 操作框架
         self.operate_frame = tk.Frame(self, bg=self.primary_color)
-        self.operate_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
+        self.operate_frame.grid(row=5, column=0, sticky="ew", padx=10, pady=5)
         self.operate_frame.rowconfigure(1, weight=1)
-        self.operate_frame.rowconfigure(2, weight=0)
         self.operate_frame.columnconfigure(0, weight=1)
+
+        self.settings_element()
+        self.display_element()
         self.input_element()
 
-        shared.msg.connect(lambda: self.username.get().strip(), "username")
-        shared.msg.connect(lambda: self.serverid.get().strip(), "serverid")
+        shared.msg.connect(lambda: self.username_var.get().strip(), "username")
+        shared.msg.connect(lambda: self.serverid_var.get().strip(), "serverid")
 
     """ ====== 主要元件 ====== """
 
     def settings_element(self):
-        # ! GUI 的顯示值是直接取用 cfg 的數據, 不會驗證該參數是否存在, 當手動修改 cfg 時 就算不存在也會顯示
-        # ! 只會在後端 get_config 時進行驗證
-
-        tk.Label(
-            self.select_frame,
-            text=f"{shared.transl('選擇配置')}：",
-            font=("Microsoft JhengHei", 14, "bold"),
+        self.title_label = tk.Label(
+            self.title_frame,
+            text=shared.transl("選擇配置"),
+            font=("Microsoft JhengHei", 16, "bold"),
             bg=self.primary_color,
             fg=self.text_color,
-        ).grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(10, 10))
+        )
+        self.title_label.grid(row=0, column=0)
 
-        self.username = tk.StringVar(self)
-        self.username.set(
+        self.language_var = tk.StringVar(self)
+        self.language_var.set(shared.transl(shared.set_lang))
+
+        self.init_language_rules()
+        self.language_menu = ttk.Combobox(
+            self.menus_frame,
+            textvariable=self.language_var,
+            font=("Microsoft JhengHei", 10),
+            width=12,
+            cursor="hand2",
+            justify="center",
+            state="readonly",
+            values=list(self.language_rules.keys()),
+        )
+        self.language_menu.grid(row=0, column=0, sticky="w", padx=(0, 10))
+        self.language_menu.bind("<<ComboboxSelected>>", self.language_select)
+
+        self.username_var = tk.StringVar(self)
+        self.username_var.set(
             f"{shared.transl('帳號')}->{shared.cfg_data.get(shared.ck.Acc, account_list[0])}"
-        )  # 下面取用數據時, 會進行判斷是否存在, 這邊直接填充
+        )
         self.username_menu = ttk.Combobox(
-            self.select_frame,
-            textvariable=self.username,
+            self.menus_frame,
+            textvariable=self.username_var,
             font=("Microsoft JhengHei", 10),
             width=15,
             cursor="hand2",
@@ -99,15 +141,15 @@ class UI_Main:
             state="readonly",
             values=account_list,
         )
-        self.username_menu.grid(row=0, column=1, sticky="w", padx=(0, 20))
+        self.username_menu.grid(row=0, column=1, sticky="w", padx=(0, 10))
 
-        self.serverid = tk.StringVar(self)
-        self.serverid.set(
+        self.serverid_var = tk.StringVar(self)
+        self.serverid_var.set(
             f"{shared.transl('應用')}->{shared.cfg_data.get(shared.ck.App, self.app_list[0])}"
         )
         self.serverid_menu = ttk.Combobox(
-            self.select_frame,
-            textvariable=self.serverid,
+            self.menus_frame,
+            textvariable=self.serverid_var,
             font=("Microsoft JhengHei", 10),
             cursor="hand2",
             justify="center",
@@ -117,7 +159,7 @@ class UI_Main:
         self.search_operat()
 
         self.path_button = tk.Button(
-            self.select_frame,
+            self.buttons_frame,
             text=shared.transl("修改路徑"),
             font=("Microsoft JhengHei", 10, "bold"),
             cursor="hand2",
@@ -126,23 +168,10 @@ class UI_Main:
             fg=self.text_color,
             command=self.set_save_path,
         )
-        self.path_button.grid(row=1, column=0, sticky="w")
-
-        self.save_path_label = tk.Label(
-            self.select_frame,
-            text=shared.save_path,
-            font=("Microsoft JhengHei", 14, "bold"),
-            cursor="hand2",
-            anchor="w",
-            justify="left",
-            bg=self.primary_color,
-            fg=self.text_color,
-        )
-        self.save_path_label.grid(row=1, column=1, columnspan=2, sticky="w")
-        self.save_path_label.bind("<Button-1>", self.copy_save_path)
+        self.path_button.grid(row=0, column=1, padx=5, pady=5)
 
         self.merge_button = tk.Button(
-            self.select_frame,
+            self.buttons_frame,
             text=shared.transl("檔案整合"),
             font=("Microsoft JhengHei", 10, "bold"),
             cursor="hand2",
@@ -151,16 +180,59 @@ class UI_Main:
             fg=self.text_color,
             command=self.file_merge,
         )
-        self.merge_button.grid(row=2, column=0, sticky="w", pady=(15, 0))
+        self.merge_button.grid(row=0, column=2, padx=5, pady=5)
+
+        self.extract_pkg_var = tk.BooleanVar(value=False)
+        self.extract_pkg_var.set(shared.enable_extract_pkg)
+        self.extract_pkg_button = tk.Checkbutton(
+            self.buttons_frame,
+            text=shared.transl("提取 PKG 文件"),
+            variable=self.extract_pkg_var,
+            font=("Microsoft JhengHei", 11, "bold"),
+            bg=self.primary_color,
+            fg=self.text_color,
+            selectcolor=self.primary_color,
+            activebackground=self.primary_color,
+            activeforeground=self.text_color,
+            cursor="hand2",
+            padx=5,
+            pady=5,
+            command=self.set_pkg_extract,
+        )
+        self.extract_pkg_button.grid(row=0, column=3, padx=5, pady=5)
+
+        path_display_frame = tk.Frame(
+            self.path_text_frame,
+            bg=self.primary_color,
+            borderwidth=2,
+            cursor="hand2",
+            relief="raised",
+        )
+        path_display_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+
+        self.save_path_label = tk.Label(
+            path_display_frame,
+            text=shared.save_path,
+            font=("Microsoft JhengHei", 15, "bold"),
+            cursor="hand2",
+            bg=self.primary_color,
+            fg=self.text_color,
+        )
+        self.save_path_label.pack(padx=10, pady=5)
+
+        path_display_frame.bind("<Button-1>", self.copy_save_path)
+        self.save_path_label.bind("<Button-1>", self.copy_save_path)
 
     def display_element(self):
-        tk.Label(
+        self.console_label = tk.Label(
             self.console_frame,
             text=f"{shared.transl('控制台輸出')}：",
             font=("Microsoft JhengHei", 10, "bold"),
             bg=self.primary_color,
             fg=self.text_color,
-        ).grid(row=0, column=0, sticky="nsew")
+            anchor="center",
+        )
+        self.console_label.grid(row=0, column=0, sticky="nsew")
 
         self.console = scrolledtext.ScrolledText(
             self.console_frame,
@@ -177,17 +249,20 @@ class UI_Main:
         self.console.grid(row=1, column=0, sticky="nsew")
 
     def input_element(self):
-        tk.Label(
+        self.input_label = tk.Label(
             self.operate_frame,
             text=f"{shared.transl('輸入創意工坊專案（每行一個，支援連結和檔案ID）')}：",
             font=("Microsoft JhengHei", 10, "bold"),
             bg=self.primary_color,
             fg=self.text_color,
-        ).grid(row=0, column=0, sticky="nsew")
+            anchor="center",
+        )
+        self.input_label.grid(row=0, column=0, sticky="nsew")
 
         self.input_text = scrolledtext.ScrolledText(
             self.operate_frame,
             font=("Microsoft JhengHei", 10, "bold"),
+            height=8,
             borderwidth=2,
             relief="sunken",
             wrap="none",
@@ -214,10 +289,15 @@ class UI_Main:
         )
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
 
-    """ ====== 其餘功能 ====== """
+    """ ====== 互動功能 ====== """
+
+    def set_pkg_extract(self):
+        shared.enable_extract_pkg = self.extract_pkg_var.get()
 
     def set_save_path(self):
-        path = filedialog.askdirectory(title=shared.transl("選擇資料夾"))
+        path = filedialog.askdirectory(
+            title=shared.transl("選擇資料夾"), initialdir=shared.save_path
+        )
 
         if path:
             shared.save_path = Path(path) / shared.output_folder
@@ -249,6 +329,50 @@ class UI_Main:
 
         popup.grab_set()
         popup.after(800, popup.destroy)
+
+    def init_language_rules(self):
+        self.language_rules = {
+            shared.transl("en_US"): "en_US",
+            shared.transl("zh_TW"): "zh_TW",
+            shared.transl("zh_CN"): "zh_CN",
+        }
+
+    def language_select(self, _):
+        selected = self.language_rules[self.language_var.get()]
+
+        if selected != shared.set_lang:
+            shared.transl, shared.set_lang = translator(selected)  # 更新翻譯
+
+            # 主 UI 更新
+            self.win_title = f"Wallpaper Engine {shared.transl('創意工坊下載器')}"
+            self.title(self.win_title)
+
+            self.title_label.config(text=shared.transl("選擇配置"))
+
+            self.init_language_rules()
+            self.language_var.set(shared.transl(shared.set_lang))
+            self.language_menu.config(values=list(self.language_rules.keys()))
+
+            self.username_var.set(
+                f"{shared.transl('帳號')}->{shared.cfg_data.get(shared.ck.Acc, account_list[0])}"
+            )
+
+            self.serverid_var.set(
+                f"{shared.transl('應用')}->{shared.cfg_data.get(shared.ck.App, self.app_list[0])}"
+            )
+
+            self.path_button.config(text=shared.transl("修改路徑"))
+            self.merge_button.config(text=shared.transl("檔案整合"))
+            self.extract_pkg_button.config(text=shared.transl("提取 PKG 文件"))
+            self.run_button.config(text=shared.transl("下載"))
+
+            self.console_label.config(text=f"{shared.transl('控制台輸出')}：")
+            self.input_label.config(
+                text=f"{shared.transl('輸入創意工坊專案（每行一個，支援連結和檔案ID）')}："
+            )
+
+            # 後端數據更新
+            self.init_error_rule()
 
     def file_merge(self):
         data_table = get_ext_groups(shared.save_path, shared.integrate_folder)
@@ -325,43 +449,6 @@ class UI_Main:
             scroll_y.config(command=treeview.yview)
             treeview.pack(fill="both", expand=True)
 
-            def move_trigger():
-                if len(treeview.selection()) == 0:
-                    messagebox.showwarning(
-                        title=shared.transl("操作提示"),
-                        message=shared.transl("請選擇要整合的類型"),
-                        parent=merge_window,
-                    )
-                    return
-
-                selected = []
-                selected_items = treeview.selection()
-
-                for item in selected_items:
-                    values = treeview.item(item, "values")  # 取得對應的數據
-                    selected.append(values[0])
-
-                confirm = messagebox.askquestion(
-                    shared.transl("操作確認"),
-                    f"{shared.transl('整合以下類型的檔案')}?\n\n{selected}",
-                    parent=merge_window,
-                )
-
-                if confirm == "yes":
-
-                    def merge_success_show(merge_path):
-                        messagebox.showinfo(
-                            title=shared.transl("操作完成"),
-                            message=f"{shared.transl('檔案整合完成')}\n{merge_path}",
-                            parent=merge_window,
-                        )
-
-                        for item in selected_items:  # 移除選中的項目
-                            treeview.delete(item)
-
-                    shared.msg.connect(merge_success_show, once=True)
-                    self.move_files(data_table, selected)
-
             output_button = tk.Button(
                 output_frame,
                 text=shared.transl("整合輸出"),
@@ -371,7 +458,7 @@ class UI_Main:
                 relief="raised",
                 bg=self.secondary_color,
                 fg=self.text_color,
-                command=move_trigger,
+                command=self.move_trigger,
             )
             output_button.pack(pady=(5, 15))
 
