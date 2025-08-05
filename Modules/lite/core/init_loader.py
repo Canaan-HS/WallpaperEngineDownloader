@@ -1,16 +1,13 @@
 from ..bootstrap import os, json, Path, logging, itemgetter, messagebox, SimpleNamespace
 
 from . import shared
-from ..utils import Language
+from ..language import translator
 
 
 class Init_Loader:
     def __init__(self, default_config):
-        getter = itemgetter(
-            "language", "output_folder", "integrate_folder", "appid_dict", "current_dir"
-        )
+        getter = itemgetter("output_folder", "integrate_folder", "appid_dict", "current_dir")
         (
-            lang,
             shared.output_folder,
             shared.integrate_folder,
             shared.appid_dict,
@@ -19,13 +16,15 @@ class Init_Loader:
 
         # 配置預設值
         shared.account = "ruiiixx"
-        shared.transl = Language(lang)
+        shared.transl, shared.set_lang = translator()
 
         # 配置模板 (Key 是調用值, Value 是輸出值)
         shared.cfg_key = {
             "Save": "Sava_Path",
+            "Lang": "Language",
             "Acc": "Account",
             "App": "Application",
+            "ExtPkg": "Extract_Pkg",
             "X": "window_x",
             "Y": "window_y",
             "W": "window_width",
@@ -50,9 +49,6 @@ class Init_Loader:
             messagebox.showerror(shared.transl("依賴錯誤"), err_message)
             os._exit(0)
 
-        # 判斷是否運行 RePkg
-        shared.repkg = True if shared.repkg_exe.exists() else False
-
         if id_json.exists():
             try:
                 shared.appid_dict.update(json.loads(id_json.read_text(encoding="utf-8")))
@@ -70,7 +66,17 @@ class Init_Loader:
                     if val in (config := json.loads(shared.config_json.read_text(encoding="utf-8")))
                 }
 
-                record_path = Path(shared.cfg_data.get(shared.ck.Save, ""))
+                # ! 版本迭帶
+                old_path = "Wallpaper_Output"
+                record_path = shared.cfg_data.get(shared.ck.Save, "")
+                is_old_path = old_path in record_path
+
+                # 更新輸出路徑
+                if is_old_path:
+                    record_path = record_path.replace(old_path, shared.output_folder)
+                    shared.output_folder = record_path
+
+                record_path = Path(record_path)
                 shared.save_path = (
                     record_path
                     if record_path.is_absolute() and record_path.name == shared.output_folder
@@ -78,3 +84,15 @@ class Init_Loader:
                 )
             except Exception as e:
                 logging.error(f"{shared.transl('讀取 Config.json 時出錯')}: {e}")
+
+        # 判斷是否運行 RePkg (預設為 False)
+        shared.enable_extract_pkg = (
+            True
+            if shared.repkg_exe.exists() and shared.cfg_data.get(shared.ck.ExtPkg, False)
+            else False
+        )
+
+        # 不是預設語言, 進行更新
+        use_lang = shared.cfg_data.get(shared.ck.Lang, shared.set_lang)
+        if use_lang != shared.set_lang:
+            shared.transl, shared.set_lang = translator(use_lang)
