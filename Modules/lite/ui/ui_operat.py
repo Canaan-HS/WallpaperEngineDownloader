@@ -26,6 +26,9 @@ class UI_Operat:
         shared.msg.connect(self.console_insert)
         shared.msg.connect(self.button_state_change)
 
+        shared.msg.connect(lambda: self.username_var.get(), "username")
+        shared.msg.connect(lambda: self.serverid_var.get().strip(), "serverid")
+
     def ui_close(self, account, application, tasks):
         shared.save_config(
             {
