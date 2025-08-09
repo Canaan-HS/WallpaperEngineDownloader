@@ -77,7 +77,7 @@ class Backend_Tools:
 
         shared.msg.emit("merge_success_show", merge_path)
 
-    def extract_pkg(self, path):
+    def extract_pkg(self, path, notify=False):
         pkg_path = get_ext_groups(path).get("pkg", False)
 
         if pkg_path:
@@ -85,9 +85,17 @@ class Backend_Tools:
             # 如果中途被刪除, 關閉該功能
             if not shared.repkg_exe.exists():
                 shared.enable_extract_pkg = False
+                if notify:
+                    shared.msg.emit(
+                        "extract_info_show",
+                        "error",
+                        shared.transl("提取失敗"),
+                        f"{shared.transl('找不到')} {shared.repkg_exe}",
+                    )
                 return
 
             for pkg in pkg_path:
+                # 沒有處理 被占用中的檔案, 無法提取問題 (不影響功能)
                 command = [shared.repkg_exe, "extract", pkg, "-o", path, "-r", "-t", "-s"]
 
                 process = subprocess.Popen(
@@ -100,4 +108,19 @@ class Backend_Tools:
 
                 output, _ = process.communicate()
                 if process.returncode == 0:
+                    if notify:
+                        shared.msg.emit(
+                            "extract_info_show",
+                            "info",
+                            shared.transl("提取完成"),
+                            f"{shared.transl('成功提取')} {len(pkg_path)} {shared.transl('個 PKG 檔案')}",
+                        )
                     pkg.unlink()
+
+        elif notify:
+            shared.msg.emit(
+                "extract_info_show",
+                "error",
+                shared.transl("提取失敗"),
+                shared.transl("找不到 PKG 檔案"),
+            )
