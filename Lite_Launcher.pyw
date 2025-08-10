@@ -3,7 +3,7 @@ from Modules.lite import sys, Path, logging, atexit, IsFrozen, LogConfig, Init_L
 
 class Controller(Init_Loader, UI_Loader):
     def __init__(self, default_config):
-        log_path = Path(default_config["current_dir"]) / "Info.log"
+        log_path = Path(default_config["exact_dir"]) / "Info.log"
 
         if IsFrozen:
             LogConfig.update(
@@ -33,6 +33,9 @@ if __name__ == "__main__":
             "output_folder": "Workshop_Output",
             "integrate_folder": "!【Integrate】!",
             "appid_dict": {"Wallpaper Engine": "431960"},
-            "current_dir": Path(sys.executable if IsFrozen else __file__).parent,
+            # 適用於 pyinstaller 打包精確位置判斷
+            "exact_dir": Path(sys.executable if IsFrozen else __file__).parent,
+            # 適用於直接執行, 與 pyinstaller 打包後解壓位置
+            "current_dir": Path(__file__).parent,
         }
     )
