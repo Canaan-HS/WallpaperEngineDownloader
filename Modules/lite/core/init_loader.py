@@ -6,11 +6,12 @@ from ..language import translator
 
 class Init_Loader:
     def __init__(self, default_config):
-        getter = itemgetter("output_folder", "integrate_folder", "appid_dict", "current_dir")
+        getter = itemgetter("output_folder", "integrate_folder", "appid_dict", "exact_dir", "current_dir")
         (
             shared.output_folder,
             shared.integrate_folder,
             shared.appid_dict,
+            exact_dir,
             current_dir,
         ) = getter(default_config)
 
@@ -33,11 +34,11 @@ class Init_Loader:
         }
 
         # 依賴載入路徑
-        shared.save_path = current_dir / shared.output_folder
+        shared.save_path = exact_dir / shared.output_folder
         shared.icon_ico = current_dir / "Icon/DepotDownloader.ico"
 
         id_json = current_dir / "APPID/ID.json"
-        shared.config_json = current_dir / "Config.json"
+        shared.config_json = exact_dir / "Config.json"
 
         shared.repkg_exe = current_dir / "RePkg/RePkg.exe"
         shared.depot_exe = current_dir / "DepotdownloaderMod/DepotDownloadermod.exe"
@@ -74,13 +75,14 @@ class Init_Loader:
                 # 更新輸出路徑
                 if is_old_path:
                     record_path = record_path.replace(old_path, shared.output_folder)
-                    shared.output_folder = record_path
+                    shared.save_config({"Sava_Path": record_path})
+                    shared.output_folder = Path(record_path).name
 
                 record_path = Path(record_path)
                 shared.save_path = (
                     record_path
                     if record_path.is_absolute() and record_path.name == shared.output_folder
-                    else record_path / shared.output_folder
+                    else shared.save_path
                 )
             except Exception as e:
                 logging.error(f"{shared.transl('讀取 Config.json 時出錯')}: {e}")
