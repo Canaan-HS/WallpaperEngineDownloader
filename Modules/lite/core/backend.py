@@ -1,6 +1,6 @@
+from . import shared
+
 from ..bootstrap import (
-    tk,
-    ttk,
     time,
     Path,
     shutil,
@@ -11,19 +11,21 @@ from ..bootstrap import (
     subprocess,
     traceback,
     messagebox,
-    defaultdict,
     pyperclip,
 )
 
-from . import shared
-from ..utils import illegal_regex, parse_regex, link_regex, account_dict, Signal, BuildSuffixTree
+from ..utils import (
+    illegal_regex,
+    parse_regex,
+    link_regex,
+    account_dict,
+    get_ext_groups,
+    BuildSuffixTree,
+)
 
 
 class Backend:
     def __init__(self):
-        self.message = Signal()
-        # self.message.emit("測試消息")
-
         self.clean_text = lambda text: text.split("->")[-1]
 
         # 緩存任務數據 用於未完成恢復
@@ -247,161 +249,27 @@ class Backend:
             logging.error(exception)
             messagebox.showerror(shared.transl("例外"), exception, parent=self)
 
-    """ ====== 檔案整合 ====== """
+    """ ====== 檔案整合 (移動) ====== """
 
-    def get_path_data(self, path: Path):
-        file_data = defaultdict(list)
-        for file in path.rglob("*"):
-            # 取用是檔案, 且父資料夾 不是 整合資料夾
-            if file.is_file() and shared.integrate_folder not in file.parts:
-                # ! 針對不是 file 但卻通過檢查 例外, 進行二次檢查 副檔名不為空字串
-                suffix = file.suffix.strip()
-                if suffix:  # key 為不含 . 的副檔名, value 為檔案列表
-                    file_data[suffix[1:]].append(file)
-        return dict(  # 數量多到少排序, 相同數量按字母排序, 組合 key 為副檔名, value 為檔案列表 回傳字典
-            sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
-        )
+    def move_files(self, data_table, selected):
+        merge_path = shared.save_path / shared.integrate_folder
+        merge_path.mkdir(parents=True, exist_ok=True)
+        move_file = [data_table[select] for select in selected]
 
-    def file_merge(self):
-        data_table = self.get_path_data(shared.save_path)
+        for files in move_file:
+            for file in files:
+                relative_path = file.relative_to(
+                    shared.save_path
+                )  # 獲取 file 在 shared.save_path 下的相對路徑
 
-        if data_table:
-            merge_window = tk.Toplevel(self)
-            merge_window.title(shared.transl("檔案整合"))
-            merge_window.configure(bg=self.primary_color)
+                top_folder = relative_path.parts[0]  # 取得最上層資料夾名稱
 
-            try:
-                merge_window.iconbitmap(shared.icon_ico)
-            except Exception as e:
-                logging.warning(e)
-                pass
+                try:
+                    file.rename(merge_path / f"[{top_folder}] {file.name}")
+                except Exception as e:
+                    logging.warning(e)
 
-            width = 500
-            height = 550
-
-            merge_window.geometry(
-                f"{width}x{height}+{int((self.winfo_screenwidth() - width) / 2)}+{int((self.winfo_screenheight() - height) / 2)}"
-            )
-            merge_window.minsize(400, 450)
-
-            tip_frame = tk.Frame(merge_window, bg=self.primary_color)
-            tip_frame.pack(fill="x", padx=10, pady=10)
-            tip = tk.Label(
-                tip_frame,
-                text=shared.transl("選擇整合的類型"),
-                font=("Microsoft JhengHei", 18, "bold"),
-                bg=self.primary_color,
-                fg=self.text_color,
-            )
-            tip.pack()
-
-            display_frame = tk.Frame(merge_window, bg=self.primary_color)
-            display_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-            output_frame = tk.Frame(merge_window, bg=self.primary_color)
-            output_frame.pack(fill="x")
-
-            scroll_y = tk.Scrollbar(display_frame, orient="vertical")
-            scroll_y.pack(side="right", fill="y")
-
-            style = ttk.Style()
-            style.configure(
-                "Custom.Treeview",
-                font=("Microsoft JhengHei", 14, "bold"),
-                foreground=self.text_color,
-                background=self.consolo_color,
-                rowheight=30,
-            )
-            style.configure(
-                "Custom.Treeview.Heading",
-                font=("Microsoft JhengHei", 16, "bold"),
-                foreground="#0066CC",
-            )
-
-            treeview = ttk.Treeview(
-                display_frame,
-                columns=("Type", "Count"),
-                show="headings",
-                yscrollcommand=scroll_y.set,
-                cursor="hand2",
-                style="Custom.Treeview",
-            )
-            treeview.heading("Type", text=shared.transl("檔案類型"))
-            treeview.heading("Count", text=shared.transl("檔案數量"))
-            treeview.column("Type", anchor="center")
-            treeview.column("Count", anchor="center")
-
-            for key, value in data_table.items():
-                treeview.insert("", "end", values=(key, len(value)))
-
-            scroll_y.config(command=treeview.yview)
-            treeview.pack(fill="both", expand=True)
-
-            def move_save_file():
-                if len(treeview.selection()) == 0:
-                    messagebox.showwarning(
-                        title=shared.transl("操作提示"),
-                        message=shared.transl("請選擇要整合的類型"),
-                        parent=merge_window,
-                    )
-                    return
-
-                selected = []
-                selected_items = treeview.selection()
-
-                for item in selected_items:
-                    values = treeview.item(item, "values")  # 取得對應的數據
-                    selected.append(values[0])
-
-                confirm = messagebox.askquestion(
-                    shared.transl("操作確認"),
-                    f"{shared.transl('整合以下類型的檔案')}?\n\n{selected}",
-                    parent=merge_window,
-                )
-                if confirm == "yes":
-                    for item in selected_items:  # 移除選中的項目
-                        treeview.delete(item)
-
-                    merge_path = shared.save_path / shared.integrate_folder
-                    merge_path.mkdir(parents=True, exist_ok=True)
-                    move_file = [data_table[select] for select in selected]
-
-                    for files in move_file:
-                        for file in files:
-                            relative_path = file.relative_to(
-                                shared.save_path
-                            )  # 獲取 file 在 shared.save_path 下的相對路徑
-                            top_folder = relative_path.parts[0]  # 取得最上層資料夾名稱
-
-                            try:
-                                file.rename(merge_path / f"[{top_folder}] {file.name}")
-                            except Exception as e:
-                                logging.warning(e)
-
-                    messagebox.showinfo(
-                        title=shared.transl("操作完成"),
-                        message=f"{shared.transl('檔案整合完成')}\n{merge_path}",
-                        parent=merge_window,
-                    )
-
-            output_button = tk.Button(
-                output_frame,
-                text=shared.transl("整合輸出"),
-                font=("Microsoft JhengHei", 12, "bold"),
-                borderwidth=2,
-                cursor="hand2",
-                relief="raised",
-                bg=self.secondary_color,
-                fg=self.text_color,
-                command=move_save_file,
-            )
-            output_button.pack(pady=(5, 15))
-        else:
-            messagebox.showwarning(
-                title=shared.transl("獲取失敗"),
-                message=shared.transl("沒有可整合的檔案"),
-                parent=self,
-            )
+        shared.msg.emit("merge_success_show", merge_path)
 
     """ ====== 關閉清理 ====== """
 
@@ -470,7 +338,7 @@ class Backend:
     """ ====== 附加功能 ====== """
 
     def extract_pkg(self, path):
-        pkg_path = self.get_path_data(path).get("pkg", False)
+        pkg_path = get_ext_groups(path).get("pkg", False)
 
         if pkg_path:
             for pkg in pkg_path:
