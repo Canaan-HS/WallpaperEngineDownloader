@@ -121,7 +121,7 @@ class UI:
             relief="raised",
             bg=self.secondary_color,
             fg=self.text_color,
-            command=self.save_settings,
+            command=self.set_save_path,
         )
         self.path_button.grid(row=1, column=0, sticky="w")
 
@@ -216,7 +216,7 @@ class UI:
 
     """ ====== 其餘功能 ====== """
 
-    def save_settings(self):
+    def set_save_path(self):
         path = filedialog.askdirectory(title=shared.transl("選擇資料夾"))
 
         if path:
