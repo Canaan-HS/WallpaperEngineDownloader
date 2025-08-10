@@ -1,22 +1,23 @@
-from ..bootstrap import tk, ttk, logging, scrolledtext, threading
+from ..bootstrap import tk, ttk, Path, logging, filedialog, scrolledtext, threading
 from ..utils import account_list
+from ..core import shared
 
 
 class UI:
     def __init__(self):  # 方便還原
-        self.win_title = f"Wallpaper Engine {self.transl('創意工坊下載器')}"
+        self.win_title = f"Wallpaper Engine {shared.transl('創意工坊下載器')}"
 
-        x = self.cfg_data.get(self.CK.X, 200)
-        y = self.cfg_data.get(self.CK.Y, 200)
-        width = self.cfg_data.get(self.CK.W, 600)
-        height = self.cfg_data.get(self.CK.H, 700)
+        x = shared.cfg_data.get(shared.ck.X, 200)
+        y = shared.cfg_data.get(shared.ck.Y, 200)
+        width = shared.cfg_data.get(shared.ck.W, 600)
+        height = shared.cfg_data.get(shared.ck.H, 700)
 
         self.title(self.win_title)
         self.minsize(350, 250)
         self.geometry(f"{width}x{height}+{x}+{y}")
 
         try:
-            self.iconbitmap(self.icon_ico)
+            self.iconbitmap(shared.icon_ico)
         except Exception as e:
             logging.warning(e)
             pass
@@ -57,7 +58,7 @@ class UI:
 
         username_label = tk.Label(
             self.select_frame,
-            text=f"{self.transl('選擇配置')}：",
+            text=f"{shared.transl('選擇配置')}：",
             font=("Microsoft JhengHei", 14, "bold"),
             bg=self.primary_color,
             fg=self.text_color,
@@ -66,7 +67,7 @@ class UI:
 
         self.username = tk.StringVar(self)
         self.username.set(
-            f"{self.transl('帳號')}->{self.cfg_data.get(self.CK.Acc, account_list[0])}"
+            f"{shared.transl('帳號')}->{shared.cfg_data.get(shared.ck.Acc, account_list[0])}"
         )  # 下面取用數據時, 會進行判斷是否存在, 這邊直接填充
         self.username_menu = ttk.Combobox(
             self.select_frame,
@@ -82,7 +83,7 @@ class UI:
 
         self.serverid = tk.StringVar(self)
         self.serverid.set(
-            f"{self.transl('應用')}->{self.cfg_data.get(self.CK.App, self.app_list[0])}"
+            f"{shared.transl('應用')}->{shared.cfg_data.get(shared.ck.App, self.app_list[0])}"
         )
         self.serverid_menu = ttk.Combobox(
             self.select_frame,
@@ -97,7 +98,7 @@ class UI:
 
         self.path_button = tk.Button(
             self.select_frame,
-            text=self.transl("修改路徑"),
+            text=shared.transl("修改路徑"),
             font=("Microsoft JhengHei", 10, "bold"),
             cursor="hand2",
             relief="raised",
@@ -109,7 +110,7 @@ class UI:
 
         self.save_path_label = tk.Label(
             self.select_frame,
-            text=self.save_path,
+            text=shared.save_path,
             font=("Microsoft JhengHei", 14, "bold"),
             cursor="hand2",
             anchor="w",
@@ -122,7 +123,7 @@ class UI:
 
         self.merge_button = tk.Button(
             self.select_frame,
-            text=self.transl("檔案整合"),
+            text=shared.transl("檔案整合"),
             font=("Microsoft JhengHei", 10, "bold"),
             cursor="hand2",
             relief="raised",
@@ -135,7 +136,7 @@ class UI:
     def display_element(self):
         console_label = tk.Label(
             self.console_frame,
-            text=f"{self.transl('控制台輸出')}：",
+            text=f"{shared.transl('控制台輸出')}：",
             font=("Microsoft JhengHei", 10, "bold"),
             bg=self.primary_color,
             fg=self.text_color,
@@ -159,7 +160,7 @@ class UI:
     def input_element(self):
         input_label = tk.Label(
             self.operate_frame,
-            text=f"{self.transl('輸入創意工坊專案（每行一個，支援連結和檔案ID）')}：",
+            text=f"{shared.transl('輸入創意工坊專案（每行一個，支援連結和檔案ID）')}：",
             font=("Microsoft JhengHei", 10, "bold"),
             bg=self.primary_color,
             fg=self.text_color,
@@ -174,16 +175,18 @@ class UI:
             wrap="none",
         )
         self.input_text.grid(row=1, column=0, sticky="nsew")
-        self.after(100, self.listen_clipboard)  # 避免初始化的微小延遲, 進行延遲排程 (可直接調用, 但會有微小延遲)
+        self.after(
+            100, self.listen_clipboard
+        )  # 避免初始化的微小延遲, 進行延遲排程 (可直接調用, 但會有微小延遲)
 
-        for task in self.cfg_data.get(self.CK.Task, []):  # 添加舊任務數據
+        for task in shared.cfg_data.get(shared.ck.Task, []):  # 添加舊任務數據
             self.capture_record.add(task)  # 避免複製移動位置時擷取
             self.input_text.insert("end", f"{task}\n")
         self.input_text.xview_moveto(1.0)  # 將滾動條移至最右
 
         self.run_button = tk.Button(
             self.operate_frame,
-            text=self.transl("下載"),
+            text=shared.transl("下載"),
             font=("Microsoft JhengHei", 14, "bold"),
             borderwidth=2,
             cursor="hand2",
@@ -193,3 +196,11 @@ class UI:
             command=lambda: threading.Thread(target=self.download_trigger, daemon=True).start(),
         )
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
+
+    def save_settings(self):
+        path = filedialog.askdirectory(title=shared.transl("選擇資料夾"))
+
+        if path:
+            shared.save_path = Path(path) / shared.output_folder
+            self.save_path_label.config(text=shared.save_path)
+            shared.save_config({"Sava_Path": str(shared.save_path)})
