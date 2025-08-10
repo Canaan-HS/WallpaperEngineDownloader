@@ -1,4 +1,5 @@
 from ..bootstrap import json, logging
+from ..utils import Signal
 
 transl = None
 
@@ -20,6 +21,8 @@ depot_exe = None
 
 account = None
 appid_dict = None
+
+msg = Signal()
 
 
 def save_config(data):
