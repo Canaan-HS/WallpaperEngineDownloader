@@ -32,10 +32,9 @@ class Controller(Loader, tk.Tk, Backend, UI):
 
 
 if __name__ == "__main__":
-    # ! key 值不能隨意修改 (需要同時修改 ENV)
     Controller(
         {
-            "language": None,  # 自動偵測
+            "language": None,  # auto
             "output_folder": "Wallpaper_Output",
             "integrate_folder": "!【Integrate】!",
             "appid_dict": {"Wallpaper Engine": "431960"},
