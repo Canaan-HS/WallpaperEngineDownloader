@@ -11,16 +11,18 @@ from ..bootstrap import (
     subprocess,
     traceback,
     messagebox,
-    filedialog,
     defaultdict,
     pyperclip,
 )
 
-from ..utils import illegal_regex, parse_regex, link_regex, account_dict, BuildSuffixTree
+from . import shared
+from ..utils import illegal_regex, parse_regex, link_regex, account_dict, Signal, BuildSuffixTree
 
 
 class Backend:
     def __init__(self):
+        self.message = Signal()
+        # self.message.emit("測試消息")
 
         self.clean_text = lambda text: text.split("->")[-1]
 
@@ -31,30 +33,20 @@ class Backend:
         self.capture_record = set()
         self.complete_record = set()
 
-        self.app_list = list(self.appid_dict.keys())
+        self.app_list = list(shared.appid_dict.keys())
 
         self.token = True  # 可強制停止所有任務
         self.error_rule = {
-            ".NET": self.transl("下載失敗: 請先安裝 .NET 9 執行庫"),
-            "Unable to locate manifest ID for published file": self.transl(
+            ".NET": shared.transl("下載失敗: 請先安裝 .NET 9 執行庫"),
+            "Unable to locate manifest ID for published file": shared.transl(
                 "下載失敗: 該項目可能已被刪除，或應用設置錯誤"
             ),
             # 列表為可觸發強制停止任務
             **dict.fromkeys(
                 ["STEAM GUARD", "Authentication", "AccountDisabled", "AlreadyLoggedInElsewhere"],
-                self.transl("下載失敗: 請嘗試變更帳號後再下載"),
+                shared.transl("下載失敗: 請嘗試變更帳號後再下載"),
             ),
         }
-
-    """ ====== 設定保存位置 ====== """
-
-    def save_settings(self):
-        path = filedialog.askdirectory(title=self.transl("選擇資料夾"))
-
-        if path:
-            self.save_path = Path(path) / self.output_folder
-            self.save_path_label.config(text=self.save_path)
-            self.save_config({"Sava_Path": str(self.save_path)})
 
     """ ====== 下載 數據處理/觸發 ====== """
 
@@ -63,18 +55,18 @@ class Backend:
             iter(
                 account_dict.get(
                     self.clean_text(self.username.get()),
-                    account_dict.get(self.account),
+                    account_dict.get(shared.account),
                 ).items()
             )
         )
 
         if original:
             for app in [self.clean_text(self.serverid.get()), self.app_list[0]]:
-                if app in self.appid_dict:
+                if app in shared.appid_dict:
                     return username, app
         else:
-            appid = self.appid_dict.get(
-                self.clean_text(self.serverid.get()), next(iter(self.appid_dict.values()))
+            appid = shared.appid_dict.get(
+                self.clean_text(self.serverid.get()), next(iter(shared.appid_dict.values()))
             )
             return appid, username, password
 
@@ -110,7 +102,7 @@ class Backend:
                             password,
                         )
                 else:
-                    self.console_update(f"{self.transl('無效連結')}：{link}\n")
+                    self.console_update(f"{shared.transl('無效連結')}：{link}\n")
 
         self.status_switch("normal")
 
@@ -162,20 +154,20 @@ class Backend:
 
         try:
             full_download = False
-            end_message = self.transl("下載完成")
+            end_message = shared.transl("下載完成")
             process_name = illegal_regex.sub("-", searchText if searchText else pubId).strip()
 
-            self.console_update(f"\n> {self.transl('開始下載')} [{process_name}]\n", "important")
+            self.console_update(f"\n> {shared.transl('開始下載')} [{process_name}]\n", "important")
 
-            if not self.save_path.exists():
-                self.save_path.mkdir(parents=True, exist_ok=True)
+            if not shared.save_path.exists():
+                shared.save_path.mkdir(parents=True, exist_ok=True)
 
-            task_path = self.get_unique_path(self.save_path / process_name)
+            task_path = self.get_unique_path(shared.save_path / process_name)
             self.task_cache[taskId]["path"] = task_path  # 再添加下載路徑
 
             # 避免 Command Injection
             command = [
-                self.depot_exe,
+                shared.depot_exe,
                 "-app",
                 appId,
                 "-pubfile",
@@ -227,14 +219,14 @@ class Backend:
             # 雖然可能不需要這麼多檢測, 但避免例外
             if (
                 full_download
-                and end_message == self.transl("下載完成")
+                and end_message == shared.transl("下載完成")
                 and Path(task_path).exists()
             ):
                 self.task_cache.pop(taskId, None)  # 刪除任務緩存
                 self.complete_record.add(taskId)  # 添加下載完成紀錄
 
                 # 允許 repkg 且 appId 為 Wallpaper Engine 的 ID, 觸發提取
-                if self.repkg and appId == "431960":
+                if shared.repkg and appId == "431960":
                     threading.Thread(
                         target=self.extract_pkg, args=(task_path,), daemon=True
                     ).start()
@@ -243,17 +235,17 @@ class Backend:
                 # 用於顯示不在 console_analysis 中的錯誤
                 end_message = (
                     end_message
-                    if end_message != self.transl("下載完成")
-                    else self.transl("下載失敗")
+                    if end_message != shared.transl("下載完成")
+                    else shared.transl("下載失敗")
                 )
 
             self.console_update(f"> [{process_name}] {end_message}\n", "important")
         except:
-            self.console_update(f"> {self.transl('例外中止')}\n", "important")
+            self.console_update(f"> {shared.transl('例外中止')}\n", "important")
 
             exception = traceback.format_exc()
             logging.error(exception)
-            messagebox.showerror(self.transl("例外"), exception, parent=self)
+            messagebox.showerror(shared.transl("例外"), exception, parent=self)
 
     """ ====== 檔案整合 ====== """
 
@@ -261,7 +253,7 @@ class Backend:
         file_data = defaultdict(list)
         for file in path.rglob("*"):
             # 取用是檔案, 且父資料夾 不是 整合資料夾
-            if file.is_file() and self.integrate_folder not in file.parts:
+            if file.is_file() and shared.integrate_folder not in file.parts:
                 # ! 針對不是 file 但卻通過檢查 例外, 進行二次檢查 副檔名不為空字串
                 suffix = file.suffix.strip()
                 if suffix:  # key 為不含 . 的副檔名, value 為檔案列表
@@ -271,15 +263,15 @@ class Backend:
         )
 
     def file_merge(self):
-        data_table = self.get_path_data(self.save_path)
+        data_table = self.get_path_data(shared.save_path)
 
         if data_table:
             merge_window = tk.Toplevel(self)
-            merge_window.title(self.transl("檔案整合"))
+            merge_window.title(shared.transl("檔案整合"))
             merge_window.configure(bg=self.primary_color)
 
             try:
-                merge_window.iconbitmap(self.icon_ico)
+                merge_window.iconbitmap(shared.icon_ico)
             except Exception as e:
                 logging.warning(e)
                 pass
@@ -296,7 +288,7 @@ class Backend:
             tip_frame.pack(fill="x", padx=10, pady=10)
             tip = tk.Label(
                 tip_frame,
-                text=self.transl("選擇整合的類型"),
+                text=shared.transl("選擇整合的類型"),
                 font=("Microsoft JhengHei", 18, "bold"),
                 bg=self.primary_color,
                 fg=self.text_color,
@@ -334,8 +326,8 @@ class Backend:
                 cursor="hand2",
                 style="Custom.Treeview",
             )
-            treeview.heading("Type", text=self.transl("檔案類型"))
-            treeview.heading("Count", text=self.transl("檔案數量"))
+            treeview.heading("Type", text=shared.transl("檔案類型"))
+            treeview.heading("Count", text=shared.transl("檔案數量"))
             treeview.column("Type", anchor="center")
             treeview.column("Count", anchor="center")
 
@@ -348,8 +340,8 @@ class Backend:
             def move_save_file():
                 if len(treeview.selection()) == 0:
                     messagebox.showwarning(
-                        title=self.transl("操作提示"),
-                        message=self.transl("請選擇要整合的類型"),
+                        title=shared.transl("操作提示"),
+                        message=shared.transl("請選擇要整合的類型"),
                         parent=merge_window,
                     )
                     return
@@ -362,23 +354,23 @@ class Backend:
                     selected.append(values[0])
 
                 confirm = messagebox.askquestion(
-                    self.transl("操作確認"),
-                    f"{self.transl('整合以下類型的檔案')}?\n\n{selected}",
+                    shared.transl("操作確認"),
+                    f"{shared.transl('整合以下類型的檔案')}?\n\n{selected}",
                     parent=merge_window,
                 )
                 if confirm == "yes":
                     for item in selected_items:  # 移除選中的項目
                         treeview.delete(item)
 
-                    merge_path = self.save_path / self.integrate_folder
+                    merge_path = shared.save_path / shared.integrate_folder
                     merge_path.mkdir(parents=True, exist_ok=True)
                     move_file = [data_table[select] for select in selected]
 
                     for files in move_file:
                         for file in files:
                             relative_path = file.relative_to(
-                                self.save_path
-                            )  # 獲取 file 在 self.save_path 下的相對路徑
+                                shared.save_path
+                            )  # 獲取 file 在 shared.save_path 下的相對路徑
                             top_folder = relative_path.parts[0]  # 取得最上層資料夾名稱
 
                             try:
@@ -387,14 +379,14 @@ class Backend:
                                 logging.warning(e)
 
                     messagebox.showinfo(
-                        title=self.transl("操作完成"),
-                        message=f"{self.transl('檔案整合完成')}\n{merge_path}",
+                        title=shared.transl("操作完成"),
+                        message=f"{shared.transl('檔案整合完成')}\n{merge_path}",
                         parent=merge_window,
                     )
 
             output_button = tk.Button(
                 output_frame,
-                text=self.transl("整合輸出"),
+                text=shared.transl("整合輸出"),
                 font=("Microsoft JhengHei", 12, "bold"),
                 borderwidth=2,
                 cursor="hand2",
@@ -406,8 +398,8 @@ class Backend:
             output_button.pack(pady=(5, 15))
         else:
             messagebox.showwarning(
-                title=self.transl("獲取失敗"),
-                message=self.transl("沒有可整合的檔案"),
+                title=shared.transl("獲取失敗"),
+                message=shared.transl("沒有可整合的檔案"),
                 parent=self,
             )
 
@@ -422,7 +414,7 @@ class Backend:
             {cache["url"] for cache in self.task_cache.values()} | set(self.input_stream())
         )
 
-        self.save_config(
+        shared.save_config(
             {
                 "Account": username,
                 "Application": app,
@@ -482,7 +474,7 @@ class Backend:
 
         if pkg_path:
             for pkg in pkg_path:
-                command = [self.repkg_exe, "extract", pkg, "-o", path, "-r", "-t", "-s"]
+                command = [shared.repkg_exe, "extract", pkg, "-o", path, "-r", "-t", "-s"]
 
                 process = subprocess.Popen(
                     command,
@@ -534,14 +526,14 @@ class Backend:
             time.sleep(1)
 
     def copy_save_path(self, event):
-        pyperclip.copy(self.save_path)
+        pyperclip.copy(shared.save_path)
         popup = tk.Toplevel(self)
         popup.overrideredirect(True)
         popup.attributes("-topmost", True)
 
         label = tk.Label(
             popup,
-            text=self.transl("已複製"),
+            text=shared.transl("已複製"),
             font=("Microsoft JhengHei", 10),
             bg="#333333",
             fg="#FFFFFF",
