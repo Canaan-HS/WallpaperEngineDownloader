@@ -37,7 +37,7 @@ class Signal:
         """
         return slot_info["min_args"] <= arg_count <= slot_info["max_args"]
 
-    def connect(self, func, once=False, label=""):
+    def connect(self, func: callable, label: str = "", once: bool = False):
         """
         將一個函式（slot）連接到此信號。
 
@@ -46,8 +46,8 @@ class Signal:
 
         Args:
             func (callable): 要連接的函式。
-            once (bool, optional): 函式是否只執行一次。預設為 False。
             label (str, optional): 自訂指定標籤。
+            once (bool, optional): 函式是否只執行一次。預設為 False。
 
         Raises:
             TypeError: 如果 `func` 不是一個可呼叫的對象。
@@ -90,7 +90,7 @@ class Signal:
             "once": once,
         }
 
-    def emit(self, target=None, *args, **kwargs):
+    def emit(self, target: str = None, *args, **kwargs):
         """
         發出信號，呼叫所有已連接或指定名稱的函式。
 
@@ -136,7 +136,7 @@ class Signal:
                 if slot_info.get("once"):
                     del self._slots[target]
 
-    def request(self, target=None, *args, **kwargs):
+    def request(self, target: str = None, *args, **kwargs):
         """
         發送一個請求給指定的 slot，並回傳該 slot 的結果。
 
