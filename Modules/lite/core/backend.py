@@ -10,7 +10,6 @@ from ..bootstrap import (
     threading,
     subprocess,
     traceback,
-    messagebox,
     pyperclip,
 )
 
@@ -147,6 +146,13 @@ class Backend:
         if not self.token:
             return
 
+        if not shared.depot_exe.exists():
+            self.token = False
+            err_message = f"{shared.transl('找不到')}: {shared.depot_exe}"
+            logging.error(err_message)
+            shared.msg.emit("showerror", shared.transl("依賴錯誤"), err_message)
+            return
+
         try:
             full_download = False
             end_message = shared.transl("下載完成")
@@ -160,7 +166,7 @@ class Backend:
                 shared.save_path.mkdir(parents=True, exist_ok=True)
 
             task_path = self.get_unique_path(shared.save_path / process_name)
-            self.task_cache[taskId]["path"] = task_path  # 再添加下載路徑
+            self.task_cache[taskId]["path"] = task_path  # 添加下載路徑
 
             # 避免 Command Injection
             command = [
@@ -242,7 +248,7 @@ class Backend:
 
             exception = traceback.format_exc()
             logging.error(exception)
-            messagebox.showerror(shared.transl("例外"), exception, parent=self)
+            shared.msg.emit("showerror", shared.transl("例外"), exception)
 
     """ ====== 檔案整合 (移動) ====== """
 
@@ -306,9 +312,9 @@ class Backend:
 
     def del_error_file(self, pids):
         for task in self.task_cache.values():
-            path = task["path"]
+            path = task.get("path")
 
-            if Path(path).exists():
+            if path is not None and Path(path).exists():
                 for _ in range(10):  # 最多等待10秒
                     if not any(psutil.pid_exists(pid) for pid in pids):
                         try:
@@ -325,6 +331,12 @@ class Backend:
         pkg_path = get_ext_groups(path).get("pkg", False)
 
         if pkg_path:
+
+            # 如果中途被刪除, 關閉該功能
+            if not shared.repkg_exe.exists():
+                shared.repkg = False
+                return
+
             for pkg in pkg_path:
                 command = [shared.repkg_exe, "extract", pkg, "-o", path, "-r", "-t", "-s"]
 
@@ -349,7 +361,7 @@ class Backend:
             if link_regex.match(clipboard) and clipboard not in self.capture_record:
                 self.capture_record.add(clipboard)
                 shared.msg.emit(
-                    "input_operat", "insert-view", f"{unquote(clipboard)}\n"
+                    "input_operat", "insert", f"{unquote(clipboard)}\n"
                 )  # unquote 是沒必要的, 方便觀看而已
 
             self.after(300, loop)
@@ -365,12 +377,14 @@ class Backend:
             bytes_current = net_io.bytes_sent + net_io.bytes_recv  # 當前總流量
 
             # 計算流量速度
-            speed_text = (
-                f"{total_speed:.2f} KB/s"
-                if (total_speed := (bytes_current - bytes_initial) / 1e3) < 1e3
-                else f"{(total_speed / 1e3):.2f} MB/s"
+            shared.msg.emit(
+                "title_change",
+                (
+                    f"{total_speed:.2f} KB/s"
+                    if (total_speed := (bytes_current - bytes_initial) / 1e3) < 1e3
+                    else f"{(total_speed / 1e3):.2f} MB/s"
+                ),
             )
-            shared.msg.emit("title_change", f"{self.win_title} （{speed_text}）")
 
             bytes_initial = bytes_current
             time.sleep(1)
