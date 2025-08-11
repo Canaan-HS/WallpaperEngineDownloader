@@ -5,10 +5,10 @@ on:
     branches: [main]
     paths: # 暫時只發佈 Lite 版本
       - "LiteVersion.yaml"
-      - "Pack/**"
-      - "APPID/**"
-      - "RePKG/**"
-      - "DepotDownloaderMod/**"
+      # - "Pack/**"
+      # - "APPID/**"
+      # - "RePKG/**"
+      # - "DepotDownloaderMod/**"
   workflow_dispatch:
 
 permissions:
@@ -28,9 +28,7 @@ jobs:
       - name: 初始化依賴
         id: version
         run: |
-          mkdir WallpaperEngineDownloader
-
-          # 使用 yq 解析 YAML 文件, 在使用 ConvertFrom-Json, 對於多行文本會有意外, 因此使用這種方式
+          # 使用 yq 解析 YAML 文件
           $tag = $(.\Pack\yq.exe -o=json e '.tag' LiteVersion.yaml).Trim('"')
           $version = $(.\Pack\yq.exe -o=json e '.version' LiteVersion.yaml).Trim('"')
           $description = $(.\Pack\yq.exe -r e '.description' LiteVersion.yaml)
@@ -44,7 +42,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.13.x"
-          cache: "pip" # 啟用 pip 緩存，加速依賴下載
+          cache: "pip"
 
       - name: 安裝 Python 依賴
         run: |
@@ -54,91 +52,16 @@ jobs:
           pip freeze
 
       - name: PyInstaller 編譯
+        id: build
         run: |
           pyinstaller Pack/LitePack.spec --upx-dir Pack
+          $exe_name = (Get-ChildItem -Path "dist" -Filter "*.exe").Name
+          echo "EXE_NAME=$exe_name" >> $env:GITHUB_OUTPUT
 
-      - name: 組合文件
-        run: |
-          Get-ChildItem -Path "dist" -Filter "*.exe" | Move-Item -Destination "WallpaperEngineDownloader/" -Force
-          New-Item -Path "WallpaperEngineDownloader/APPID" -ItemType Directory -Force
-
-          Get-ChildItem -Path "APPID" -Exclude "AutoCrawl.js" | Copy-Item -Destination "WallpaperEngineDownloader/APPID" -Recurse
-          Copy-Item -Path "Icon" -Destination "WallpaperEngineDownloader/" -Recurse
-          Copy-Item -Path "RePKG" -Destination "WallpaperEngineDownloader/" -Recurse
-          Copy-Item -Path "DepotDownloaderMod" -Destination "WallpaperEngineDownloader/" -Recurse
-
-      - name: 壓縮文件
-        run: |
-          .\Pack\7z.exe a -tzip -mx=9 WallpaperEngineDownloader_Lite.zip WallpaperEngineDownloader
-
-      - name: 進行發佈
-        uses: actions/github-script@v6
+      - name: 建立或更新 Release
+        uses: softprops/action-gh-release@v2
         with:
-          script: |
-            const fs = require('fs');
-            const description = fs.readFileSync('Release_notes.md', 'utf8');
-            const tag = '${{ steps.version.outputs.TAG }}';
-            const version = '${{ steps.version.outputs.VERSION }}';
-            try {
-              const existingRelease = await github.rest.repos.getReleaseByTag({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag: tag
-              });
-              console.log('找到現有發佈，準備更新...');
-              await github.rest.repos.updateRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: existingRelease.data.id,
-                name: `Release ${version}`,
-                body: description
-              });
-              for (const asset of existingRelease.data.assets) {
-                await github.rest.repos.deleteReleaseAsset({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  asset_id: asset.id
-                });
-              }
-              const zipPath = 'WallpaperEngineDownloader_Lite.zip';
-              const zipStats = fs.statSync(zipPath);
-              const zipData = fs.readFileSync(zipPath);
-              await github.rest.repos.uploadReleaseAsset({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: existingRelease.data.id,
-                name: 'WallpaperEngineDownloader_Lite.zip',
-                data: zipData,
-                headers: {
-                  'content-type': 'application/zip',
-                  'content-length': zipStats.size
-                }
-              });
-              console.log('現有發佈已更新');
-            } catch (error) {
-              console.log('沒有找到現有發佈，創建新發佈...');
-              const newRelease = await github.rest.repos.createRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag_name: tag,
-                name: `Release ${version}`,
-                body: description,
-                draft: false,
-                prerelease: false
-              });
-              const zipPath = 'WallpaperEngineDownloader_Lite.zip';
-              const zipStats = fs.statSync(zipPath);
-              const zipData = fs.readFileSync(zipPath);
-              await github.rest.repos.uploadReleaseAsset({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: newRelease.data.id,
-                name: 'WallpaperEngineDownloader_Lite.zip',
-                data: zipData,
-                headers: {
-                  'content-type': 'application/zip',
-                  'content-length': zipStats.size
-                }
-              });
-              console.log('新發佈已創建');
-            }
+          body_path: Release_notes.md
+          files: dist/${{ steps.build.outputs.EXE_NAME }}
+          name: Release ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.version.outputs.TAG }}
