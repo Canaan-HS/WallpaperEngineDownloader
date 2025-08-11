@@ -1,7 +1,7 @@
-from Modules.lite import tk, sys, Path, logging, atexit, Loader, Backend, UI, IsFrozen, LogConfig
+from Modules.lite import sys, Path, logging, atexit, IsFrozen, LogConfig, Init_Loader, UI_Loader
 
 
-class Controller(Loader, tk.Tk, Backend, UI):
+class Controller(Init_Loader, UI_Loader):
     def __init__(self, default_config):
         log_path = Path(default_config["current_dir"]) / "Info.log"
 
@@ -20,15 +20,11 @@ class Controller(Loader, tk.Tk, Backend, UI):
             sys.__excepthook__(*args),
         )
 
-        Loader.__init__(self, default_config)
-        tk.Tk.__init__(self)
-        Backend.__init__(self)
-        UI.__init__(self)
+        Init_Loader.__init__(self, default_config)
+        UI_Loader.__init__(self)
 
-        self.protocol("WM_DELETE_WINDOW", self.closure)  # 關閉 GUI 與 自動保存
         atexit.register(self.process_cleanup)  # 關閉後進程清理
         atexit.register(self.log_cleanup, log_path)  # 關閉後日誌清理
-        self.mainloop()
 
 
 if __name__ == "__main__":
