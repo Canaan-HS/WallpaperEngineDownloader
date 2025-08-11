@@ -1,1 +1,1 @@
-from .ui import UI
+from .ui_main import UI
