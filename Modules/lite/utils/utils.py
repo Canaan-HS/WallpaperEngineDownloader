@@ -221,6 +221,8 @@ class BuildSuffixTree:
     # 清除快取
     def clear_tree(self):
         self._collect_indexes_from_node.cache_clear()
+        self._original_data = []
+        self._root = _Node()
 
     # 搜尋
     def search(self, query) -> list:
