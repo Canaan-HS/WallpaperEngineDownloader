@@ -44,10 +44,10 @@ class Loader:
         shared.depot_exe = current_dir / "DepotdownloaderMod/DepotDownloadermod.exe"
 
         if not shared.depot_exe.exists():
-            logging.error(f"{shared.transl('找不到')}: {shared.depot_exe}")
-            messagebox.showerror(
-                shared.transl("依賴錯誤"), f"{shared.transl('找不到')}: {shared.depot_exe}"
-            )
+            err_message = f"{shared.transl('找不到')}: {shared.depot_exe}"
+
+            logging.error(err_message)
+            messagebox.showerror(shared.transl("依賴錯誤"), err_message)
             os._exit(0)
 
         # 判斷是否運行 RePkg
