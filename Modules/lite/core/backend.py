@@ -27,6 +27,9 @@ class Backend:
     def __init__(self):
         self.clean_text = lambda text: text.split("->")[-1]
 
+        # 緩存搜尋樹
+        self.searcher = None
+
         # 緩存任務數據 用於未完成恢復
         self.task_cache = {}
 
@@ -387,42 +390,8 @@ class Backend:
             bytes_initial = bytes_current
             time.sleep(1)
 
-    def server_search(self):
+    def build_searcher(self):
+        self.searcher = BuildSuffixTree(self.app_list)
 
-        self.text_cache = ""  # 文本緩存, 用於當取消焦點狀態 且 serverid 內容為空時, 重新填充
-        self.searcher = None  # 後墜樹緩存
-
-        def build_searcher():
-            self.searcher = BuildSuffixTree(self.app_list)
-
-        def on_input(event):
-            widget = event.widget
-            suffix = widget.get().lower()  # 忽略大小寫
-            matches = list(self.searcher.search(suffix)) if suffix else self.app_list
-            widget.configure(values=matches)
-
-        def on_click(event):
-            if self.searcher is None:
-                self.after(100, build_searcher)
-
-            x = event.x
-            widget = event.widget
-            text = shared.msg.request("serverid")
-            if x < widget.winfo_width() - 20 and "->" in text:
-                text = self.clean_text(text)
-                self.serverid.set(text)
-                widget.unbind("<Button-1>")
-            self.text_cache = text
-
-        def on_select(event):
-            self.text_cache = shared.msg.request("serverid")
-            event.widget.configure(values=self.app_list)
-
-        def of_select(event):
-            if shared.msg.request("serverid") == "":
-                self.serverid.set(self.text_cache)
-
-        self.serverid_menu.bind("<KeyRelease>", on_input)
-        self.serverid_menu.bind("<Button-1>", on_click)
-        self.serverid_menu.bind("<FocusOut>", of_select)
-        self.serverid_menu.bind("<<ComboboxSelected>>", on_select)
+    def search_list(self, text):
+        return list(self.searcher.search(text)) if text else self.app_list
