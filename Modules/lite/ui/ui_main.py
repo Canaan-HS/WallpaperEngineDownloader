@@ -68,11 +68,20 @@ class UI:
         self.operate_frame.columnconfigure(0, weight=1)
         self.input_element()
 
-        shared.msg.connect(lambda: self.username.get().strip(), label="username")
-        shared.msg.connect(lambda: self.serverid.get().strip(), label="serverid")
+        shared.msg.connect(lambda: self.username.get().strip(), "username")
+        shared.msg.connect(lambda: self.serverid.get().strip(), "serverid")
+
+        # 目前只用於顯示 請求速度
+        shared.msg.connect(
+            lambda speed="": self.title(
+                f"{self.win_title} （{speed}）" if speed.strip() else self.win_title
+            ),
+            "title_change",
+        )
 
         shared.msg.connect(
-            lambda title="": self.title(title.strip() or self.win_title), label="title_change"
+            lambda title, message: messagebox.showerror(title, message, parent=self),
+            "showerror",
         )
 
         shared.msg.connect(self.ui_close)
@@ -208,7 +217,7 @@ class UI:
 
         for task in shared.cfg_data.get(shared.ck.Task, []):  # 添加舊任務數據
             self.capture_record.add(task)  # 避免複製移動位置時擷取
-            self.input_operat("insert-view", f"{task}\n")
+            self.input_operat("insert", f"{task}\n")
 
         self.run_button = tk.Button(
             self.operate_frame,
@@ -251,11 +260,11 @@ class UI:
         self.run_button.config(state=state, cursor=cursor)
 
     def input_operat(self, operat: str, *args):
-        if operat == "insert" or operat == "insert-view":
+        if operat == "insert":
             self.input_text.insert("end", *args)
-            if operat == "insert-view":
-                self.input_text.yview("end")
-                self.input_text.xview_moveto(1.0)
+            self.input_text.yview("end")
+            self.input_text.xview_moveto(1.0)
+            self.input_text.update_idletasks()
         elif operat == "delete":
             self.input_text.delete(*args)
         elif operat == "get":
@@ -406,7 +415,7 @@ class UI:
                         for item in selected_items:  # 移除選中的項目
                             treeview.delete(item)
 
-                    shared.msg.connect(merge_success_show, True)
+                    shared.msg.connect(merge_success_show, once=True)
                     self.move_files(data_table, selected)
 
             output_button = tk.Button(
