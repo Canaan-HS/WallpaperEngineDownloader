@@ -57,11 +57,21 @@ class Backend_Tools:
                 relative_path = file.relative_to(
                     shared.save_path
                 )  # 獲取 file 在 shared.save_path 下的相對路徑
-
-                top_folder = relative_path.parts[0]  # 取得最上層資料夾名稱
+                parts = relative_path.parts
 
                 try:
-                    file.rename(merge_path / f"[{top_folder}] {file.name}")
+                    if len(parts) > 1:  # 有父資料夾
+                        top_folder = parts[0]  # 取得最上層資料夾名稱
+                        parent_folder = file.parent.name  # 取得檔案父資料夾名稱
+
+                        if top_folder == parent_folder:
+                            new_name = f"[{top_folder}] {file.name}"
+                        else:
+                            new_name = f"[{top_folder}] {parent_folder} - {file.name}"
+                    else:
+                        new_name = file.name
+
+                    file.rename(merge_path / new_name)
                 except Exception as e:
                     logging.warning(e)
 
