@@ -34,28 +34,34 @@ class Backend_Download:
     def download_trigger(self):
         self.status_switch("disabled")
 
-        for link in self.input_stream():
-            if link:
-                match = parse_regex.search(link)
-                if match:
-                    appid, username, password = self.get_config()  # 允許臨時變更, 所以每次重獲取
-                    self.capture_record.add(link)
+        try:
+            for link in self.input_stream():
+                if link:
+                    match = parse_regex.search(link)
+                    if match:
+                        self.capture_record.add(link)
+                        appid, username, password = (
+                            self.get_config()
+                        )  # 允許臨時變更, 所以每次重獲取
 
-                    match_gp1 = match.group(1)
-                    task_id = f"{appid}-{match_gp1}"
+                        match_gp1 = match.group(1)
+                        task_id = f"{appid}-{match_gp1}"
 
-                    if task_id not in self.complete_record:
-                        self.task_cache[task_id] = {"url": link}
-                        self.download(
-                            task_id,
-                            appid,
-                            match_gp1,
-                            unquote(match.group(2)),
-                            username,
-                            password,
-                        )
-                else:
-                    shared.msg.emit("console_insert", f"{shared.transl('無效連結')}：{link}\n")
+                        if task_id not in self.complete_record:
+                            self.task_cache[task_id] = {"url": link}
+                            self.download(
+                                task_id,
+                                appid,
+                                match_gp1,
+                                match.group(2),
+                                username,
+                                password,
+                            )
+                    else:
+                        shared.msg.emit("console_insert", f"{shared.transl('無效連結')}：{link}\n")
+        except Exception as e:
+            logging.error(e)
+            shared.msg.emit("showerror", shared.transl("例外"), e)
 
         self.status_switch("normal")
 
@@ -73,7 +79,9 @@ class Backend_Download:
         try:
             full_download = False
             end_message = shared.transl("下載完成")
-            process_name = illegal_regex.sub("-", searchText if searchText else pubId).strip()
+            process_name = illegal_regex.sub(
+                "-", unquote(searchText) if searchText else pubId
+            ).strip()
 
             shared.msg.emit(
                 "console_insert", f"\n> {shared.transl('開始下載')} [{process_name}]\n", "important"
