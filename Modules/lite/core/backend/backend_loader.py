@@ -69,7 +69,7 @@ class Backend_Loader(Backend_Cleaner, Backend_Tools, Backend_Download):
             # 列表為可觸發強制停止任務
             **dict.fromkeys(
                 ["STEAM GUARD", "Authentication", "AccountDisabled", "AlreadyLoggedInElsewhere"],
-                shared.transl("下載失敗: 請嘗試變更帳號後再下載"),
+                [shared.transl("下載失敗: 請嘗試變更帳號後再下載")],
             ),
         }
 
