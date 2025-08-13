@@ -49,8 +49,9 @@ class UI_Main:
         self.rowconfigure(1, weight=0)
         self.rowconfigure(2, weight=0)
         self.rowconfigure(3, weight=0)
-        self.rowconfigure(4, weight=1)
-        self.rowconfigure(5, weight=0)
+        self.rowconfigure(4, weight=0)
+        self.rowconfigure(5, weight=1)
+        self.rowconfigure(6, weight=0)
         self.columnconfigure(0, weight=1)
 
         # 選擇配置
@@ -65,29 +66,28 @@ class UI_Main:
         self.menus_frame.columnconfigure(1, weight=0)
         self.menus_frame.columnconfigure(2, weight=1)
 
-        # 按鈕框架
-        self.buttons_frame = tk.Frame(self, bg=self.primary_color)
-        self.buttons_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
-        self.buttons_frame.columnconfigure(0, weight=1)  # 左側彈性空間
-        self.buttons_frame.columnconfigure(1, weight=0)  # 修改路徑
-        self.buttons_frame.columnconfigure(2, weight=0)  # 檔案整合
-        self.buttons_frame.columnconfigure(3, weight=0)  # 自動提取
-        self.buttons_frame.columnconfigure(4, weight=1)  # 右側彈性空間
+        # 第一排按鈕框架
+        self.actions_frame_1 = tk.Frame(self, bg=self.primary_color)
+        self.actions_frame_1.grid(row=2, column=0, pady=2, sticky="w", padx=5)
+
+        # 第二排按鈕框架
+        self.actions_frame_2 = tk.Frame(self, bg=self.primary_color)
+        self.actions_frame_2.grid(row=3, column=0, pady=2, sticky="w", padx=5)
 
         # 路徑文本框架
         self.path_text_frame = tk.Frame(self, bg=self.primary_color)
-        self.path_text_frame.grid(row=3, column=0, sticky="ew", padx=10, pady=5)
+        self.path_text_frame.grid(row=4, column=0, sticky="ew", padx=10, pady=5)
         self.path_text_frame.columnconfigure(0, weight=1)
 
         # 控制台框架
         self.console_frame = tk.Frame(self, bg=self.primary_color)
-        self.console_frame.grid(row=4, column=0, sticky="nsew", padx=10, pady=5)
+        self.console_frame.grid(row=5, column=0, sticky="nsew", padx=10, pady=5)
         self.console_frame.rowconfigure(1, weight=1)
         self.console_frame.columnconfigure(0, weight=1)
 
         # 操作框架
         self.operate_frame = tk.Frame(self, bg=self.primary_color)
-        self.operate_frame.grid(row=5, column=0, sticky="ew", padx=10, pady=5)
+        self.operate_frame.grid(row=6, column=0, sticky="ew", padx=10, pady=5)
         self.operate_frame.rowconfigure(1, weight=1)
         self.operate_frame.columnconfigure(0, weight=1)
 
@@ -165,34 +165,23 @@ class UI_Main:
         self.serverid_menu.grid(row=0, column=2, sticky="we")
         self.search_operat()
 
-        self.path_button = tk.Button(
-            self.buttons_frame,
+        # --- 第一排按鈕 ---
+        self.manual_extract_button = tk.Button(
+            self.actions_frame_1,
             font=("Microsoft JhengHei", 10, "bold"),
             cursor="hand2",
             relief="raised",
             bg=self.secondary_color,
             fg=self.text_color,
-            command=self.set_save_path,
+            command=self.manual_extract_pkg,
         )
-        self.text_register(self.path_button, "修改路徑")
-        self.path_button.grid(row=0, column=1, padx=5, pady=5)
-
-        self.merge_button = tk.Button(
-            self.buttons_frame,
-            font=("Microsoft JhengHei", 10, "bold"),
-            cursor="hand2",
-            relief="raised",
-            bg=self.secondary_color,
-            fg=self.text_color,
-            command=self.file_merge,
-        )
-        self.text_register(self.merge_button, "檔案整合")
-        self.merge_button.grid(row=0, column=2, padx=5, pady=5)
+        self.text_register(self.manual_extract_button, "手動提取 PKG")
+        self.manual_extract_button.pack(side="left", padx=5, pady=5)
 
         self.extract_pkg_var = tk.BooleanVar(value=False)
         self.extract_pkg_var.set(shared.enable_extract_pkg)
         self.extract_pkg_button = tk.Checkbutton(
-            self.buttons_frame,
+            self.actions_frame_1,
             variable=self.extract_pkg_var,
             font=("Microsoft JhengHei", 11, "bold"),
             bg=self.primary_color,
@@ -201,12 +190,35 @@ class UI_Main:
             activebackground=self.primary_color,
             activeforeground=self.text_color,
             cursor="hand2",
-            padx=5,
-            pady=5,
             command=self.set_pkg_extract,
         )
-        self.text_register(self.extract_pkg_button, "自動提取 PKG 文件")
-        self.extract_pkg_button.grid(row=0, column=3, padx=5, pady=5)
+        self.text_register(self.extract_pkg_button, "自動提取 PKG")
+        self.extract_pkg_button.pack(side="left", padx=5, pady=5)
+
+        # --- 第二排按鈕 ---
+        self.merge_button = tk.Button(
+            self.actions_frame_2,
+            font=("Microsoft JhengHei", 10, "bold"),
+            cursor="hand2",
+            relief="raised",
+            bg=self.secondary_color,
+            fg=self.text_color,
+            command=self.file_merge,
+        )
+        self.text_register(self.merge_button, "檔案整合")
+        self.merge_button.pack(side="left", padx=5, pady=5)
+
+        self.path_button = tk.Button(
+            self.actions_frame_2,
+            font=("Microsoft JhengHei", 10, "bold"),
+            cursor="hand2",
+            relief="raised",
+            bg=self.secondary_color,
+            fg=self.text_color,
+            command=self.set_save_path,
+        )
+        self.text_register(self.path_button, "修改路徑")
+        self.path_button.pack(side="left", padx=5, pady=5)
 
         path_display_frame = tk.Frame(
             self.path_text_frame,
@@ -220,7 +232,7 @@ class UI_Main:
         self.save_path_label = tk.Label(
             path_display_frame,
             text=shared.save_path,
-            font=("Microsoft JhengHei", 15, "bold"),
+            font=("Microsoft JhengHei", 14, "bold"),
             cursor="hand2",
             bg=self.primary_color,
             fg=self.text_color,
@@ -244,7 +256,6 @@ class UI_Main:
         self.console = scrolledtext.ScrolledText(
             self.console_frame,
             font=("Consolas", 12),
-            height=16,
             borderwidth=4,
             cursor="arrow",
             relief="sunken",
@@ -269,7 +280,7 @@ class UI_Main:
         self.input_text = scrolledtext.ScrolledText(
             self.operate_frame,
             font=("Microsoft JhengHei", 10, "bold"),
-            height=8,
+            height=5,
             borderwidth=2,
             relief="sunken",
             wrap="none",
@@ -301,10 +312,29 @@ class UI_Main:
     def set_pkg_extract(self):
         shared.enable_extract_pkg = self.extract_pkg_var.get()
 
-    def set_save_path(self):
-        path = filedialog.askdirectory(
+    def select_folder(self):
+        return filedialog.askdirectory(
             title=shared.transl("選擇資料夾"), initialdir=shared.save_path
         )
+
+    def manual_extract_pkg(self):
+        path = self.select_folder()
+
+        if path:
+
+            def extract_info_show(icon, title, message):
+                messagebox.showinfo(
+                    icon=icon,
+                    title=title,
+                    message=message,
+                    parent=self,
+                )
+
+            shared.msg.connect(extract_info_show, once=True)
+            threading.Thread(target=self.extract_pkg, args=(Path(path), True), daemon=True).start()
+
+    def set_save_path(self):
+        path = self.select_folder()
 
         if path:
             shared.save_path = Path(path) / shared.output_folder
@@ -399,12 +429,20 @@ class UI_Main:
                 logging.warning(e)
                 pass
 
+            self.update_idletasks()
+
             width = 500
             height = 550
 
-            merge_window.geometry(
-                f"{width}x{height}+{int((self.winfo_screenwidth() - width) / 2)}+{int((self.winfo_screenheight() - height) / 2)}"
-            )
+            main_window_x = self.winfo_x()
+            main_window_y = self.winfo_y()
+            main_window_width = self.winfo_width()
+            main_window_height = self.winfo_height()
+
+            position_x = main_window_x + (main_window_width // 2) - (width // 2)
+            position_y = main_window_y + (main_window_height // 2) - (height // 2)
+
+            merge_window.geometry(f"{width}x{height}+{position_x}+{position_y}")
             merge_window.minsize(400, 450)
 
             tip_frame = tk.Frame(merge_window, bg=self.primary_color)
