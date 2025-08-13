@@ -6,7 +6,7 @@ A project based on [WallpaperEngineWorkshopDownloader](https://github.com/oureve
 
 ## Preview
 
-![English Version](https://github.com/user-attachments/assets/7d4786d6-4826-41da-b6ee-ea8faa634077)
+![English Version](https://github.com/user-attachments/assets/9a0c489d-38fa-4f3e-9462-d557f2d029e2)
 
 https://github.com/user-attachments/assets/dc70a30b-47c5-48e8-a4e5-8fcc9f665645
 
