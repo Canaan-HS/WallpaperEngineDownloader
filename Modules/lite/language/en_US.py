@@ -6,7 +6,7 @@ en_US = {
     "選擇配置": "Select Configuration",
     "修改路徑": "Modify Path",
     "檔案整合": "File Integration",
-    "提取 PKG 文件": "Extract PKG File",
+    "自動提取 PKG 文件": "Auto Extract PKG File",
     "帳號": "Acc",
     "應用": "App",
     "已複製": "Copied",
