@@ -42,9 +42,7 @@ jobs:
           cache: "pip"
 
       - name: 安裝 Python 依賴
-        run: |
-          python -m pip install --upgrade pip
-          pip install --upgrade -r Pack/LiteRequirements.txt
+        run: pip install --upgrade -r Pack/LiteRequirements.txt
 
       - name: PyInstaller 編譯
         id: build
