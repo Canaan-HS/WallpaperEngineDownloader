@@ -2,6 +2,7 @@ from ..bootstrap import json, logging
 from ..utils import Signal
 
 transl = None
+set_lang = None
 
 ck = None
 cfg_key = None
@@ -15,12 +16,12 @@ save_path = None
 
 config_json = None
 
-repkg = None
 repkg_exe = None
 depot_exe = None
 
 account = None
 appid_dict = None
+enable_extract_pkg = None
 
 msg = Signal()
 
