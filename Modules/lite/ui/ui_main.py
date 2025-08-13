@@ -91,23 +91,30 @@ class UI_Main:
         self.operate_frame.rowconfigure(1, weight=1)
         self.operate_frame.columnconfigure(0, weight=1)
 
+        self.register_object = []
+
         self.settings_element()
         self.display_element()
         self.input_element()
 
-        shared.msg.connect(lambda: self.username_var.get().strip(), "username")
-        shared.msg.connect(lambda: self.serverid_var.get().strip(), "serverid")
+    """ ====== 特殊函數 ====== """
+
+    def text_register(self, element, text):
+        element.configure(text=shared.transl(text))
+        self.register_object.append(
+            (element, lambda key=text: shared.transl(key))
+        )  # key=text 據說可以更安全避免 延遲綁定 問題
 
     """ ====== 主要元件 ====== """
 
     def settings_element(self):
         self.title_label = tk.Label(
             self.title_frame,
-            text=shared.transl("選擇配置"),
             font=("Microsoft JhengHei", 16, "bold"),
             bg=self.primary_color,
             fg=self.text_color,
         )
+        self.text_register(self.title_label, "選擇配置")
         self.title_label.grid(row=0, column=0)
 
         self.language_var = tk.StringVar(self)
@@ -160,7 +167,6 @@ class UI_Main:
 
         self.path_button = tk.Button(
             self.buttons_frame,
-            text=shared.transl("修改路徑"),
             font=("Microsoft JhengHei", 10, "bold"),
             cursor="hand2",
             relief="raised",
@@ -168,11 +174,11 @@ class UI_Main:
             fg=self.text_color,
             command=self.set_save_path,
         )
+        self.text_register(self.path_button, "修改路徑")
         self.path_button.grid(row=0, column=1, padx=5, pady=5)
 
         self.merge_button = tk.Button(
             self.buttons_frame,
-            text=shared.transl("檔案整合"),
             font=("Microsoft JhengHei", 10, "bold"),
             cursor="hand2",
             relief="raised",
@@ -180,13 +186,13 @@ class UI_Main:
             fg=self.text_color,
             command=self.file_merge,
         )
+        self.text_register(self.merge_button, "檔案整合")
         self.merge_button.grid(row=0, column=2, padx=5, pady=5)
 
         self.extract_pkg_var = tk.BooleanVar(value=False)
         self.extract_pkg_var.set(shared.enable_extract_pkg)
         self.extract_pkg_button = tk.Checkbutton(
             self.buttons_frame,
-            text=shared.transl("提取 PKG 文件"),
             variable=self.extract_pkg_var,
             font=("Microsoft JhengHei", 11, "bold"),
             bg=self.primary_color,
@@ -199,6 +205,7 @@ class UI_Main:
             pady=5,
             command=self.set_pkg_extract,
         )
+        self.text_register(self.extract_pkg_button, "自動提取 PKG 文件")
         self.extract_pkg_button.grid(row=0, column=3, padx=5, pady=5)
 
         path_display_frame = tk.Frame(
@@ -226,12 +233,12 @@ class UI_Main:
     def display_element(self):
         self.console_label = tk.Label(
             self.console_frame,
-            text=f"{shared.transl('控制台輸出')}：",
             font=("Microsoft JhengHei", 10, "bold"),
             bg=self.primary_color,
             fg=self.text_color,
             anchor="center",
         )
+        self.text_register(self.console_label, "控制台輸出")
         self.console_label.grid(row=0, column=0, sticky="nsew")
 
         self.console = scrolledtext.ScrolledText(
@@ -251,12 +258,12 @@ class UI_Main:
     def input_element(self):
         self.input_label = tk.Label(
             self.operate_frame,
-            text=f"{shared.transl('輸入創意工坊專案（每行一個，支援連結和檔案ID）')}：",
             font=("Microsoft JhengHei", 10, "bold"),
             bg=self.primary_color,
             fg=self.text_color,
             anchor="center",
         )
+        self.text_register(self.input_label, "輸入創意工坊專案（每行一個，支援連結和檔案ID）")
         self.input_label.grid(row=0, column=0, sticky="nsew")
 
         self.input_text = scrolledtext.ScrolledText(
@@ -278,7 +285,6 @@ class UI_Main:
 
         self.run_button = tk.Button(
             self.operate_frame,
-            text=shared.transl("下載"),
             font=("Microsoft JhengHei", 14, "bold"),
             borderwidth=2,
             cursor="hand2",
@@ -287,6 +293,7 @@ class UI_Main:
             fg=self.text_color,
             command=lambda: threading.Thread(target=self.download_trigger, daemon=True).start(),
         )
+        self.text_register(self.run_button, "下載")
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
 
     """ ====== 互動功能 ====== """
@@ -341,35 +348,31 @@ class UI_Main:
         selected = self.language_rules[self.language_var.get()]
 
         if selected != shared.set_lang:
+            old_acc_str = f"{shared.transl('帳號')}->"
+            old_app_str = f"{shared.transl('應用')}->"
+
             shared.transl, shared.set_lang = translator(selected)  # 更新翻譯
 
             # 主 UI 更新
+            for element, func in self.register_object:
+                element.config(text=func())
+
             self.win_title = f"Wallpaper Engine {shared.transl('創意工坊下載器')}"
             self.title(self.win_title)
-
-            self.title_label.config(text=shared.transl("選擇配置"))
 
             self.init_language_rules()
             self.language_var.set(shared.transl(shared.set_lang))
             self.language_menu.config(values=list(self.language_rules.keys()))
 
-            self.username_var.set(
-                f"{shared.transl('帳號')}->{shared.cfg_data.get(shared.ck.Acc, account_list[0])}"
-            )
+            old_acc_var = self.username_var.get()
+            if "->" in old_acc_var:
+                new_acc_var = old_acc_var.split(old_acc_str)[1]
+                self.username_var.set(f"{shared.transl('帳號')}->{new_acc_var}")
 
-            self.serverid_var.set(
-                f"{shared.transl('應用')}->{shared.cfg_data.get(shared.ck.App, self.app_list[0])}"
-            )
-
-            self.path_button.config(text=shared.transl("修改路徑"))
-            self.merge_button.config(text=shared.transl("檔案整合"))
-            self.extract_pkg_button.config(text=shared.transl("提取 PKG 文件"))
-            self.run_button.config(text=shared.transl("下載"))
-
-            self.console_label.config(text=f"{shared.transl('控制台輸出')}：")
-            self.input_label.config(
-                text=f"{shared.transl('輸入創意工坊專案（每行一個，支援連結和檔案ID）')}："
-            )
+            old_app_var = self.serverid_var.get()
+            if "->" in old_app_var:
+                new_app_var = old_app_var.split(old_app_str)[1]
+                self.serverid_var.set(f"{shared.transl('應用')}->{new_app_var}")
 
             # 後端數據更新
             self.init_error_rule()
