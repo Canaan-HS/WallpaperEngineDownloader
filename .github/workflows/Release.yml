@@ -25,17 +25,15 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: 安裝並驗證 yq 工具
-        uses: mikefarah/yq@v4
-        with:
-          cmd: yq --version
-
-      - name: 初始化依賴並準備發佈資訊
+      - name: 初始化依賴
         id: version
         run: |
-          $tag = $(yq e '.tag' LiteVersion.yaml).Trim('"')
-          $version = $(yq e '.version' LiteVersion.yaml).Trim('"')
-          yq -r e '.description' LiteVersion.yaml | Out-File -FilePath "Release_notes.md" -Encoding utf8
+          # 使用 yq 解析 YAML 文件
+          $tag = $(.\Pack\yq.exe -o=json e '.tag' LiteVersion.yaml).Trim('"')
+          $version = $(.\Pack\yq.exe -o=json e '.version' LiteVersion.yaml).Trim('"')
+          $description = $(.\Pack\yq.exe -r e '.description' LiteVersion.yaml)
+
+          $description | Out-File -FilePath "Release_notes.md" -Encoding utf8
 
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
           echo "TAG=$tag" >> $env:GITHUB_OUTPUT
@@ -65,7 +63,7 @@ jobs:
           Compress-Archive -Path "dist/${{ steps.build.outputs.EXE_NAME }}" -DestinationPath $zip_name
           echo "ZIP_NAME=$zip_name" >> $env:GITHUB_OUTPUT
 
-      - name: 建立或更新 Release 並上傳 ZIP
+      - name: 建立或更新 Release
         uses: softprops/action-gh-release@v2
         with:
           body_path: Release_notes.md
