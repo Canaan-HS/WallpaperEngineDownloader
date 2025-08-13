@@ -88,8 +88,14 @@ excluded_file_types = ['.pdb', '.lib', '.a', '.ilk', '.exp', '.map']
 a = Analysis(
     ['../Lite_Launcher.pyw'],
     pathex=[],
-    binaries=[],
-    datas=[('../Icon/DepotDownloader.ico', '.')],
+    binaries=[
+        ('../RePKG/RePkg.exe', 'RePKG'),
+        ('../DepotDownloaderMod', 'DepotDownloaderMod')
+    ],
+    datas=[
+        ('../Icon/DepotDownloader.ico', 'Icon'),
+        ('../APPID/ID.json', 'APPID')
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
