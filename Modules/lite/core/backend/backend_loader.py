@@ -22,18 +22,8 @@ class Backend_Loader(Backend_Cleaner, Backend_Tools, Backend_Download):
 
         self.app_list = list(shared.appid_dict.keys())
 
-        self.token = True  # 可強制停止所有任務
-        self.error_rule = {
-            ".NET": shared.transl("下載失敗: 請先安裝 .NET 9 執行庫"),
-            "Unable to locate manifest ID for published file": shared.transl(
-                "下載失敗: 該項目可能已被刪除，或應用設置錯誤"
-            ),
-            # 列表為可觸發強制停止任務
-            **dict.fromkeys(
-                ["STEAM GUARD", "Authentication", "AccountDisabled", "AlreadyLoggedInElsewhere"],
-                shared.transl("下載失敗: 請嘗試變更帳號後再下載"),
-            ),
-        }
+        self.token = True  # 允許下載
+        self.init_error_rule()  # 初始化錯誤規則
 
         # ? 目前只是簡單的將, 個類型功能硬拆成不同模塊, 但其實基本都是相互依賴的, 只是都放在同一個模塊太難閱讀
         # ! Download 需要 Tools 和 Cleaner 的函數, 順序不能亂
@@ -69,6 +59,19 @@ class Backend_Loader(Backend_Cleaner, Backend_Tools, Backend_Download):
             path = parent / f"{stem} ({index}){suffix}"
             index += 1
         return path
+
+    def init_error_rule(self):
+        self.error_rule = {
+            ".NET": shared.transl("下載失敗: 請先安裝 .NET 9 執行庫"),
+            "Unable to locate manifest ID for published file": shared.transl(
+                "下載失敗: 該項目可能已被刪除，或應用設置錯誤"
+            ),
+            # 列表為可觸發強制停止任務
+            **dict.fromkeys(
+                ["STEAM GUARD", "Authentication", "AccountDisabled", "AlreadyLoggedInElsewhere"],
+                shared.transl("下載失敗: 請嘗試變更帳號後再下載"),
+            ),
+        }
 
     def console_analysis(self, text):
         for Key, message in self.error_rule.items():
