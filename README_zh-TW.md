@@ -4,7 +4,7 @@
 
 ## 預覽
 
-![中文版](https://github.com/user-attachments/assets/1d08c74b-4d98-49f8-aeb8-26f2e1c6c3ef)
+![中文版](https://github.com/user-attachments/assets/2271811d-a20c-46dc-b1a6-03b3ca6da40e)
 
 ## 依賴  
 
