@@ -78,7 +78,11 @@ class Backend_Download:
 
         try:
             full_download = False
-            end_message = shared.transl("下載完成")
+
+            success_message = shared.transl("下載完成")
+            failure_message = shared.transl("下載失敗")
+            end_message = success_message
+
             process_name = illegal_regex.sub(
                 "-", unquote(searchText) if searchText else pubId
             ).strip()
@@ -143,27 +147,19 @@ class Backend_Download:
             process.wait()
 
             # 雖然可能不需要這麼多檢測, 但避免例外
-            if (
-                full_download
-                and end_message == shared.transl("下載完成")
-                and Path(task_path).exists()
-            ):
+            if full_download and end_message == success_message and Path(task_path).exists():
                 self.task_cache.pop(taskId, None)  # 刪除任務緩存
                 self.complete_record.add(taskId)  # 添加下載完成紀錄
 
                 # 允許 repkg 且 appId 為 Wallpaper Engine 的 ID, 觸發提取
-                if shared.repkg and appId == "431960":
+                if shared.enable_extract_pkg and appId == "431960":
                     threading.Thread(
                         target=self.extract_pkg, args=(task_path,), daemon=True
                     ).start()
             else:
                 # 進程可能還需要繼續, 不刪除錯誤的文件
                 # 用於顯示不在 console_analysis 中的錯誤
-                end_message = (
-                    end_message
-                    if end_message != shared.transl("下載完成")
-                    else shared.transl("下載失敗")
-                )
+                end_message = end_message if end_message != success_message else failure_message
 
             shared.msg.emit("console_insert", f"> [{process_name}] {end_message}\n", "important")
         except:
