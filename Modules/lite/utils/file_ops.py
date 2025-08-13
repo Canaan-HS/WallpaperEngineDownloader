@@ -3,7 +3,7 @@ from ..bootstrap import Path, defaultdict
 
 def get_ext_groups(path: Path, exclude_folder: str = "") -> dict:
     """
-    遞迴掃描指定路徑下的所有檔案，並依副檔名進行分組。
+    描指定路徑下的所有檔案，並依副檔名進行分組。
 
     此函式會忽略特定資料夾（如果提供），然後將所有找到的檔案
     按照其副檔名分類，並將結果儲存到一個字典中。
