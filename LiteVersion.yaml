@@ -1,7 +1,13 @@
-tag: v1.0.4
-version: v1.0.4
+tag: v1.0.5
+version: v1.0.5
 description: |
-  1. Input field automatically scrolls to the end of text
-  2. Optimized certain usage logic and interface behavior
-  3. Added automatic extraction functionality for Wallpaper Engine Pkg files
-lastEdit: 2025-05-30 05:00
+  ### Added
+  - Language selection menu.
+  - Options for both manual and automatic PKG file extraction.
+
+  ### Fixed
+  - A parsing error when using standalone IDs as input.
+
+  ### Changed
+  - Improved overall performance and stability.
+lastEdit: 2025-08-13 07:30
