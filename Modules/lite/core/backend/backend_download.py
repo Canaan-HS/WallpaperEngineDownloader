@@ -134,7 +134,6 @@ class Backend_Download:
                     self.token = False
                     process.terminate()
                     end_message = err_message[0]
-                    return
 
                 elif err_message:
                     end_message = err_message
