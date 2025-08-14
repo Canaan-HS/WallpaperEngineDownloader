@@ -32,7 +32,6 @@ class UI_Main:
             self.iconbitmap(shared.icon_ico)
         except Exception as e:
             logging.warning(e)
-            pass
 
         # 開啟時 窗口置頂 (非鎖定)
         self.attributes("-topmost", True)
