@@ -55,7 +55,7 @@ jobs:
         id: archive
         run: |
           $release_dir = "WallpaperEngineDownloader"
-          $zip_name = "WallpaperEngineDownloader_Lite_${{ steps.version.outputs.VERSION }}.zip"
+          $zip_name = "WallpaperEngineDownloader_${{ steps.version.outputs.VERSION }}_Lite.zip"
 
           # 建立一個新的發佈資料夾
           New-Item -ItemType Directory -Name $release_dir
