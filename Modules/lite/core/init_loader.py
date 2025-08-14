@@ -6,7 +6,9 @@ from ..language import translator
 
 class Init_Loader:
     def __init__(self, default_config):
-        getter = itemgetter("output_folder", "integrate_folder", "appid_dict", "exact_dir", "current_dir")
+        getter = itemgetter(
+            "output_folder", "integrate_folder", "appid_dict", "exact_dir", "current_dir"
+        )
         (
             shared.output_folder,
             shared.integrate_folder,
@@ -33,7 +35,7 @@ class Init_Loader:
             "Task": "Tasks",
         }
 
-        # 依賴載入路徑
+        # 預設載入路徑
         shared.save_path = exact_dir / shared.output_folder
         shared.icon_ico = current_dir / "Icon/DepotDownloader.ico"
 
@@ -70,7 +72,9 @@ class Init_Loader:
                 # ! 版本迭帶
                 old_path = "Wallpaper_Output"
                 record_path = shared.cfg_data.get(shared.ck.Save, "")
+
                 is_old_path = old_path in record_path
+                is_myprojects_path = record_path.endswith("myprojects")
 
                 # 更新輸出路徑
                 if is_old_path:
@@ -81,7 +85,8 @@ class Init_Loader:
                 record_path = Path(record_path)
                 shared.save_path = (
                     record_path
-                    if record_path.is_absolute() and record_path.name == shared.output_folder
+                    if record_path.is_absolute()
+                    and (record_path.name == shared.output_folder or is_myprojects_path)
                     else shared.save_path
                 )
             except Exception as e:
