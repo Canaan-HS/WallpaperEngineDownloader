@@ -25,7 +25,7 @@ class UI_Main:
         height = shared.cfg_data.get(shared.ck.H, 700)
 
         self.title(self.win_title)
-        self.minsize(350, 250)
+        self.minsize(350, 500)
         self.geometry(f"{width}x{height}+{x}+{y}")
 
         try:
