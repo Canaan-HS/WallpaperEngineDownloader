@@ -336,7 +336,11 @@ class UI_Main:
         path = self.select_folder()
 
         if path:
-            shared.save_path = Path(path) / shared.output_folder
+            shared.save_path = (
+                Path(path)
+                if path.endswith("myprojects")
+                else Path(path) / shared.output_folder
+            )
             self.save_path_label.config(text=shared.save_path)
             shared.save_config({"Sava_Path": str(shared.save_path)})
 
