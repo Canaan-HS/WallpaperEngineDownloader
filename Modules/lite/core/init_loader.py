@@ -69,20 +69,10 @@ class Init_Loader:
                     if val in (config := json.loads(shared.config_json.read_text(encoding="utf-8")))
                 }
 
-                # ! 版本迭帶
-                old_path = "Wallpaper_Output"
                 record_path = shared.cfg_data.get(shared.ck.Save, "")
-
-                is_old_path = old_path in record_path
                 is_myprojects_path = record_path.endswith("myprojects")
 
-                # 更新輸出路徑
-                if is_old_path:
-                    record_path = record_path.replace(old_path, shared.output_folder)
-                    shared.save_config({"Sava_Path": record_path})
-                    shared.output_folder = Path(record_path).name
-
-                record_path = Path(record_path)
+                record_path = Path(record_path)  # 轉換用於判斷
                 shared.save_path = (
                     record_path
                     if record_path.is_absolute()
