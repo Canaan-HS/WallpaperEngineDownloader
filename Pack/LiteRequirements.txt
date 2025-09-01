@@ -1,3 +1,4 @@
+vdf
 psutil
 pyperclip
 pyinstaller
