@@ -53,3 +53,9 @@ class Backend_Cleaner:
                             logging.info(e)
                             continue
                     time.sleep(1)
+
+    def del_depot_data(self, path):
+        try:
+            shutil.rmtree(path / ".DepotDownloader")
+        except Exception as e:
+            logging.info(e)
