@@ -1,6 +1,7 @@
 from ..bootstrap import os, json, Path, logging, itemgetter, messagebox, SimpleNamespace
 
 from . import shared
+from ..utils import search_path
 from ..language import translator
 
 
@@ -36,7 +37,7 @@ class Init_Loader:
         }
 
         # 預設載入路徑
-        shared.save_path = exact_dir / shared.output_folder
+        shared.save_path = search_path() or exact_dir / shared.output_folder
         shared.icon_ico = current_dir / "Icon/DepotDownloader.ico"
 
         id_json = current_dir / "APPID/ID.json"
@@ -47,40 +48,34 @@ class Init_Loader:
 
         if not shared.depot_exe.exists():
             err_message = f"{shared.transl('找不到')}: {shared.depot_exe}"
-
             logging.error(err_message)
             messagebox.showerror(shared.transl("依賴錯誤"), err_message)
             os._exit(0)
 
-        if id_json.exists():
-            try:
-                shared.appid_dict.update(json.loads(id_json.read_text(encoding="utf-8")))
-            except Exception as e:
-                logging.error(f"{shared.transl('讀取 ID.json 時出錯')}: {e}")
+        try:
+            shared.appid_dict.update(json.loads(id_json.read_text(encoding="utf-8")))
+        except FileNotFoundError:
+            logging.warning("ID.json does not exist")
+        except Exception as e:
+            logging.error(f"{shared.transl('讀取 ID.json 時出錯')}: {e}")
 
         shared.cfg_data = {}
         shared.ck = SimpleNamespace(**shared.cfg_key)  # 方便簡短調用
 
-        if shared.config_json.exists():
-            try:
-                shared.cfg_data = {
-                    val: config[val]
-                    for val in shared.cfg_key.values()
-                    if val in (config := json.loads(shared.config_json.read_text(encoding="utf-8")))
-                }
+        try:
+            shared.cfg_data = {
+                val: config[val]
+                for val in shared.cfg_key.values()
+                if val in (config := json.loads(shared.config_json.read_text(encoding="utf-8")))
+            }
 
-                record_path = shared.cfg_data.get(shared.ck.Save, "")
-                is_myprojects_path = record_path.endswith("myprojects")
-
-                record_path = Path(record_path)  # 轉換用於判斷
-                shared.save_path = (
-                    record_path
-                    if record_path.is_absolute()
-                    and (record_path.name == shared.output_folder or is_myprojects_path)
-                    else shared.save_path
-                )
-            except Exception as e:
-                logging.error(f"{shared.transl('讀取 Config.json 時出錯')}: {e}")
+            record_path = Path(shared.cfg_data.get(shared.ck.Save, ""))  # 轉換用於判斷
+            # 簡單的防呆, 避免有人直接修改 Config.json 導致的錯誤, 只要是絕對路徑, 下載時會自動補齊缺失
+            shared.save_path = record_path if record_path.is_absolute() else shared.save_path
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            logging.error(f"{shared.transl('讀取 Config.json 時出錯')}: {e}")
 
         # 判斷是否運行 RePkg (預設為 False)
         shared.enable_extract_pkg = (
