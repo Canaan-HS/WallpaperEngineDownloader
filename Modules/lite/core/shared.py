@@ -30,11 +30,12 @@ def save_config(data):
     old_data = {}
     cache_data = ""
 
-    if config_json.exists():
-        try:
-            cache_data = (old_data := json.loads(config_json.read_text(encoding="utf-8"))).copy()
-        except Exception as e:
-            logging.info(e)
+    try:
+        cache_data = (old_data := json.loads(config_json.read_text(encoding="utf-8"))).copy()
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        logging.info(e)
 
     old_data.update(data)
     final_config = {val: old_data.get(val, "") for val in cfg_key.values() if val in old_data}
