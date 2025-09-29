@@ -23,6 +23,7 @@
     const app = /^https:\/\/steamcommunity\.com\/app\/\d+/;
     const workshop = /^https:\/\/steamcommunity\.com\/workshop\/browse\/\?appid=\d+/;
     const sharedfiles = /^https:\/\/steamcommunity\.com\/sharedfiles\/filedetails\/\?id=\d+/;
+    const myworkshopfiles = /^https:\/\/steamcommunity\.com\/profiles\/\d+\/myworkshopfiles\/?.*$/;
 
     if (app.test(url)) {
         WaitElem(".workshop_home_content", content => {
@@ -31,7 +32,7 @@
                 title && ReUri(a, title);
             })
         })
-    } else if (workshop.test(url)) {
+    } else if (workshop.test(url) || myworkshopfiles.test(url)) {
         WaitElem(".workshopBrowseItems", items => {
             WaitLoad(items, 300, () => {
                 items.querySelectorAll(".workshopItem").forEach(div => {
