@@ -1,5 +1,6 @@
 import os
 import sys
+import winreg
 import shutil
 import atexit
 import platform
@@ -25,5 +26,6 @@ from types import SimpleNamespace
 from collections import deque, defaultdict
 from tkinter import ttk, scrolledtext, filedialog, messagebox
 
+import vdf
 import psutil
 import pyperclip
