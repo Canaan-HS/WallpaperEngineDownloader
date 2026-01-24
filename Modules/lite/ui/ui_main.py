@@ -232,6 +232,7 @@ class UI_Main:
             path_display_frame,
             text=shared.save_path,
             font=("Microsoft JhengHei", 14, "bold"),
+            anchor="e",
             cursor="hand2",
             bg=self.primary_color,
             fg=self.text_color,
