@@ -77,10 +77,15 @@ class Backend_Tools:
 
         shared.msg.emit("merge_success_show", merge_path)
 
-    def extract_pkg(self, path, notify=False):
-        pkg_path = get_ext_groups(path).get("pkg", False)
+    def _extract_path_normalize(self, value):
+        return value if isinstance(value, list) else ([value] if value else [])
 
-        if pkg_path:
+    def extract_pkg(self, path, notify=False, ext_groups=None):
+        ext_groups = get_ext_groups(path) if ext_groups is None else ext_groups
+
+        paths = [p for k in ("pkg", "tex") for p in self._extract_path_normalize(ext_groups.get(k))]
+
+        if paths:
 
             # 如果中途被刪除, 關閉該功能
             if not shared.repkg_exe.exists():
@@ -94,7 +99,7 @@ class Backend_Tools:
                     )
                 return
 
-            for pkg in pkg_path:
+            for pkg in paths:
                 # 沒有處理 被占用中的檔案, 無法提取問題 (不影響功能)
                 command = [shared.repkg_exe, "extract", pkg, "-o", path, "-r", "-t", "-s"]
 
@@ -113,9 +118,13 @@ class Backend_Tools:
                             "extract_info_show",
                             "info",
                             shared.transl("提取完成"),
-                            f"{shared.transl('成功提取')} {len(pkg_path)} {shared.transl('個 PKG 檔案')}",
+                            f"{shared.transl('成功提取')} {len(paths)} {shared.transl('個 PKG 檔案')}",
                         )
                     pkg.unlink()
+
+            ext_groups = get_ext_groups(path)
+            if ext_groups.get("tex"):
+                self.extract_pkg(path, False, ext_groups)  # 遞迴提取 pkg 中的 tex
 
         elif notify:
             shared.msg.emit(
