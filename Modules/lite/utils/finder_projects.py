@@ -10,6 +10,10 @@ def search_path() -> str:
         ) as key:
             # 獲取 steam 安裝路徑
             steam_path, _ = winreg.QueryValueEx(key, "installPath")
+
+            if not steam_path:
+                raise Exception("Not found steam path")
+
             library_path = Path(steam_path) / "steamapps" / "libraryfolders.vdf"
             # 讀取 libraryfolders.vdf, 並用 vdf 解析
             library = vdf.loads(library_path.read_text(encoding="utf-8"))
@@ -17,7 +21,7 @@ def search_path() -> str:
             app_path = ""
             for value in library["libraryfolders"].values():
                 data = SimpleNamespace(value)
-                if "3557620" in data.apps.keys():
+                if "431960" in data.apps.keys():
                     app_path = (
                         Path(data.path)
                         / "steamapps"
