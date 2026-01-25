@@ -69,6 +69,7 @@ class Backend_Download:
         if not self.token:
             return
 
+        # 防護用, 避免有人途中刪除 depot_exe
         if not shared.depot_exe.exists():
             self.token = False
             err_message = f"{shared.transl('找不到')}: {shared.depot_exe}"
@@ -91,6 +92,7 @@ class Backend_Download:
                 "console_insert", f"\n> {shared.transl('開始下載')} [{process_name}]\n", "important"
             )
 
+            # 防護用, 避免有人中途把文件刪掉
             shared.save_path.mkdir(parents=True, exist_ok=True)
             task_path = self.get_unique_path(shared.save_path / process_name)
             self.task_cache[taskId]["path"] = task_path  # 添加下載路徑
@@ -108,9 +110,9 @@ class Backend_Download:
                 Password,
                 "-dir",
                 task_path,
+                "-validate",
                 "-max-downloads",
                 "16",
-                "-validate",
             ]
 
             process = subprocess.Popen(
@@ -145,7 +147,7 @@ class Backend_Download:
             process.stdout.close()
             process.wait()
 
-            # 雖然可能不需要這麼多檢測, 但避免例外
+            # 不需要這麼多檢測, 但避免例外
             if full_download and end_message == success_message and Path(task_path).exists():
                 self.task_cache.pop(taskId, None)  # 刪除任務緩存
                 self.complete_record.add(taskId)  # 添加下載完成紀錄
@@ -155,6 +157,9 @@ class Backend_Download:
                     threading.Thread(
                         target=self.extract_pkg, args=(task_path,), daemon=True
                     ).start()
+
+                # 刪除 depot 生成的 manifest
+                threading.Thread(target=self.del_depot_data, args=(task_path,), daemon=True).start()
             else:
                 # 進程可能還需要繼續, 不刪除錯誤的文件
                 # 用於顯示不在 console_analysis 中的錯誤
