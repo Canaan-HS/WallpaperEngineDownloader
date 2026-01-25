@@ -1,13 +1,13 @@
-tag: v1.0.5
-version: v1.0.5
+tag: v1.0.6
+version: v1.0.6
 description: |
   ### Added
-  - Language selection menu.
-  - Options for both manual and automatic PKG file extraction.
+  - Automatically search for the path `projects/myprojects` and use it as the default save path.
+  - Automatically clean up the `.DepotDownloader` files created after DepotDownloader finishes downloading.
 
-  ### Fixed
-  - A parsing error when using standalone IDs as input.
+  ### Removed
+  - Version migration adaptation for changes to default filenames.
 
   ### Changed
-  - Improved overall performance and stability.
-lastEdit: 2025-08-14 14:00
+  - Significantly reduce the application IDs, keeping only the popular ones.
+lastEdit: 2026-01-25 08:30
