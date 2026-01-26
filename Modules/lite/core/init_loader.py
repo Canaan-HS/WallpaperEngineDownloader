@@ -64,11 +64,9 @@ class Init_Loader:
         shared.ck = SimpleNamespace(**shared.cfg_key)  # 方便簡短調用
 
         try:
-            shared.cfg_data = {
-                val: config[val]
-                for val in shared.cfg_key.values()
-                if val in (config := json.loads(shared.config_json.read_text(encoding="utf-8")))
-            }
+            # 讀取 Config.json
+            config = json.loads(shared.config_json.read_text(encoding="utf-8"))
+            shared.cfg_data = {val: config[val] for val in shared.cfg_key.values() if val in config}
 
             record_path = Path(shared.cfg_data.get(shared.ck.Save, ""))  # 轉換用於判斷
             # 簡單的防呆, 避免有人直接修改 Config.json 導致的錯誤, 只要是絕對路徑, 下載時會自動補齊缺失
