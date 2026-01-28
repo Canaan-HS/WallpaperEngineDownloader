@@ -26,10 +26,17 @@ class Backend_Download:
     def input_stream(self):
         while True:
             lines = shared.msg.request("input_operat", "get", "1.0", "end")
-            if not lines or not lines[0].strip():
-                break  # 避免空數據
+            line = lines[0].strip()
+
             shared.msg.emit("input_operat", "delete", "1.0", "2.0")
-            yield lines[0].strip()
+
+            # 避免空數據
+            if len(lines) == 1 and not line:
+                break
+            elif not line:
+                continue
+
+            yield line
 
     def download_trigger(self):
         self.status_switch("disabled")
