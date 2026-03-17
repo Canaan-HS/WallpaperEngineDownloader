@@ -43,6 +43,7 @@ class Init_Loader:
         id_json = current_dir / "APPID/ID.json"
         shared.config_json = exact_dir / "Config.json"
 
+        # 如果檔案太大被限制, 就要使用 RePkg.Net10.exe 無限制版本
         shared.repkg_exe = current_dir / "RePkg/RePkg.exe"
         shared.depot_exe = current_dir / "DepotdownloaderMod/DepotDownloadermod.exe"
 
