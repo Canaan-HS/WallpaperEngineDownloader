@@ -4,9 +4,9 @@ from ..utils import Signal
 transl = None
 set_lang = None
 
-ck = None
 cfg_key = None
 cfg_data = None
+simple_cfg_key = None
 
 output_folder = None
 integrate_folder = None
