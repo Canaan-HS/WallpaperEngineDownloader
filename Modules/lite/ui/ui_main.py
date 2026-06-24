@@ -19,10 +19,10 @@ class UI_Main:
     def __init__(self):  # 方便還原
         self.win_title = f"Wallpaper Engine {shared.transl('創意工坊下載器')}"
 
-        x = shared.cfg_data.get(shared.ck.X, 200)
-        y = shared.cfg_data.get(shared.ck.Y, 200)
-        width = shared.cfg_data.get(shared.ck.W, 600)
-        height = shared.cfg_data.get(shared.ck.H, 700)
+        x = shared.cfg_data.get(shared.simple_cfg_key.X, 200)
+        y = shared.cfg_data.get(shared.simple_cfg_key.Y, 200)
+        width = shared.cfg_data.get(shared.simple_cfg_key.W, 600)
+        height = shared.cfg_data.get(shared.simple_cfg_key.H, 700)
 
         self.title(self.win_title)
         self.minsize(350, 500)
@@ -135,7 +135,7 @@ class UI_Main:
 
         self.username_var = tk.StringVar(self)
         self.username_var.set(
-            f"{shared.transl('帳號')}->{shared.cfg_data.get(shared.ck.Acc, account_list[0])}"
+            f"{shared.transl('帳號')}->{shared.cfg_data.get(shared.simple_cfg_key.Acc, account_list[0])}"
         )
         self.username_menu = ttk.Combobox(
             self.menus_frame,
@@ -151,7 +151,7 @@ class UI_Main:
 
         self.serverid_var = tk.StringVar(self)
         self.serverid_var.set(
-            f"{shared.transl('應用')}->{shared.cfg_data.get(shared.ck.App, self.app_list[0])}"
+            f"{shared.transl('應用')}->{shared.cfg_data.get(shared.simple_cfg_key.App, self.app_list[0])}"
         )
         self.serverid_menu = ttk.Combobox(
             self.menus_frame,
@@ -290,7 +290,7 @@ class UI_Main:
             100, self.listen_clipboard
         )  # 避免初始化的微小延遲, 進行延遲排程 (可直接調用, 但會有微小延遲)
 
-        for task in shared.cfg_data.get(shared.ck.Task, []):  # 添加舊任務數據
+        for task in shared.cfg_data.get(shared.simple_cfg_key.Task, []):  # 添加舊任務數據
             self.capture_record.add(task)  # 避免複製移動位置時擷取
             self.input_operat("insert", f"{task}\n")
 
@@ -338,9 +338,7 @@ class UI_Main:
 
         if path:
             shared.save_path = (
-                Path(path)
-                if path.endswith("myprojects")
-                else Path(path) / shared.output_folder
+                Path(path) if path.endswith("myprojects") else Path(path) / shared.output_folder
             )
             self.save_path_label.config(text=shared.save_path)
             shared.save_config({"Sava_Path": str(shared.save_path)})
