@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name WorkshopEnhance
-// @version 2026/06/24
+// @version 2026/06/24-Beta
 // @author Canaan HS
 // @description 一個簡單的工作坊網址替換腳本，為網址添加 searchtext=<標題>
 // @description:zh-TW 一個簡單的工作坊網址替換腳本，為網址添加 searchtext=<標題>
@@ -58,14 +58,14 @@
         let timer = null;
         return (...args) => {
             clearTimeout(timer);
-            timer = setTimeout(function () {
+            timer = setTimeout(() => {
                 func(...args);
             }, delay);
         }
     };
 
     function findUri() {
-        const links = document.querySelectorAll("a[href^='https://steamcommunity.com/sharedfiles/filedetails/?id=']");
+        const links = document.querySelectorAll("a[href^='https://steamcommunity.com/sharedfiles/filedetails/?id=']:not([fixed='true'])");
         if (links.length % 2 === 0) {
             for (let i = 0; i < links.length; i += 2) {
                 const [rawLink, titleLink] = [links[i], links[i + 1]];
@@ -89,7 +89,7 @@
         const newUri = url.href.replace(/\+/g, " ");
 
         isElement
-            ? uri.tagName === "A" ? (uri.href = newUri) : null
+            ? uri.tagName === "A" ? (uri.href = newUri, uri.setAttribute("fixed", "true")) : null
             : history.replaceState(null, '', newUri);
     };
 
@@ -107,19 +107,34 @@
     };
 
     function waitLoad(container, debounce, run) {
-        const observer = new MutationObserver(_debounce(() => { run() }, debounce));
+        const observer = new MutationObserver(_debounce(() => {
+            observer.disconnect();
+            run();
+        }, debounce));
         observer.observe(container, { subtree: true, childList: true, attributes: true, characterData: true });
     };
 
     function waitElem(selector, found, all = false) {
-        const observer = new MutationObserver(() => {
-            const result = all ? document.querySelectorAll(selector) : document.querySelector(selector);
+        let timer, idleCallback;
+
+        const query = () => {
+            const result = all
+                ? document.querySelectorAll(selector)
+                : document.querySelector(selector);
+
             if (all ? result.length > 0 : result) {
-                observer.disconnect();
+                cancelIdleCallback(idleCallback);
+                // clearTimeout(timer);
                 found(result);
+            } else {
+                idleCallback = requestIdleCallback(query, { timeout: 5e2 });
             }
-        });
-        observer.observe(document, { subtree: true, childList: true });
+        }
+
+        idleCallback = requestIdleCallback(query, { timeout: 5e2 });
+        // timer = setTimeout(() => {
+        // cancelIdleCallback(idleCallback);
+        // }, 2e4);
     };
 
     function onUrlChange(callback, timeout = 15) {
