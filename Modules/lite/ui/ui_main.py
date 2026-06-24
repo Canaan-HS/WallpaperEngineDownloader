@@ -135,7 +135,7 @@ class UI_Main:
 
         self.username_var = tk.StringVar(self)
         self.username_var.set(
-            f"{shared.transl('帳號')}->{shared.cfg_data.get(shared.simple_cfg_key.Acc, account_list[0])}"
+            f"{shared.transl('帳號')}->{shared.cfg_data.get(shared.simple_cfg_key.Acc, shared.account)}"
         )
         self.username_menu = ttk.Combobox(
             self.menus_frame,
