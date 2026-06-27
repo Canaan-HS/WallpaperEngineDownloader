@@ -23,6 +23,8 @@ account = None
 appid_dict = None
 enable_extract_pkg = None
 
+logged_in = False
+
 msg = Signal()
 
 
