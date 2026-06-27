@@ -1,7 +1,7 @@
 from ..bootstrap import os, json, Path, logging, itemgetter, messagebox, SimpleNamespace
 
 from . import shared
-from ..utils import search_path
+from ..utils import LOGIN_KEY, add_login_account, search_path
 from ..language import translator
 
 
@@ -19,7 +19,7 @@ class Init_Loader:
         ) = getter(default_config)
 
         # 配置預設值
-        shared.account = "ruiiixx"
+        shared.account = "adgjl1182"
         shared.transl, shared.set_lang = translator()
 
         # 配置模板 (Key 是調用值, Value 是輸出值)
@@ -45,7 +45,7 @@ class Init_Loader:
 
         # 如果檔案太大被限制, 就要使用 RePkg.Net10.exe 無限制版本
         shared.repkg_exe = current_dir / "RePkg/RePkg.exe"
-        shared.depot_exe = current_dir / "DepotdownloaderMod/DepotDownloadermod.exe"
+        shared.depot_exe = exact_dir / "DepotdownloaderMod/DepotDownloadermod.exe"
 
         if not shared.depot_exe.exists():
             err_message = f"{shared.transl('找不到')}: {shared.depot_exe}"
@@ -68,8 +68,16 @@ class Init_Loader:
             config = json.loads(shared.config_json.read_text(encoding="utf-8"))
             shared.cfg_data = {val: config[val] for val in shared.cfg_key.values() if val in config}
 
-            record_path = Path(shared.cfg_data.get(shared.simple_cfg_key.Save, ""))  # 轉換用於判斷
+            account = shared.cfg_data.get(shared.simple_cfg_key.Acc)
+            if LOGIN_KEY in account:
+                shared.logged_in = True  # 設置旗標
+                account = account.split(LOGIN_KEY)[0]  # 還原帳號
+                # 將正確的帳號數據加入修改
+                shared.cfg_data[shared.simple_cfg_key.Acc] = account
+                add_login_account(account)
+
             # 簡單的防呆, 避免有人直接修改 Config.json 導致的錯誤, 只要是絕對路徑, 下載時會自動補齊缺失
+            record_path = Path(shared.cfg_data.get(shared.simple_cfg_key.Save, ""))
             shared.save_path = record_path if record_path.is_absolute() else shared.save_path
         except FileNotFoundError:
             pass
