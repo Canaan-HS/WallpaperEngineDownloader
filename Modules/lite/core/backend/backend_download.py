@@ -1,5 +1,5 @@
 from .. import shared
-from ...utils import illegal_regex, parse_regex
+from ...utils import ILLEGAL_REGEX, PARSE_REGEX, QR_KEY
 from ...bootstrap import Path, logging, unquote, threading, subprocess, traceback, pyperclip
 
 
@@ -44,7 +44,7 @@ class Backend_Download:
         try:
             for link in self.input_stream():
                 if link:
-                    match = parse_regex.search(link)
+                    match = PARSE_REGEX.search(link)
                     if match:
                         self.capture_record.add(link)
                         appid, username, password = (
@@ -85,13 +85,57 @@ class Backend_Download:
             return
 
         try:
-            full_download = False
 
+            def task(
+                command: list, end_message: str = "", full_download: bool = False
+            ) -> tuple[str, bool]:
+                process = subprocess.Popen(
+                    command,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                )
+
+                threading.Thread(target=self.listen_network, args=(process,), daemon=True).start()
+                for line in process.stdout:
+                    if line.strip() == "":
+                        continue
+
+                    # 臨時補丁
+                    if username == QR_KEY:
+                        if "█" in line:
+                            shared.msg.emit("console_insert", line, "QRCode")
+                        elif "-remember-password" in line:
+                            self.login_processing(line)
+                    else:
+                        shared.msg.emit("console_insert", line)
+
+                    # 分析可能的錯誤訊息, 消息是列表狀態, 代表需要強制中止
+                    err_message = self.console_analysis(line)
+                    if isinstance(err_message, list):
+                        self.token = False
+                        process.terminate()
+                        end_message = err_message[0]
+
+                    elif err_message:
+                        end_message = err_message
+
+                    # 分析是否有下載完成, 字串
+                    if "Total downloaded" in line:
+                        full_download = True
+
+                process.stdout.close()
+                process.wait()
+
+                return end_message, full_download
+
+            # 宣告旗標
             success_message = shared.transl("下載完成")
             failure_message = shared.transl("下載失敗")
-            end_message = success_message
 
-            process_name = illegal_regex.sub(
+            # 處理檔名
+            process_name = ILLEGAL_REGEX.sub(
                 "-", unquote(searchText) if searchText else pubId
             ).strip()
 
@@ -111,10 +155,6 @@ class Backend_Download:
                 appId,
                 "-pubfile",
                 pubId,
-                "-username",
-                username,
-                "-password",
-                password,
                 "-dir",
                 task_path,
                 "-validate",
@@ -122,37 +162,17 @@ class Backend_Download:
                 "16",
             ]
 
-            process = subprocess.Popen(
-                command,
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                creationflags=subprocess.CREATE_NO_WINDOW,
-            )
+            # 觸發 QR 登入
+            if username == QR_KEY:
+                command += ["-qr", "-remember-password"]
+            # 使用儲存的帳號
+            elif password == "-remember-password":
+                command += ["-username", username, password]
+            # 使用預設帳號
+            else:
+                command += ["-username", username, "-password", password]
 
-            threading.Thread(target=self.listen_network, args=(process,), daemon=True).start()
-            for line in process.stdout:
-                if line.strip() == "":
-                    continue
-
-                shared.msg.emit("console_insert", line)
-
-                # 分析可能的錯誤訊息, 消息是列表狀態, 代表需要強制中止
-                err_message = self.console_analysis(line)
-                if isinstance(err_message, list):
-                    self.token = False
-                    process.terminate()
-                    end_message = err_message[0]
-
-                elif err_message:
-                    end_message = err_message
-
-                # 分析是否有下載完成, 字串
-                if "Total downloaded" in line:
-                    full_download = True
-
-            process.stdout.close()
-            process.wait()
+            end_message, full_download = task(command, success_message)
 
             # 不需要這麼多檢測, 但避免例外
             if full_download and end_message == success_message and Path(task_path).exists():
