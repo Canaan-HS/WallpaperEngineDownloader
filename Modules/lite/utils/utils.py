@@ -20,6 +20,10 @@ def Elapsed_Time(func=None, *, label=""):
     return wrapper
 
 
+class SignalTargetNotFoundError(Exception):
+    pass
+
+
 class Signal:
     def __init__(self):
         self._slots = {}
@@ -125,16 +129,18 @@ class Signal:
             for name, slot_info in self._slots.items():
                 if self._can_call(slot_info, len(args)):
                     slot_info["func"](*args, **kwargs)
-                    if slot_info.get("once"):
+                    if slot_info.get("once", False):
                         to_remove.append(name)
             for name in to_remove:
                 del self._slots[name]
         else:
-            slot_info = self._slots.get(target)
+            slot_info = self._slots.get(target, False)
             if slot_info:
                 slot_info["func"](*args, **kwargs)
-                if slot_info.get("once"):
+                if slot_info.get("once", False):
                     del self._slots[target]
+            else:
+                raise SignalTargetNotFoundError(f"Signal target not found: '{target}'")
 
     def request(self, target: str = None, *args, **kwargs):
         """
@@ -148,10 +154,10 @@ class Signal:
         if target is None:
             self.emit(target, *args, **kwargs)  # 廣播不回傳
         else:
-            slot_info = self._slots.get(target)
+            slot_info = self._slots.get(target, False)
             if slot_info:
                 result = slot_info["func"](*args, **kwargs)
-                if slot_info.get("once"):
+                if slot_info.get("once", False):
                     del self._slots[target]
                 return result
         return None
