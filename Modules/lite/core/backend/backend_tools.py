@@ -1,5 +1,5 @@
 from .. import shared
-from ...utils import link_regex, get_ext_groups, BuildSuffixTree
+from ...utils import LINK_REGEX, add_login_account, get_ext_groups, BuildSuffixTree
 from ...bootstrap import time, psutil, logging, unquote, subprocess, pyperclip
 
 
@@ -16,7 +16,7 @@ class Backend_Tools:
         def loop():
             clipboard = pyperclip.paste().strip()
 
-            if link_regex.match(clipboard) and clipboard not in self.capture_record:
+            if LINK_REGEX.match(clipboard) and clipboard not in self.capture_record:
                 self.capture_record.add(clipboard)
                 shared.msg.emit(
                     "input_operat", "insert", f"{unquote(clipboard)}\n"
@@ -133,3 +133,16 @@ class Backend_Tools:
                 shared.transl("提取失敗"),
                 shared.transl("找不到 PKG 檔案"),
             )
+
+    def login_processing(self, text):
+        shared.msg.emit("console_insert", text, "login")
+
+        token = text.split()
+        for i, t in enumerate(token):
+            if t == "-username" and i + 1 < len(token):
+                account = token[i + 1]
+                # 更新加入的帳號
+                shared.logged_in = True
+                add_login_account(account)
+                shared.msg.emit("username_menu_refresh", account)
+                break
