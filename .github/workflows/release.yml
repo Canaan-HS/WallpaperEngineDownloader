@@ -62,6 +62,7 @@ jobs:
           New-Item -ItemType Directory -Name $release_dir
 
           Copy-Item -Path "dist/${{ steps.build.outputs.EXE_NAME }}" -Destination $release_dir
+          Copy-Item -Path "DepotDownloaderMod" -Destination $release_dir -Recurse
           Copy-Item -Path "Icon" -Destination $release_dir -Recurse
 
           # 壓縮整個發佈資料夾
