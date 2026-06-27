@@ -35,6 +35,7 @@ class Backend_Loader(Backend_Cleaner, Backend_Tools, Backend_Download):
         username, password = next(
             iter(
                 account_dict.get(
+                    # 請求用戶名, 並進行清理, 作為 key
                     self.clean_text(shared.msg.request("username")),
                     account_dict.get(shared.account),
                 ).items()
@@ -68,7 +69,13 @@ class Backend_Loader(Backend_Cleaner, Backend_Tools, Backend_Download):
             ),
             # 列表為可觸發強制停止任務
             **dict.fromkeys(
-                ["STEAM GUARD", "Authentication", "AccountDisabled", "AlreadyLoggedInElsewhere"],
+                [
+                    "STEAM GUARD",
+                    "Authentication",
+                    "AccountDisabled",
+                    "ArgumentException",
+                    "AlreadyLoggedInElsewhere",
+                ],
                 [shared.transl("下載失敗: 請嘗試變更帳號後再下載")],
             ),
         }
