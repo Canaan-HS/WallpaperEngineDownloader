@@ -1,4 +1,5 @@
 from ..bootstrap import messagebox
+from ..utils import LOGIN_KEY, account_list
 from ..core import shared
 
 
@@ -25,11 +26,15 @@ class UI_Operat:
         shared.msg.connect(self.input_operat)
         shared.msg.connect(self.console_insert)
         shared.msg.connect(self.button_state_change)
+        shared.msg.connect(self.username_menu_refresh)
 
         shared.msg.connect(lambda: self.username_var.get(), "username")
         shared.msg.connect(lambda: self.serverid_var.get().strip(), "serverid")
 
     def ui_close(self, account, application, tasks):
+        if shared.logged_in:
+            account += LOGIN_KEY
+
         shared.save_config(
             {
                 "Language": shared.set_lang,
@@ -51,6 +56,10 @@ class UI_Operat:
         self.console.insert("end", message, *args)
         self.console.yview("end")
         self.console.config(state="disabled")
+
+    def username_menu_refresh(self, username):
+        self.username_var.set(username)
+        self.username_menu.configure(values=account_list)
 
     def button_state_change(self, state, cursor):
         self.merge_button.config(state=state, cursor=cursor)
