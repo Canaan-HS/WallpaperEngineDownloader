@@ -72,7 +72,7 @@ class Backend_Download:
 
         self.status_switch("normal")
 
-    def download(self, taskId, appId, pubId, searchText, Username, Password):
+    def download(self, taskId, appId, pubId, searchText, username, password):
         if not self.token:
             return
 
@@ -112,9 +112,9 @@ class Backend_Download:
                 "-pubfile",
                 pubId,
                 "-username",
-                Username,
+                username,
                 "-password",
-                Password,
+                password,
                 "-dir",
                 task_path,
                 "-validate",
