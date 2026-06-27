@@ -90,7 +90,7 @@ a = Analysis(
     pathex=[],
     binaries=[
         ('../RePKG/RePkg.exe', 'RePKG'),
-        ('../DepotDownloaderMod', 'DepotDownloaderMod')
+        # ('../DepotDownloaderMod', 'DepotDownloaderMod')
     ],
     datas=[
         ('../Icon/DepotDownloader.ico', 'Icon'),
