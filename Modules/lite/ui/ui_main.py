@@ -263,6 +263,8 @@ class UI_Main:
             bg=self.consolo_color,
             fg=self.text_color,
         )
+        self.console.tag_configure("QRCode", foreground="#0470A0", font=("Consolas", 5, "bold"))
+        self.console.tag_configure("login", foreground="#DDFA36", font=("Consolas", 12, "bold"))
         self.console.tag_configure("important", foreground="#00DB00", font=("Consolas", 12, "bold"))
         self.console.grid(row=1, column=0, sticky="nsew")
 
