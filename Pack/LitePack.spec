@@ -17,7 +17,7 @@ excludes = [
     'email', 'ftplib', 'telnetlib', 'nntplib',
     'poplib', 'smtpd', 'smtplib', 'mailbox', 'asyncio',
     'ssl', '_ssl', 'http', 'urllib.request', 'gopherlib',
-    'imaplib', 'wsgiref', 'webbrowser', 'cgi', 'cgitb',
+    'imaplib', 'wsgiref', 'cgi', 'cgitb',
     'xmlrpc'
 
     # 4. GUI、多媒體與圖形 (GUI, Multimedia & Graphics)
