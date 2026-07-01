@@ -6,6 +6,7 @@ from ..bootstrap import (
     filedialog,
     scrolledtext,
     messagebox,
+    webbrowser,
     threading,
     pyperclip,
 )
@@ -164,6 +165,17 @@ class UI_Main:
         self.serverid_menu.grid(row=0, column=2, sticky="we")
         self.search_operat()
 
+        self.open_website_label = tk.Label(
+            self.menus_frame,
+            text="🌐",
+            cursor="hand2",
+            bg=self.primary_color,
+            fg=self.secondary_color,
+            font=("Microsoft JhengHei", 17, "bold"),
+        )
+        self.open_website_label.grid(row=0, column=3, sticky="w", padx=(4, 0))
+        self.open_website_label.bind("<Button-1>", self.open_website)
+
         # --- 第一排按鈕 ---
         self.manual_extract_button = tk.Button(
             self.actions_frame_1,
@@ -310,6 +322,10 @@ class UI_Main:
         self.run_button.grid(row=2, column=0, sticky="ew", pady=(12, 5))
 
     """ ====== 互動功能 ====== """
+
+    def open_website(self, _):
+        appid = shared.appid_dict.get(self.clean_text(self.serverid_var.get()))
+        webbrowser.open(f"https://steamcommunity.com/workshop/browse/?appid={appid}")
 
     def set_pkg_extract(self):
         shared.enable_extract_pkg = self.extract_pkg_var.get()
