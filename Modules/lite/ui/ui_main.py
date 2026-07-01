@@ -327,13 +327,13 @@ class UI_Main:
         appid = shared.appid_dict.get(self.clean_text(self.serverid_var.get()))
         webbrowser.open(f"https://steamcommunity.com/workshop/browse/?appid={appid}")
 
-    def set_pkg_extract(self):
-        shared.enable_extract_pkg = self.extract_pkg_var.get()
-
     def select_folder(self):
         return filedialog.askdirectory(
             title=shared.transl("選擇資料夾"), initialdir=shared.save_path
         )
+
+    def set_pkg_extract(self):
+        shared.enable_extract_pkg = self.extract_pkg_var.get()
 
     def manual_extract_pkg(self):
         path = self.select_folder()
