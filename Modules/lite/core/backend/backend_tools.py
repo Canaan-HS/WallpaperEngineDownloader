@@ -135,7 +135,7 @@ class Backend_Tools:
             )
 
     def login_processing(self, text):
-        shared.msg.emit("console_insert", "Login Success!", "login")
+        shared.msg.emit("console_insert", "Login Success!\n", "login")
 
         token = text.split()
         for i, t in enumerate(token):
