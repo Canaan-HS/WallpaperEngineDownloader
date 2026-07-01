@@ -6,6 +6,7 @@ import atexit
 import platform
 import traceback
 import threading
+import webbrowser
 import subprocess
 import tkinter as tk
 
