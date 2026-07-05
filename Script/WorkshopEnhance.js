@@ -21,7 +21,7 @@
     const app = /^https:\/\/steamcommunity\.com\/app\/\d+/;
     const workshop = /^https:\/\/steamcommunity\.com\/workshop\/browse\/\?appid=\d+/;
     const sharedfiles = /^https:\/\/steamcommunity\.com\/sharedfiles\/filedetails\/\?id=\d+/;
-    const myworkshopfiles = /^https:\/\/steamcommunity\.com\/profiles\/\d+\/myworkshopfiles\/?.*$/;
+    const myworkshopfiles = /^https:\/\/steamcommunity\.com\/(?:profiles\/\d+|id\/[^/?#]+)\/myworkshopfiles\/?.*$/;
 
     let jumpMark = false;
 
@@ -30,11 +30,11 @@
             waitElem("div[style*='--gap: var(--spacing-9);'] div.Panel", findUri)
         }
         else if (workshop.test(url) || myworkshopfiles.test(url)) {
-            waitElem("div[style*='--gap: var(--spacing-5);']", container => {
+            waitElem("div[style*='--gap: var(--spacing-5);'], .workshopBrowseItems", container => {
                 waitLoad(container, 300, () => {
                     findUri();
-                    waitElem("button[data-accent-color='accent']", buttons => {
-                        if (buttons.length === 2) {
+                    waitElem("button[data-accent-color='accent'], .pagebtn", buttons => {
+                        if (buttons.length >= 2) {
                             // 當跳轉標記為 true 時，代表先前觸發過，因此移除先前鍵盤監聽
                             if (jumpMark) window.removeEventListener("keydown", triggerTurnPage);
 
@@ -112,6 +112,7 @@
             run();
         }, debounce));
         observer.observe(container, { subtree: true, childList: true, attributes: true, characterData: true });
+        container.setAttribute("trigger", "true"); // 首次觸發一次
     };
 
     function waitElem(selector, found, all = false) {
