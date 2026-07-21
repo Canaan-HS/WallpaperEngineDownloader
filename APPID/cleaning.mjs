@@ -337,4 +337,5 @@ file.read("./ID.json").then(async data => {
 
     file.delete("./temp.json");
     file.write(cleanData, "./ID.json");
+    file.write(Object.assign(verified, cleanData), "./verified.json");
 });
