@@ -26,6 +26,19 @@ const file = {
             err => {
                 err ? console.log(`${saveName}: 輸出失敗`) : console.log(`${saveName}: 輸出成功`);
             });
+    },
+    delete(path) {
+        return new Promise((resolve, reject) => {
+            fs.unlink(path, err => {
+                if (err) {
+                    console.log(`${path}: 刪除失敗`, err);
+                    resolve(false);
+                } else {
+                    console.log(`${path}: 刪除成功`);
+                    resolve(true);
+                }
+            });
+        });
     }
 };
 
@@ -285,12 +298,19 @@ const request = (() => {
 file.read("./ID.json").then(async data => {
     let index = 1;
     const cleanData = {}, timeout = 6e4; // 保險一點停久一點
+    const verified = await file.read("./verified.json");
 
     for (const [name, id] of Object.entries(data)) {
         let success = false;
 
         while (!success) {
             try {
+                if (verified[name]) {
+                    cleanData[name] = id;
+                    console.log(`[${index}] 保存: ${name}`);
+                    break;
+                }
+
                 const response = await request.get(`https://store.steampowered.com/api/appdetails?appids=${id}`, { responseType: "json", reTry: 0 });
 
                 success = true;
@@ -311,9 +331,10 @@ file.read("./ID.json").then(async data => {
             }
         }
 
-        if (index % 100 === 0) file.write(cleanData, "./ID_temp.json");
+        if (index % 100 === 0) file.write(cleanData, "./temp.json"); // 這是為了防止中途中斷丟失
         index++;
     }
 
+    file.delete("./temp.json");
     file.write(cleanData, "./ID.json");
 });
