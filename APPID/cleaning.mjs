@@ -301,13 +301,14 @@ file.read("./ID.json").then(async data => {
     const verified = await file.read("./verified.json");
 
     for (const [name, id] of Object.entries(data)) {
-        let success = false;
+        let success = false, skip = false;
 
         while (!success) {
             try {
                 if (verified[name]) {
+                    skip = true;
                     cleanData[name] = id;
-                    console.log(`[${index}] 保存: ${name}`);
+                    console.log(`跳過: ${name}`);
                     break;
                 }
 
@@ -331,8 +332,11 @@ file.read("./ID.json").then(async data => {
             }
         }
 
-        if (index % 100 === 0) file.write(cleanData, "./temp.json"); // 這是為了防止中途中斷丟失
-        index++;
+        if (index % 100 === 0) {
+            // 這是為了防止中途中斷丟失
+            file.write(Object.assign(await file.read("./temp.json"), cleanData), "./temp.json");
+        }
+        if (!skip) index++;
     }
 
     file.delete("./temp.json");
