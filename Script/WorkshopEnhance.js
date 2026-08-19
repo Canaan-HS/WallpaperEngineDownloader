@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name WorkshopEnhance
-// @version 2026/06/24-Beta
+// @version 2026/08/19-Beta
 // @author Canaan HS
 // @description 一個簡單的工作坊網址替換腳本，為網址添加 searchtext=<標題>
 // @description:zh-TW 一個簡單的工作坊網址替換腳本，為網址添加 searchtext=<標題>
@@ -23,50 +23,57 @@
     const sharedfiles = /^https:\/\/steamcommunity\.com\/sharedfiles\/filedetails\/\?id=\d+/;
     const myworkshopfiles = /^https:\/\/steamcommunity\.com\/(?:profiles\/\d+|id\/[^/?#]+)\/myworkshopfiles\/?.*$/;
 
-    let jumpMark = false;
+    const hotKeyTurnPage = (() => {
+
+        const turnButtons = {
+            leftButton: null,
+            rightButton: null
+        };
+
+        document.addEventListener("keydown", _throttle(event => {
+            const key = event.key;
+
+            if (key === "ArrowLeft") {
+                turnButtons.leftButton.click();
+            } else if (key === "ArrowRight") {
+                turnButtons.rightButton.click();
+            }
+        }, 600), { capture: true });
+
+        return {
+            register(buttons) {
+                if (buttons.length >= 2) {
+                    turnButtons.leftButton = buttons[0];
+                    turnButtons.rightButton = buttons[1];
+                }
+            }
+        }
+    })();
 
     function main(url) {
         if (app.test(url)) {
-            waitElem("div[style*='--gap: var(--spacing-9);'] div.Panel", findUri)
+            waitElem("div[style*='--gap: var(--spacing-9);'] > div:nth-child(2)", findUri)
         }
-        else if (workshop.test(url) || myworkshopfiles.test(url)) {
-            waitElem("div[style*='--gap: var(--spacing-5);'], .workshopBrowseItems", container => {
-                waitLoad(container, 300, () => {
-                    findUri();
-                    waitElem("button[data-accent-color='accent'], .pagebtn", buttons => {
-                        if (buttons.length >= 2) {
-                            // 當跳轉標記為 true 時，代表先前觸發過，因此移除先前鍵盤監聽
-                            if (jumpMark) window.removeEventListener("keydown", triggerTurnPage);
-
-                            jumpMark = false;
-                            window.addEventListener(
-                                "keydown",
-                                event => triggerTurnPage(event, buttons),
-                                { capture: true }
-                            );
-                        }
-                    }, true)
-                })
-            })
+        else if (workshop.test(url)) {
+            // 改成持續監聽 (現在改的 DOM 太不穩定了, 用暴力的方法)
+            listenLoad(3e3, () => {
+                findUri();
+                hotKeyTurnPage.register(document.querySelectorAll("button[data-accent-color='accent']"));
+            });
+        } else if (myworkshopfiles.test(url)) {
+            waitElem(".workshopBrowseItems", () => {
+                findUri();
+                waitElem(".pagebtn", hotKeyTurnPage.register, true);
+            });
         }
         else if (sharedfiles.test(url)) {
             waitElem(".workshopItemTitle", title => reUri(url, title?.textContent ?? ""));
         }
     };
 
-    function _debounce(func, delay) {
-        let timer = null;
-        return (...args) => {
-            clearTimeout(timer);
-            timer = setTimeout(() => {
-                func(...args);
-            }, delay);
-        }
-    };
-
     function findUri() {
         const links = document.querySelectorAll("a[href^='https://steamcommunity.com/sharedfiles/filedetails/?id=']:not([fixed='true'])");
-        if (links.length % 2 === 0) {
+        if (links.length >= 2 && links.length % 2 === 0) {
             for (let i = 0; i < links.length; i += 2) {
                 const [rawLink, titleLink] = [links[i], links[i + 1]];
                 const titleText = titleLink.textContent.trim();
@@ -93,26 +100,31 @@
             : history.replaceState(null, '', newUri);
     };
 
-    const turnPage = (button) => {
-        jumpMark = true;
-        button.click();
-    };
-    function triggerTurnPage(event, buttons) {
-        const key = event.key;
-        if (key === "ArrowLeft" && !jumpMark) {
-            turnPage(buttons[0]);
-        } else if (key === "ArrowRight" && !jumpMark) {
-            turnPage(buttons[1]);
+    function _throttle(func, delay) {
+        let lastTime = 0;
+        return (...args) => {
+            const now = Date.now();
+            if ((now - lastTime) >= delay) {
+                lastTime = now;
+                func(...args);
+            }
         }
     };
 
-    function waitLoad(container, debounce, run) {
-        const observer = new MutationObserver(_debounce(() => {
+    let observer;
+    function listenLoad(throttle, run) {
+        if (observer) {
             observer.disconnect();
-            run();
-        }, debounce));
-        observer.observe(container, { subtree: true, childList: true, attributes: true, characterData: true });
-        container.setAttribute("trigger", "true"); // 首次觸發一次
+            observer = null;
+        };
+
+        observer = new MutationObserver(_throttle(run, throttle));
+        observer.observe(document.body, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            characterData: true
+        });
     };
 
     function waitElem(selector, found, all = false) {
