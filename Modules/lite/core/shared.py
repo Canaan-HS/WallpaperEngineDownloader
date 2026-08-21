@@ -24,6 +24,7 @@ appid_dict = None
 enable_extract_pkg = None
 
 logged_in = False
+current_task_name = ""
 
 msg = Signal()
 
