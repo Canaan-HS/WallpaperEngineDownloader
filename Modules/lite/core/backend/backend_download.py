@@ -1,5 +1,5 @@
 from .. import shared
-from ...utils import ILLEGAL_REGEX, PARSE_REGEX, QR_KEY
+from ...utils import ILLEGAL_REGEX, PARSE_REGEX, QR_KEY, get_file_size
 from ...bootstrap import Path, logging, unquote, threading, subprocess, traceback, pyperclip
 
 
@@ -86,9 +86,7 @@ class Backend_Download:
 
         try:
 
-            def task(
-                command: list, end_message: str = "", full_download: bool = False
-            ) -> tuple[str, bool]:
+            def task(command: list, end_message: str = "") -> tuple[str, int]:
                 process = subprocess.Popen(
                     command,
                     text=True,
@@ -97,7 +95,9 @@ class Backend_Download:
                     creationflags=subprocess.CREATE_NO_WINDOW,
                 )
 
+                full_download_size = 0
                 threading.Thread(target=self.listen_network, args=(process,), daemon=True).start()
+
                 for line in process.stdout:
                     if line.strip() == "":
                         continue
@@ -121,14 +121,14 @@ class Backend_Download:
                     elif err_message:
                         end_message = err_message
 
-                    # 分析是否有下載完成, 字串
+                    # 解析下載解壓後總大小
                     if "Total downloaded" in line:
-                        full_download = True
+                        full_download_size = int(line.split("(")[1].split(" bytes")[0])
 
                 process.stdout.close()
                 process.wait()
 
-                return end_message, full_download
+                return end_message, full_download_size
 
             # 宣告旗標
             success_message = shared.transl("下載完成")
@@ -172,10 +172,20 @@ class Backend_Download:
             else:
                 command += ["-username", username, "-password", password]
 
-            end_message, full_download = task(command, success_message)
+            end_message, full_download_size = task(command, success_message)
 
             # 不需要這麼多檢測, 但避免例外
-            if full_download and end_message == success_message and Path(task_path).exists():
+            if (
+                # 結果字串與成功字串相同, 代表中途無檢測到錯誤
+                end_message == success_message
+                # 下載總大小大於 0, 代表下載成功
+                and full_download_size > 0
+                # 檔案存在
+                and task_path.exists()
+                # 本地檔案大小 與 下載大小相差不超過 5%
+                and abs(get_file_size(task_path) - full_download_size) / full_download_size <= 0.05
+            ):
+
                 self.task_cache.pop(taskId, None)  # 刪除任務緩存
                 self.complete_record.add(taskId)  # 添加下載完成紀錄
 
