@@ -89,7 +89,7 @@ a = Analysis(
     ['../Lite_Launcher.pyw'],
     pathex=[],
     binaries=[
-        ('../RePKG/RePkg.exe', 'RePKG'),
+        ('../RePKG/RePkg.Net10.exe', 'RePKG'),
         # ('../DepotDownloaderMod', 'DepotDownloaderMod')
     ],
     datas=[
