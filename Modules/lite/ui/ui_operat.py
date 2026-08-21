@@ -62,7 +62,7 @@ class UI_Operat:
         self.username_menu.configure(values=account_list)
 
     def button_state_change(self, state, cursor):
-        self.merge_button.config(state=state, cursor=cursor)
+        # self.merge_button.config(state=state, cursor=cursor)
         self.run_button.config(state=state, cursor=cursor)
 
     def input_operat(self, operat: str, *args):
