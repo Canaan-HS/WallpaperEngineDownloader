@@ -1,6 +1,6 @@
 from .. import shared
 from ...utils import ILLEGAL_REGEX, PARSE_REGEX, QR_KEY, get_file_size
-from ...bootstrap import Path, logging, unquote, threading, subprocess, traceback, pyperclip
+from ...bootstrap import logging, unquote, threading, subprocess, traceback, pyperclip
 
 
 class Backend_Download:
