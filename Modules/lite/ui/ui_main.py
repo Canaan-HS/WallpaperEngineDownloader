@@ -428,7 +428,9 @@ class UI_Main:
             self.init_error_rule()
 
     def file_merge(self):
-        data_table = get_ext_groups(shared.save_path, shared.integrate_folder)
+        data_table = get_ext_groups(
+            shared.save_path, {shared.integrate_folder, shared.current_task_name}
+        )
 
         if data_table:
             self.language_menu.config(state="disabled")  # 鎖定語言變更
