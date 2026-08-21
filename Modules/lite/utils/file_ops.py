@@ -47,3 +47,7 @@ def get_ext_groups(path: Path, exclude_folder: str = "") -> dict:
     return dict(  # 數量多到少排序, 相同數量按字母排序, 組合 key 為副檔名, value 為檔案列表 回傳字典
         sorted(file_data.items(), key=lambda item: (-len(item[1]), item[0]))
     )
+
+
+def get_file_size(path: Path) -> int:
+    return sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
