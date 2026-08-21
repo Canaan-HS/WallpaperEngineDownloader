@@ -1,5 +1,4 @@
 from .. import shared
-from ...utils import account_dict
 
 from .backend_tools import Backend_Tools
 from .backend_cleaner import Backend_Cleaner
@@ -31,36 +30,6 @@ class Backend_Loader(Backend_Cleaner, Backend_Tools, Backend_Download):
         Backend_Tools.__init__(self)
         Backend_Download.__init__(self)
 
-    def get_config(self, original=False):
-        username, password = next(
-            iter(
-                account_dict.get(
-                    # 請求用戶名, 並進行清理, 作為 key
-                    self.clean_text(shared.msg.request("username")),
-                    account_dict.get(shared.account),
-                ).items()
-            )
-        )
-
-        if original:
-            for app in [self.clean_text(shared.msg.request("serverid")), self.app_list[0]]:
-                if app in shared.appid_dict:
-                    return username, app
-        else:
-            appid = shared.appid_dict.get(
-                self.clean_text(shared.msg.request("serverid")),
-                next(iter(shared.appid_dict.values())),
-            )
-            return appid, username, password
-
-    def get_unique_path(self, path):
-        index = 1
-        [parent, stem, suffix] = path.parent, path.stem, path.suffix
-        while path.exists():
-            path = parent / f"{stem} ({index}){suffix}"
-            index += 1
-        return path
-
     def init_error_rule(self):
         self.error_rule = {
             ".NET": shared.transl("下載失敗: 請先安裝 .NET 9 執行庫"),
@@ -79,8 +48,3 @@ class Backend_Loader(Backend_Cleaner, Backend_Tools, Backend_Download):
                 [shared.transl("下載失敗: 請嘗試變更帳號後再下載")],
             ),
         }
-
-    def console_analysis(self, text):
-        for Key, message in self.error_rule.items():
-            if Key in text:
-                return message
