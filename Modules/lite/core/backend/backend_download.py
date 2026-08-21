@@ -11,6 +11,7 @@ class Backend_Download:
             self.token = True  # 重設令牌
             pyperclip.copy("")  # 重設剪貼簿 避免 record 清除後再次擷取
             shared.msg.emit("title_change")  # 重設標題
+            shared.current_task_name = ""  # 重設任務名
             # self.capture_record.clear()
 
             if self.task_cache:
@@ -139,6 +140,7 @@ class Backend_Download:
                 "-", unquote(searchText) if searchText else pubId
             ).strip()
 
+            shared.current_task_name = process_name
             shared.msg.emit(
                 "console_insert", f"\n> {shared.transl('開始下載')} [{process_name}]\n", "important"
             )
