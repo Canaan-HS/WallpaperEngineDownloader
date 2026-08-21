@@ -1,15 +1,48 @@
 from .. import shared
-from ...utils import LINK_REGEX, add_login_account, get_ext_groups, BuildSuffixTree
-from ...bootstrap import time, psutil, logging, unquote, subprocess, pyperclip
+from ...utils import LINK_REGEX, BuildSuffixTree, account_dict, add_login_account, get_ext_groups
+from ...bootstrap import time, psutil, logging, unquote, subprocess, pyperclip, Path
 
 
 class Backend_Tools:
-    def build_searcher(self):
-        self.searcher = BuildSuffixTree(self.app_list)
+    # 取得配置的用戶名和密碼
+    def get_config(self, original=False) -> tuple:
+        username, password = next(
+            iter(
+                account_dict.get(
+                    # 請求用戶名, 並進行清理, 作為 key
+                    self.clean_text(shared.msg.request("username")),
+                    account_dict.get(shared.account),
+                ).items()
+            )
+        )
 
-    def search_list(self, text):
-        return list(self.searcher.search(text)) if text else self.app_list
+        if original:
+            for app in [self.clean_text(shared.msg.request("serverid")), self.app_list[0]]:
+                if app in shared.appid_dict:
+                    return username, app
+        else:
+            appid = shared.appid_dict.get(
+                self.clean_text(shared.msg.request("serverid")),
+                next(iter(shared.appid_dict.values())),
+            )
+            return appid, username, password
 
+    # 分析輸入到 console 的內容
+    def console_analysis(self, text) -> str | list:
+        for Key, message in self.error_rule.items():
+            if Key in text:
+                return message
+
+    # 取得不重複的路徑
+    def get_unique_path(self, path) -> Path:
+        index = 1
+        [parent, stem, suffix] = path.parent, path.stem, path.suffix
+        while path.exists():
+            path = parent / f"{stem} ({index}){suffix}"
+            index += 1
+        return path
+
+    # 監聽剪貼簿, 自動輸入
     def listen_clipboard(self):
         pyperclip.copy("")  # 避免開啟直接貼上
 
@@ -26,6 +59,7 @@ class Backend_Tools:
 
         loop()
 
+    # 監聽下載時網路流量
     def listen_network(self, process):
         net_io = psutil.net_io_counters()
         bytes_initial = net_io.bytes_sent + net_io.bytes_recv  # 計算初始的總流量
@@ -47,6 +81,15 @@ class Backend_Tools:
             bytes_initial = bytes_current
             time.sleep(1)
 
+    # 先調用編譯搜尋樹
+    def build_searcher(self):
+        self.searcher = BuildSuffixTree(self.app_list)
+
+    # 後續調用搜尋結果
+    def search_list(self, text) -> list:
+        return list(self.searcher.search(text)) if text else self.app_list
+
+    # 用於 file_merge 的移動操作
     def move_files(self, data_table, selected):
         merge_path = shared.save_path / shared.integrate_folder
         merge_path.mkdir(parents=True, exist_ok=True)
@@ -77,9 +120,10 @@ class Backend_Tools:
 
         shared.msg.emit("merge_success_show", merge_path)
 
-    def _extract_path_normalize(self, value):
+    def _extract_path_normalize(self, value) -> list:
         return value if isinstance(value, list) else ([value] if value else [])
 
+    # 提取 pkg
     def extract_pkg(self, path, notify=False, ext_groups=None):
         ext_groups = get_ext_groups(path) if ext_groups is None else ext_groups
 
@@ -134,6 +178,7 @@ class Backend_Tools:
                 shared.transl("找不到 PKG 檔案"),
             )
 
+    # 自訂登入處理
     def login_processing(self, text):
         shared.msg.emit("console_insert", "Login Success!\n", "login")
 
