@@ -16,11 +16,11 @@ https://github.com/user-attachments/assets/dc70a30b-47c5-48e8-a4e5-8fcc9f665645
 
 ## How to Use
 
-* First, install the [.NET 9.0 Runtime](https://dotnet.microsoft.com/download/dotnet/9.0/runtime)
+* First, install the [.NET 10.0 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0/runtime)
 
 * Windows installation command:
 ```
-winget install Microsoft.DotNet.SDK.9
+winget install Microsoft.DotNet.SDK.10
 ```
 
 1. Run `WallpaperDownloader.exe`

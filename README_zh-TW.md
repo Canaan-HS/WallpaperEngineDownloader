@@ -12,11 +12,11 @@
 
 ## 使用方法  
 
-* 請先安裝 [.NET 9.0 執行庫](https://dotnet.microsoft.com/download/dotnet/9.0/runtime)
+* 請先安裝 [.NET 10.0 執行庫](https://dotnet.microsoft.com/download/dotnet/10.0/runtime)
 
 * Widows 安裝指令:
 ```
-winget install Microsoft.DotNet.SDK.9
+winget install Microsoft.DotNet.SDK.10
 ```
 
 1. 執行 `WallpaperDownloader.exe`
