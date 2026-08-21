@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name WorkshopEnhance
-// @version 2026/08/19-Beta
+// @version 2026/08/21-Beta
 // @author Canaan HS
 // @description 一個簡單的工作坊網址替換腳本，為網址添加 searchtext=<標題>
 // @description:zh-TW 一個簡單的工作坊網址替換腳本，為網址添加 searchtext=<標題>
@@ -14,7 +14,7 @@
 // @noframes
 // @grant window.onurlchange
 
-// @run-at document-start
+// @run-at document-body
 // ==/UserScript==
 
 (() => {
