@@ -1,6 +1,6 @@
 # Wallpaper Engine Workshop Downloader Rework
 
-A project based on [WallpaperEngineWorkshopDownloader](https://github.com/oureveryday/WallpaperEngineWorkshopDownloader) with a rewritten UI and added multiple new features.
+A project based on WallpaperEngineWorkshopDownloader with a rewritten UI and added multiple new features.
 
 [中文版本](README_zh-TW.md)
 
