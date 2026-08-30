@@ -164,6 +164,7 @@ class Backend_Tools:
                             shared.transl("提取完成"),
                             f"{shared.transl('成功提取')} {len(paths)} {shared.transl('個 PKG 檔案')}",
                         )
+                    # ! 如果有需要, 要檢測 repkg 的提取資訊, 確保沒有出錯, 才刪除原始 pkg 文件, 不然會誤刪
                     pkg.unlink()
 
             ext_groups = get_ext_groups(path)
