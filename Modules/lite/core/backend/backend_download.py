@@ -182,8 +182,6 @@ class Backend_Download:
                 end_message == success_message
                 # 下載總大小大於 0, 代表下載成功
                 and full_download_size > 0
-                # 檔案存在
-                and task_path.exists()
                 # 本地檔案大小 與 下載大小相差不超過 5%
                 and abs(get_file_size(task_path) - full_download_size) / full_download_size <= 0.05
             ):
