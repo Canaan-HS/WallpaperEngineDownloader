@@ -119,12 +119,16 @@
         };
 
         observer = new MutationObserver(_throttle(run, throttle));
-        observer.observe(document.body, {
-            subtree: true,
-            childList: true,
-            attributes: true,
-            characterData: true
-        });
+
+        // ? 這不知道什麼鬼網站, 我 run-at document-body 還能找不到 document.body, 只能這樣了
+        waitElem("body", body => {
+            observer.observe(body, {
+                subtree: true,
+                childList: true,
+                attributes: true,
+                characterData: true
+            })
+        })
     };
 
     function waitElem(selector, found, all = false) {
