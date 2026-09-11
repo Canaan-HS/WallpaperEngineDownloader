@@ -1,13 +1,11 @@
-tag: v1.0.6
-version: v1.0.6
+tag: v1.0.7
+version: v1.0.7
 description: |
   ### Added
-  - Automatically search for the path `projects/myprojects` and use it as the default save path.
-  - Automatically clean up the `.DepotDownloader` files created after DepotDownloader finishes downloading.
-
-  ### Removed
-  - Version migration adaptation for changes to default filenames.
+  - Add QR Code login. Login sessions are stored locally via DepotDownloaderMod and persist across restarts (sessions may expire over time).
+  - Add a clickable icon next to the application dropdown to open the selected app's Workshop page.
+  - PKG extraction now also handles `.tex` files.
 
   ### Changed
-  - Significantly reduce the application IDs, keeping only the popular ones.
-lastEdit: 2026-01-25 09:30
+  - File integration is now available during downloads.
+lastEdit: 2026-09-11 22:30
