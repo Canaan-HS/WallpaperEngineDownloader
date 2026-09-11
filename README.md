@@ -1,79 +1,110 @@
-# Wallpaper Engine Workshop Downloader Rework
+# Wallpaper Engine Workshop Downloader — Rewritten Version
 
-A project based on WallpaperEngineWorkshopDownloader with a rewritten UI and added multiple new features.
-
-[中文版本](README_zh-TW.md)
+A rewritten version of WallpaperEngineWorkshopDownloader with a redesigned UI and multiple new features.
 
 ## Preview
 
-![English Version](https://github.com/user-attachments/assets/9a0c489d-38fa-4f3e-9462-d557f2d029e2)
-
-https://github.com/user-attachments/assets/dc70a30b-47c5-48e8-a4e5-8fcc9f665645
+![English Version](https://github.com/user-attachments/assets/2271811d-a20c-46dc-b1a6-03b3ca6da40e)
 
 ## Dependencies
 
 - [DepotDownloaderMod](https://github.com/oureveryday/DepotDownloaderMod)
+- [.NET 10.0 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0/runtime)
 
-## How to Use
+## Usage
 
-* First, install the [.NET 10.0 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0/runtime)
+1. Run `WallpaperDownloader.exe`.
 
-* Windows installation command:
-```
-winget install Microsoft.DotNet.SDK.10
-```
+2. Browse the Workshop at https://steamcommunity.com/app/431960/workshop/ and find the Workshop item you want to download.
 
-1. Run `WallpaperDownloader.exe`
+3. Copy the URL of the Workshop item. For example, `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`
 
-2. Browse your favorite Workshop projects at <https://steamcommunity.com/app/431960/workshop/>
-
-3. Copy the URL of your selected Workshop project. For example, `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`
-
-4. Click "Download"
+4. Click **Download**.
 
 ## Features
 
-## **No Steam Account Required**
-- Supports direct downloading of Steam Workshop projects without the need to log into a Steam account.
+## **Steam Account**
 
-## **Language Adaptation**
-- Supports a multilingual interface, limited to Simplified Chinese, Traditional Chinese, and English, automatically adapting to the user's environment.
+- Supports using the default Steam account directly, with no additional login required for downloads.
+
+- **QR Code Login**
+
+  Supports logging in via QR code. The login session is stored locally and can be reused for future downloads.
+
+  The session may expire after a certain period. If this happens, switch back to `QRCodeLogin` and scan the QR code again.
+
+## **Automatic Language Detection**
+
+- Supports multilingual interfaces in Simplified Chinese, Traditional Chinese, and English. The interface automatically adapts to the user's system language.
 
 ## **Automatic Link Capture**
+
 - **Smart Paste**
-  After copying a Workshop project URL (e.g., `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`), the link will automatically populate the input field.
+
+  After copying a Workshop item URL (for example, `https://steamcommunity.com/sharedfiles/filedetails/?id=1234567890`), the URL is automatically inserted into the input field.
+
 - **Dynamic Naming**
-  - If the URL contains `searchtext=name`, the output file will be named accordingly.
-  - If no name is specified, the file will default to the project ID as its name.
 
-## **Dynamic Downloading**
+  If the URL contains `searchtext=Name`, the downloaded file will be named accordingly.
+
+  If no name is specified, the Workshop item ID is used as the default filename.
+
+## **Dynamic Downloads**
+
 - **Real-Time Feedback**
-  Once downloading begins, processed links will be automatically removed from the input field.
+
+  Once a download starts, the link currently being processed is automatically removed from the input field.
+
 - **Queue Management**
-  Users can continuously add links, which will be sequentially added to the download queue until the input field is empty. If a link is manually deleted from the input field before being processed (i.e., before removal), it will not be added to the download queue.
 
-## **Auto Save**
-- **Save Settings**  
-  When the program is closed, the window size and position will be automatically saved, and these settings will be applied the next time the program is opened.
-- **Restore Records**  
-  URLs that are present in the task list, as well as those that are being downloaded but not yet completed, will be saved when the program is closed. Upon reopening, these URLs will automatically be restored to the task list.
+  Users can continue adding links while downloads are in progress. Each link is added to the download queue in order until the input field is empty.
 
-## **Automatic PKG File Extraction**
-- **Background Processing**  
-  Automatically detects and extracts `.pkg` files from downloaded Wallpaper Engine items. Extraction runs in a separate thread, **without blocking the UI or download queue**.
-- **Silent Execution**  
-  The extraction process runs silently without user prompts. If the program is closed immediately after the last item finishes downloading, any ongoing extraction may be interrupted.
+  If a link is manually removed from the input field before it is processed, it will not be added to the download queue.
+
+## **Automatic Saving**
+
+- **Save Settings**
+
+  When the application closes, the window size and position are automatically saved and restored the next time the application starts.
+
+- **Resume History**
+
+  URLs currently in the task list, as well as URLs that were still downloading when the application was closed, are saved automatically.
+
+  When the application starts again, these URLs are automatically restored to the task list.
+
+## **Automatic PKG Extraction**
+
+- **Background Processing**
+
+  Automatically detects and extracts `.pkg` files from Wallpaper Engine Workshop items.
+
+  Extraction runs independently in the background, **without interrupting the UI or subsequent downloads**.
+
+- **Silent Processing**
+
+  No notifications are displayed during extraction. If the application is closed immediately after the final item finishes downloading, any ongoing extraction may be interrupted.
 
 ## **File Integration**
+
 - **File Selection**
-  Lists all files in the output path (excluding the `!【Integrate】!` folder), displaying file types and supporting single selection or multi-selection via `Ctrl`/`Shift` keys.
-- **Integration Operation**
-  After merging, selected file types will be moved to the `!【Integrate】!` folder, with source location information appended to the file names.
+
+  Lists all files under the output directory, excluding the `!【Integrate】!` folder, and displays their file types.
+
+  Supports both single selection and multi-selection using `Ctrl`/`Shift`.
+
+- **Integration**
+
+  After selecting files of the desired type and merging them, the resulting files are moved to the `!【Integrate】!` folder with source information added to their filenames.
 
 ## **Custom Application**
-- **Custom List**
-  Users can customize the dropdown list content by editing the JSON data in the configuration file.
-- **Workshop Switching**
-  Users can select the target application via a dropdown list, with `Wallpaper Engine` as the default option.
-- **Simple Search**
-  After entering search text, reopen the dropdown list to select. If the input is not in the list (e.g., due to typos or invalid strings), the system will fall back to the default option, `Wallpaper Engine`.
+
+- **Workshop Selection**
+
+  Users can select the target application from the dropdown list. The default option is `Wallpaper Engine`.
+
+- **Quick Search**
+
+  Enter a search term and reopen the dropdown list to select an application.
+
+  If the entered text does not match any item in the list, such as due to a typo or an invalid string, the application falls back to the default option, `Wallpaper Engine`.
