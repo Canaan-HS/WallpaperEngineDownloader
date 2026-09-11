@@ -4,7 +4,9 @@ A rewritten version of WallpaperEngineWorkshopDownloader with a redesigned UI an
 
 ## Preview
 
-![English Version](https://github.com/user-attachments/assets/2271811d-a20c-46dc-b1a6-03b3ca6da40e)
+![English Version](https://github.com/user-attachments/assets/9a0c489d-38fa-4f3e-9462-d557f2d029e2)
+
+https://github.com/user-attachments/assets/dc70a30b-47c5-48e8-a4e5-8fcc9f665645
 
 ## Dependencies
 
