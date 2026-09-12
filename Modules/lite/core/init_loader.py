@@ -69,7 +69,6 @@ class Init_Loader:
 
             account = shared.cfg_data.get(shared.simple_cfg_key.Acc)
             if LOGIN_KEY in account:
-                shared.logged_in = True  # 設置旗標
                 account = account.split(LOGIN_KEY)[0]  # 還原帳號
                 # 將正確的帳號數據加入修改
                 shared.cfg_data[shared.simple_cfg_key.Acc] = account
