@@ -100,13 +100,41 @@ class Backend_Download:
                 )
 
                 full_download_size = 0
+                output_stream = threading.Event()
                 threading.Thread(target=self.listen_network, args=(process,), daemon=True).start()
+
+                def handle_error(err_message):
+                    nonlocal end_message
+
+                    # ? 消息是列表狀態, 代表需要強制中止
+                    if isinstance(err_message, list):
+                        self.token = False
+                        process.terminate()
+                        end_message = err_message[0]
+
+                    elif err_message:
+                        end_message = err_message
+
+                # ! QRCode Patch: 監聽會話狀態
+                if shared.logged_in:
+
+                    def watchdog():
+                        # 等待 10 秒
+                        if not output_stream.wait(10):
+                            line = "Login session expired"
+                            shared.msg.emit("console_insert", line)
+                            handle_error(self.console_analysis(line))
+
+                    threading.Thread(target=watchdog, daemon=True).start()
 
                 for line in process.stdout:
                     if line.strip() == "":
                         continue
 
-                    # 臨時補丁
+                    # 首次輸出, 設置旗標
+                    output_stream.set()
+
+                    # ! QRCode Patch: 處理 QRCode 登入
                     if username == QR_KEY:
                         if "█" in line:
                             shared.msg.emit("console_insert", line, "QRCode")
@@ -115,15 +143,8 @@ class Backend_Download:
                     else:
                         shared.msg.emit("console_insert", line)
 
-                    # 分析可能的錯誤訊息, 消息是列表狀態, 代表需要強制中止
-                    err_message = self.console_analysis(line)
-                    if isinstance(err_message, list):
-                        self.token = False
-                        process.terminate()
-                        end_message = err_message[0]
-
-                    elif err_message:
-                        end_message = err_message
+                    # 分析可能的錯誤訊息
+                    handle_error(self.console_analysis(line))
 
                     # 解析下載解壓後總大小
                     if "Total downloaded" in line:
