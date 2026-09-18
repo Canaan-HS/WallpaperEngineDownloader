@@ -1,6 +1,6 @@
 from .. import shared
 from ...utils import ILLEGAL_REGEX, PARSE_REGEX, QR_KEY, get_file_size
-from ...bootstrap import logging, unquote, threading, subprocess, traceback, pyperclip
+from ...bootstrap import shutil, logging, unquote, threading, subprocess, traceback, pyperclip
 
 
 class Backend_Download:
@@ -15,11 +15,14 @@ class Backend_Download:
             # self.capture_record.clear()
 
             if self.task_cache:
+                # 對於失敗任務, 最後檢查並清理
                 self.process_cleanup()
 
+                # 將失敗任務重新添加到輸入框
                 shared.msg.emit("input_operat", "delete", "1.0", "end")
                 for task in self.task_cache.values():
                     shared.msg.emit("input_operat", "insert", f"{task['url']}\n")
+
                 self.task_cache.clear()  # 重設任務緩存
 
             shared.msg.emit("button_state_change", "normal", "hand2")
@@ -198,9 +201,14 @@ class Backend_Download:
                 # 刪除 depot 生成的 manifest
                 threading.Thread(target=self.del_depot_data, args=(task_path,), daemon=True).start()
             else:
-                # 進程可能還需要繼續, 不刪除錯誤的文件
                 # 用於顯示不在 console_analysis 中的錯誤
                 end_message = end_message if end_message != success_message else failure_message
+
+                try:
+                    # 嘗試直接刪除失敗文件, 避免占用多餘空間
+                    shutil.rmtree(task_path)
+                except:
+                    pass
 
             shared.msg.emit("console_insert", f"> [{process_name}] {end_message}\n", "important")
         except:
