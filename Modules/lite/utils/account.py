@@ -1,3 +1,4 @@
+from ..core import shared
 from ..bootstrap import base64
 
 # ! 為了簡化語法, 將格式改為 {key: {key: value}}
@@ -17,6 +18,12 @@ account_list = list(account_dict.keys())
 
 
 def add_login_account(account):
+    # 判斷不在預設列表內, 避免出現 預設帳號 + LOGIN_KEY 導致判斷錯誤
+    if account_dict.get(account) is not None:
+        return
+
     account_dict.update({account: {account: LOGIN_KEY}})
     account_list.clear()
     account_list.extend(account_dict.keys())
+
+    shared.logged_in = True  # 設置旗標
