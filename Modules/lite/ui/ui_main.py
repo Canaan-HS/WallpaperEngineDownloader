@@ -9,6 +9,8 @@ from ..bootstrap import (
     webbrowser,
     threading,
     pyperclip,
+    Observer,
+    FileSystemEventHandler,
 )
 
 from ..core import shared
@@ -32,7 +34,7 @@ class UI_Main:
         try:
             self.iconbitmap(shared.icon_ico)
         except Exception as e:
-            logging.warning(e)
+            logging.info(e)
 
         # 開啟時 窗口置頂 (非鎖定)
         self.attributes("-topmost", True)
@@ -428,151 +430,201 @@ class UI_Main:
             self.init_error_rule()
 
     def file_merge(self):
-        data_table = get_ext_groups(
-            shared.save_path, {shared.integrate_folder, shared.current_task_name}
-        )
-
-        if data_table:
-            self.language_menu.config(state="disabled")  # 鎖定語言變更
-
-            merge_window = tk.Toplevel(self)
-            merge_window.title(shared.transl("檔案整合"))
-            merge_window.configure(bg=self.primary_color)
-
-            def merge_window_close():
-                self.language_menu.config(state="readonly")
-                merge_window.destroy()
-
-            merge_window.protocol("WM_DELETE_WINDOW", merge_window_close)  # 關閉觸發
-
-            try:
-                merge_window.iconbitmap(shared.icon_ico)
-            except Exception as e:
-                logging.warning(e)
-                pass
-
-            self.update_idletasks()
-
-            width = 500
-            height = 550
-
-            main_window_x = self.winfo_x()
-            main_window_y = self.winfo_y()
-            main_window_width = self.winfo_width()
-            main_window_height = self.winfo_height()
-
-            position_x = main_window_x + (main_window_width // 2) - (width // 2)
-            position_y = main_window_y + (main_window_height // 2) - (height // 2)
-
-            merge_window.geometry(f"{width}x{height}+{position_x}+{position_y}")
-            merge_window.minsize(400, 450)
-
-            tip_frame = tk.Frame(merge_window, bg=self.primary_color)
-            tip_frame.pack(fill="x", padx=10, pady=10)
-            tip = tk.Label(
-                tip_frame,
-                text=shared.transl("選擇整合的類型"),
-                font=("Microsoft JhengHei", 18, "bold"),
-                bg=self.primary_color,
-                fg=self.text_color,
-            )
-            tip.pack()
-
-            display_frame = tk.Frame(merge_window, bg=self.primary_color)
-            display_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-            output_frame = tk.Frame(merge_window, bg=self.primary_color)
-            output_frame.pack(fill="x")
-
-            scroll_y = tk.Scrollbar(display_frame, orient="vertical")
-            scroll_y.pack(side="right", fill="y")
-
-            style = ttk.Style()
-            style.configure(
-                "Custom.Treeview",
-                font=("Microsoft JhengHei", 14, "bold"),
-                foreground=self.text_color,
-                background=self.consolo_color,
-                rowheight=30,
-            )
-            style.configure(
-                "Custom.Treeview.Heading",
-                font=("Microsoft JhengHei", 16, "bold"),
-                foreground="#0066CC",
-            )
-
-            treeview = ttk.Treeview(
-                display_frame,
-                columns=("Type", "Count"),
-                show="headings",
-                yscrollcommand=scroll_y.set,
-                cursor="hand2",
-                style="Custom.Treeview",
-            )
-            treeview.heading("Type", text=shared.transl("檔案類型"))
-            treeview.heading("Count", text=shared.transl("檔案數量"))
-            treeview.column("Type", anchor="center")
-            treeview.column("Count", anchor="center")
-
-            for key, value in data_table.items():
-                treeview.insert("", "end", values=(key, len(value)))
-
-            scroll_y.config(command=treeview.yview)
-            treeview.pack(fill="both", expand=True)
-
-            def move_trigger():
-                if len(treeview.selection()) == 0:
-                    messagebox.showwarning(
-                        title=shared.transl("操作提示"),
-                        message=shared.transl("請選擇要整合的類型"),
-                        parent=merge_window,
-                    )
-                    return
-
-                selected = []
-                selected_items = treeview.selection()
-
-                for item in selected_items:
-                    values = treeview.item(item, "values")  # 取得對應的數據
-                    selected.append(values[0])
-
-                confirm = messagebox.askquestion(
-                    shared.transl("操作確認"),
-                    f"{shared.transl('整合以下類型的檔案')}?\n\n{selected}",
-                    parent=merge_window,
-                )
-
-                if confirm == "yes":
-
-                    def merge_success_show(merge_path):
-                        messagebox.showinfo(
-                            title=shared.transl("操作完成"),
-                            message=f"{shared.transl('檔案整合完成')}\n{merge_path}",
-                            parent=merge_window,
-                        )
-
-                        for item in selected_items:  # 移除選中的項目
-                            treeview.delete(item)
-
-                    shared.msg.connect(merge_success_show, once=True)
-                    self.move_files(data_table, selected)
-
-            output_button = tk.Button(
-                output_frame,
-                text=shared.transl("整合輸出"),
-                font=("Microsoft JhengHei", 12, "bold"),
-                borderwidth=2,
-                cursor="hand2",
-                relief="raised",
-                bg=self.secondary_color,
-                fg=self.text_color,
-                command=move_trigger,
-            )
-            output_button.pack(pady=(5, 15))
-
-        else:
+        if not shared.save_path.exists():
             messagebox.showwarning(
                 title=shared.transl("獲取失敗"),
                 message=shared.transl("沒有可整合的檔案"),
                 parent=self,
             )
+            return
+
+        self.language_menu.config(state="disabled")  # 鎖定語言變更
+
+        merge_window = tk.Toplevel(self)
+        merge_window.title(shared.transl("檔案整合"))
+        merge_window.configure(bg=self.primary_color)
+
+        try:
+            merge_window.iconbitmap(shared.icon_ico)
+        except Exception as e:
+            logging.info(e)
+
+        self.update_idletasks()
+
+        width = 500
+        height = 550
+
+        main_window_x = self.winfo_x()
+        main_window_y = self.winfo_y()
+        main_window_width = self.winfo_width()
+        main_window_height = self.winfo_height()
+
+        position_x = main_window_x + (main_window_width // 2) - (width // 2)
+        position_y = main_window_y + (main_window_height // 2) - (height // 2)
+
+        merge_window.geometry(f"{width}x{height}+{position_x}+{position_y}")
+        merge_window.minsize(400, 450)
+
+        tip_frame = tk.Frame(merge_window, bg=self.primary_color)
+        tip_frame.pack(fill="x", padx=10, pady=10)
+
+        tip = tk.Label(
+            tip_frame,
+            text=shared.transl("選擇整合的類型"),
+            font=("Microsoft JhengHei", 18, "bold"),
+            bg=self.primary_color,
+            fg=self.text_color,
+        )
+        tip.pack()
+
+        display_frame = tk.Frame(merge_window, bg=self.primary_color)
+        display_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        output_frame = tk.Frame(merge_window, bg=self.primary_color)
+        output_frame.pack(fill="x")
+
+        scroll_y = tk.Scrollbar(display_frame, orient="vertical")
+        scroll_y.pack(side="right", fill="y")
+
+        style = ttk.Style()
+        style.configure(
+            "Custom.Treeview",
+            font=("Microsoft JhengHei", 14, "bold"),
+            foreground=self.text_color,
+            background=self.consolo_color,
+            rowheight=30,
+        )
+        style.configure(
+            "Custom.Treeview.Heading",
+            font=("Microsoft JhengHei", 16, "bold"),
+            foreground="#0066CC",
+        )
+
+        treeview = ttk.Treeview(
+            display_frame,
+            columns=("Type", "Count"),
+            show="headings",
+            yscrollcommand=scroll_y.set,
+            cursor="hand2",
+            style="Custom.Treeview",
+        )
+        treeview.heading("Type", text=shared.transl("檔案類型"))
+        treeview.heading("Count", text=shared.transl("檔案數量"))
+        treeview.column("Type", anchor="center")
+        treeview.column("Count", anchor="center")
+
+        scroll_y.config(command=treeview.yview)
+        treeview.pack(fill="both", expand=True)
+
+        # 保留目前 Treeview 對應的資料
+        data_table = {}
+
+        # 是否已經排程 refresh
+        refresh_job = None
+
+        def refresh_treeview():
+            nonlocal data_table, refresh_job
+
+            # refresh_job 執行後清空
+            refresh_job = None
+
+            if not merge_window.winfo_exists():
+                return
+
+            data_table = get_ext_groups(
+                shared.save_path,
+                {shared.integrate_folder, shared.current_task_name},
+            )
+
+            for item in treeview.get_children():
+                treeview.delete(item)
+
+            for key, value in data_table.items():
+                treeview.insert("", "end", values=(key, len(value)))
+
+        def file_changed(event):
+            nonlocal refresh_job
+
+            # 已經有 refresh 在排隊，就不用再排
+            if refresh_job is None:
+                # 用於刷新事件的防抖
+                refresh_job = merge_window.after(300, refresh_treeview)
+
+        event_handler = FileSystemEventHandler()
+        event_handler.on_any_event = file_changed
+
+        observer = Observer()
+        observer.schedule(event_handler, str(shared.save_path), recursive=True)
+
+        def merge_window_close():
+            nonlocal refresh_job
+
+            if refresh_job is not None:
+                merge_window.after_cancel(refresh_job)
+                refresh_job = None
+
+            observer.stop()
+            observer.join()
+
+            self.language_menu.config(state="readonly")
+            merge_window.destroy()
+
+        def move_trigger():
+            selected_items = treeview.selection()
+
+            if not selected_items:
+                messagebox.showwarning(
+                    title=shared.transl("操作提示"),
+                    message=shared.transl("請選擇要整合的類型"),
+                    parent=merge_window,
+                )
+                return
+
+            selected = [treeview.item(item, "values")[0] for item in selected_items]
+
+            confirm = messagebox.askquestion(
+                shared.transl("操作確認"),
+                f"{shared.transl('整合以下類型的檔案')}?\n\n{selected}",
+                parent=merge_window,
+            )
+
+            if confirm != "yes":
+                return
+
+            def merge_success_show(merge_path):
+                messagebox.showinfo(
+                    title=shared.transl("操作完成"),
+                    message=f"{shared.transl('檔案整合完成')}\n{merge_path}",
+                    parent=merge_window,
+                )
+
+            shared.msg.connect(
+                merge_success_show,
+                once=True,
+            )
+
+            self.move_files(
+                data_table,
+                selected,
+            )
+
+        output_button = tk.Button(
+            output_frame,
+            text=shared.transl("整合輸出"),
+            font=("Microsoft JhengHei", 12, "bold"),
+            borderwidth=2,
+            cursor="hand2",
+            relief="raised",
+            bg=self.secondary_color,
+            fg=self.text_color,
+            command=move_trigger,
+        )
+        output_button.pack(pady=(5, 15))
+
+        # 第一次建立視窗時先取得資料
+        refresh_treeview()
+
+        # 第一次資料顯示完成後再啟動 watcher
+        observer.start()
+
+        merge_window.protocol("WM_DELETE_WINDOW", merge_window_close)
