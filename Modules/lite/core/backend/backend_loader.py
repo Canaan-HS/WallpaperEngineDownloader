@@ -43,6 +43,7 @@ class Backend_Loader(Backend_Cleaner, Backend_Tools, Backend_Download):
                     "Authentication",
                     "AccountDisabled",
                     "ArgumentException",
+                    "Login session expired",  # 非 DepotDownloader 的原生錯誤, 是用於 QRCode 登入過期的
                     "AlreadyLoggedInElsewhere",
                 ],
                 [shared.transl("下載失敗: 請嘗試變更帳號後再下載")],
