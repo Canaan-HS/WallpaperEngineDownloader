@@ -32,6 +32,7 @@ class UI_Operat:
         shared.msg.connect(lambda: self.serverid_var.get().strip(), "serverid")
 
     def ui_close(self, account, application, tasks):
+        # ! QRCode Patch: 檢查是否已經登入, 保存時添加旗標
         if shared.logged_in:
             account += LOGIN_KEY
 
