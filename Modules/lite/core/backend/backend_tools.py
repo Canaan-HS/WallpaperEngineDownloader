@@ -187,8 +187,6 @@ class Backend_Tools:
         for i, t in enumerate(token):
             if t == "-username" and i + 1 < len(token):
                 account = token[i + 1]
-                # 更新加入的帳號
-                shared.logged_in = True
                 add_login_account(account)
                 shared.msg.emit("username_menu_refresh", account)
                 break
