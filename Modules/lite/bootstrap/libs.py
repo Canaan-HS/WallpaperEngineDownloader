@@ -24,7 +24,9 @@ from pathlib import Path
 from operator import itemgetter
 from urllib.parse import unquote
 from types import SimpleNamespace
+from watchdog.observers import Observer
 from collections import deque, defaultdict
+from watchdog.events import FileSystemEventHandler
 from tkinter import ttk, scrolledtext, filedialog, messagebox
 
 import vdf
