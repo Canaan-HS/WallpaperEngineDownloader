@@ -1,4 +1,5 @@
 vdf
 psutil
+watchdog
 pyperclip
 pyinstaller
