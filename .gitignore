@@ -3,7 +3,6 @@
 *.txt
 Config.json
 
-VENV
 TEST
 __pycache__
 
