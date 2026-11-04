@@ -73,9 +73,22 @@
 
     function findUri() {
         const links = document.querySelectorAll("a[href^='https://steamcommunity.com/sharedfiles/filedetails/?id=']:not([fixed='true'])");
-        if (links.length >= 2 && links.length % 2 === 0) {
-            for (let i = 0; i < links.length; i += 2) {
-                const [rawLink, titleLink] = [links[i], links[i + 1]];
+        const mark = () => {
+            // 標記為已處理
+            for (const link of links) link.setAttribute("fixed", "true")
+        }
+
+        if (links.length < 2) {
+            mark();
+            return;
+        }
+
+        let remainder = links.length % 2;
+
+        if (remainder === 0 || remainder === 1) {
+            // 當餘數是 1, 第一個可能是其他東西, 所以跳過索引 0
+            for (remainder; remainder < links.length; remainder += 2) {
+                const [rawLink, titleLink] = [links[remainder], links[remainder + 1]];
                 const titleText = titleLink.textContent.trim();
 
                 if (!titleText) continue;
@@ -83,6 +96,8 @@
                 reUri(rawLink, titleText);
                 reUri(titleLink, titleText);
             }
+        } else {
+            mark();
         }
     };
 
