@@ -34,9 +34,9 @@
             const key = event.key;
 
             if (key === "ArrowLeft") {
-                turnButtons.leftButton.click();
+                turnButtons.leftButton?.click();
             } else if (key === "ArrowRight") {
-                turnButtons.rightButton.click();
+                turnButtons.rightButton?.click();
             }
         }, 600), { capture: true });
 
